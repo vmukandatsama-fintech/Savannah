@@ -1,0 +1,19 @@
+﻿from services.user_service import get_user_context
+
+
+def global_user_context(request):
+    if not getattr(request, "user", None):
+        return {}
+
+    if not request.user.is_authenticated:
+        return {}
+
+    user_email = (getattr(request.user, "email", "") or "").strip()
+    if not user_email:
+        return {}
+
+    try:
+        user_context = get_user_context(user_email)
+        return {"user_context": user_context} if user_context else {}
+    except Exception:
+        return {}

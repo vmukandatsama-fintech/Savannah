@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .page-header {
+        margin-bottom: 20px;
+    }
+
+    .request-header-card,
+    .catalog-card,
+    .cart-card {
+        background: white;
+        border-radius: 10px;
+        padding: 14px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 14px;
+    }
+
+    .request-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+    }
+
+    .request-grid .full-width {
+        grid-column: span 4;
+    }
+
+    .field label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+        color: #374151;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .field textarea {
+        min-height: 64px;
+        resize: vertical;
+    }
+
+    .cart-layout {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 14px;
+        align-items: start;
+    }
+
+    .catalog-header {
+        margin-bottom: 10px;
+    }
+
+    .catalog-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+
+    .catalog-title-row h3 {
+        margin: 0;
+    }
+
+    .catalog-filter-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 6px;
+        align-items: end;
+    }
+
+    .catalog-filter-grid .field {
+        min-width: 95px;
+    }
+
+    .catalog-filter-grid .field label {
+        font-size: 12px;
+        margin-bottom: 3px;
+    }
+
+    .catalog-filter-grid .field input,
+    .catalog-filter-grid .field select {
+        min-height: 32px;
+        padding: 6px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+    .catalog-filter-actions {
+        display: flex;
+        gap: 6px;
+        margin-top: 6px;
+    }
+
+    .catalog-filter-actions .btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
+
+    .catalog-list {
+        display: grid;
+        gap: 8px;
+        max-height: 520px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .item-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 10px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 72px 82px 88px;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .item-uom,
+    .qty-box,
+    .item-action {
+        justify-self: center;
+        width: 100%;
+        text-align: center;
+    }
+
+    .item-name {
+        font-weight: bold;
+    }
+
+    .item-meta {
+        color: #6b7280;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .qty-box input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .btn {
+        background: #1f2937;
+        color: white;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn:hover {
+        background: #111827;
+    }
+
+    .btn-light {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .btn-light:hover {
+        background: #d1d5db;
+    }
+
+    .btn-disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+
+    .cart-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .cart-table th,
+    .cart-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        font-size: 14px;
+    }
+
+    .cart-summary {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .muted-small {
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .danger-link {
+        color: #b91c1c;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 13px;
+    }
+
+    .error-box {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .stock-green {
+        color: #16a34a;
+        font-weight: 600;
+    }
+
+    .stock-amber {
+        color: #d97706;
+        font-weight: 600;
+    }
+
+    .stock-red {
+        color: #dc2626;
+        font-weight: 600;
+    }
+
+    .pager {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 16px;
+    }
+</style>
+
+<div class="page-header">
+    <h1>Create Request</h1>
+</div>
+
+{% if error_message %}
+<div class="error-box">
+    {{ error_message }}
+</div>
+{% endif %}
+
+<form method="post" id="requestForm">
+    {% csrf_token %}
+
+    <div class="request-header-card">
+        <h3>Request Header</h3>
+        <div class="request-grid">
+            <div class="field">
+                <label>Farmer</label>
+                <select name="farmer" required>
+                    <option value="">Select farmer</option>
+                    {% for farmer in farmers %}
+                        <option value="{{ farmer.grower_number }}">
+                            {{ farmer.grower_name }} ({{ farmer.grower_number }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Required Date</label>
+                <input type="date" name="required_date" required>
+            </div>
+
+            <div class="field">
+                <label>Collector Name</label>
+                <input type="text" name="collector_name" required>
+            </div>
+
+            <div class="field">
+                <label>Collector National ID</label>
+                <input type="text" name="collector_national_id" required>
+            </div>
+
+            <div class="field">
+                <label>Truck Registration</label>
+                <input type="text" name="truck_registration" required>
+            </div>
+
+            <div class="field">
+                <label>Trailer Registration</label>
+                <input type="text" name="trailer_registration">
+            </div>
+
+            <div class="field">
+                <label>Authorization Required</label>
+                <select name="authorization_required">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Department</label>
+                <input type="text" value="{{ user_context.DepartmentName }}" readonly>
+            </div>
+
+            <div class="field full-width">
+                <label>Justification</label>
+                <textarea name="justification" placeholder="Enter reason for request"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-layout">
+        <div class="catalog-card">
+            <div class="catalog-header">
+                <div class="catalog-title-row">
+                    <h3>Items Catalogue</h3>
+                    <div class="muted-small">Showing up to 10 items (scroll to view all loaded rows)</div>
+                </div>
+
+                <div class="catalog-filter-grid">
+                    <div class="field">
+                        <label>Search</label>
+                        <input type="text" id="filterSearch" value="{{ filters.search }}" placeholder="Code or name">
+                    </div>
+
+                    <div class="field">
+                        <label>Category</label>
+                        <select id="filterCategory" onchange="applyFilters()">
+                            <option value="">All</option>
+                            {% for category in categories %}
+                                <option value="{{ category }}" {% if filters.category == category %}selected{% endif %}>
+                                    {{ category }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>Stock</label>
+                        <select id="filterStock" onchange="applyFilters()">
+                            <option value="">All</option>
+                            <option value="in_stock" {% if filters.stock_filter == 'in_stock' %}selected{% endif %}>In Stock</option>
+                            <option value="low_stock" {% if filters.stock_filter == 'low_stock' %}selected{% endif %}>Low Stock</option>
+                            <option value="out_of_stock" {% if filters.stock_filter == 'out_of_stock' %}selected{% endif %}>Out of Stock</option>
+                        </select>
+                    </div>
+
+                    <div class="field">
+                        <label>UOM</label>
+                        <select id="filterUom" onchange="applyFilters()">
+                            <option value="">All</option>
+                            {% for uom in uoms %}
+                                <option value="{{ uom }}" {% if filters.uom == uom %}selected{% endif %}>
+                                    {{ uom }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                </div>
+
+                <div class="catalog-filter-actions">
+                    <a class="btn btn-light" href="?">Reset</a>
+                </div>
+            </div>
+
+            <div class="catalog-list" id="catalogList">
+                {% for item in items %}
+                <div class="item-card" data-code="{{ item.code|lower }}" data-name="{{ item.name|lower }}">
+                    <div>
+                        <div class="item-name">{{ item.name }}</div>
+                        <div class="item-meta">
+                            {{ item.code }} | Category: {{ item.category }} | UOM: {{ item.uom }} |
+                            {% if item.available == 0 %}
+                                <span class="stock-red">Out of Stock</span>
+                            {% elif item.available < 20 %}
+                                <span class="stock-amber">Low Stock ({{ item.available }})</span>
+                            {% else %}
+                                <span class="stock-green">In Stock ({{ item.available }})</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="muted-small item-uom">{{ item.uom }}</div>
+
+                    <div class="qty-box">
+                        <input type="number" min="1" value="1" id="qty_{{ item.code }}" {% if item.available == 0 %}disabled{% endif %}>
+                    </div>
+
+                    <div class="item-action">
+                        {% if item.available == 0 %}
+                            <button type="button" class="btn btn-disabled" disabled>Out of Stock</button>
+                        {% else %}
+                            <button
+                                type="button"
+                                class="btn"
+                                onclick="addToCart('{{ item.code }}', '{{ item.name|escapejs }}', '{{ item.uom }}', {{ item.available }})">
+                                Add
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="muted-small">No items found for the selected filters.</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="cart-card">
+            <h3>Request Cart</h3>
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>UOM</th>
+                        <th>Available</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cartBody">
+                    <tr id="emptyRow">
+                        <td colspan="5" class="muted-small">No items in cart yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="cart-summary">
+                <div><strong>Total Lines:</strong> <span id="totalLines">0</span></div>
+                <div><strong>Total Quantity:</strong> <span id="totalQty">0</span></div>
+            </div>
+
+            <div class="actions-row">
+                <button type="button" class="btn-light btn" onclick="clearCart()">Clear Cart</button>
+                <button type="submit" class="btn">Submit Request</button>
+            </div>
+
+            <input type="hidden" name="cart_json" id="cartJson">
+        </div>
+    </div>
+</form>
+
+<script>
+    let cart = [];
+
+    function applyFilters() {
+        const category = document.getElementById('filterCategory').value;
+        const stockFilter = document.getElementById('filterStock').value;
+        const uom = document.getElementById('filterUom').value;
+
+        const params = new URLSearchParams();
+        if (category) params.set('category', category);
+        if (stockFilter) params.set('stock_filter', stockFilter);
+        if (uom) params.set('uom', uom);
+
+        window.location.search = params.toString();
+    }
+
+    function liveSearchCatalog() {
+        const term = (document.getElementById('filterSearch').value || '').trim().toLowerCase();
+        const cards = document.querySelectorAll('#catalogList .item-card');
+
+        cards.forEach((card) => {
+            const code = card.dataset.code || '';
+            const name = card.dataset.name || '';
+            card.style.display = (!term || code.includes(term) || name.includes(term)) ? 'grid' : 'none';
+        });
+    }
+
+    function refreshCart() {
+        const cartBody = document.getElementById('cartBody');
+        const totalLines = document.getElementById('totalLines');
+        const totalQty = document.getElementById('totalQty');
+        const cartJson = document.getElementById('cartJson');
+
+        cartBody.innerHTML = '';
+
+        if (cart.length === 0) {
+            cartBody.innerHTML = `
+                <tr id="emptyRow">
+                    <td colspan="5" class="muted-small">No items in cart yet.</td>
+                </tr>
+            `;
+        } else {
+            cart.forEach((item, index) => {
+                const remaining = Math.max(Number(item.available) - Number(item.qty), 0);
+                cartBody.innerHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>
+                            <input type="number" min="1" value="${item.qty}" style="width:70px;"
+                                   onchange="updateQty(${index}, this.value)">
+                        </td>
+                        <td>${item.uom}</td>
+                        <td>${remaining}</td>
+                        <td><a class="danger-link" onclick="removeItem(${index})">Remove</a></td>
+                    </tr>
+                `;
+            });
+        }
+
+        totalLines.textContent = cart.length;
+        totalQty.textContent = cart.reduce((sum, item) => sum + Number(item.qty), 0);
+        cartJson.value = JSON.stringify(cart);
+    }
+
+    function addToCart(code, name, uom, available) {
+        const qtyInput = document.getElementById(`qty_${code}`);
+        const qty = Number(qtyInput.value);
+
+        if (!qty || qty <= 0) {
+            alert('Enter a valid quantity.');
+            return;
+        }
+
+        if (qty > available) {
+            alert(`Cannot request more than available stock (${available}).`);
+            return;
+        }
+
+        const existing = cart.find(item => item.code === code);
+
+        if (existing) {
+            if (Number(existing.qty) + qty > available) {
+                alert(`Total exceeds available stock (${available}).`);
+                return;
+            }
+            existing.qty = Number(existing.qty) + qty;
+        } else {
+            cart.push({
+                code: code,
+                name: name,
+                qty: qty,
+                uom: uom,
+                available: available
+            });
+        }
+
+        qtyInput.value = 1;
+        refreshCart();
+    }
+
+    function removeItem(index) {
+        cart.splice(index, 1);
+        refreshCart();
+    }
+
+    function updateQty(index, value) {
+        const qty = Number(value);
+
+        if (!qty || qty <= 0) {
+            cart[index].qty = 1;
+        } else if (qty > cart[index].available) {
+            alert(`Cannot request more than available stock (${cart[index].available}).`);
+            cart[index].qty = cart[index].available;
+        } else {
+            cart[index].qty = qty;
+        }
+
+        refreshCart();
+    }
+
+    function clearCart() {
+        cart = [];
+        refreshCart();
+    }
+
+    document.getElementById('filterSearch').addEventListener('input', liveSearchCatalog);
+
+    refreshCart();
+    liveSearchCatalog();
+</script>
+
+{% endblock %}

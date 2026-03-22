@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <h1>Request Submitted</h1>
+    <p class="muted">Your request has been created successfully.</p>
+
+    <p><strong>Request Number:</strong> {{ request_number }}</p>
+
+    <h3>Submitted Items</h3>
+    <table class="cart-table">
+        <thead>
+            <tr>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Qty</th>
+                <th>UOM</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart %}
+            <tr>
+                <td>{{ item.code }}</td>
+                <td>{{ item.name }}</td>
+                <td>{{ item.qty }}</td>
+                <td>{{ item.uom }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="margin-top: 20px;">
+        <a href="/requests/create/" class="btn">Create Another Request</a>
+    </div>
+</div>
+
+<style>
+    .cart-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+    }
+    .cart-table th,
+    .cart-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+    }
+    .btn {
+        display: inline-block;
+        background: #1f2937;
+        color: white;
+        text-decoration: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}

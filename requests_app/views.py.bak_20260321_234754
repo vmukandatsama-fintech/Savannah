@@ -1,0 +1,69 @@
+import json
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from services.request_service import create_request_from_cart
+from services.farmer_service import get_active_farmers
+
+
+@login_required
+def request_cart(request):
+    sample_items = [
+        {"code": "ITM001", "name": "Compound D", "uom": "BAG", "available": 120},
+        {"code": "ITM002", "name": "Ammonium Nitrate", "uom": "BAG", "available": 85},
+        {"code": "ITM003", "name": "Twine", "uom": "EA", "available": 240},
+        {"code": "ITM004", "name": "Chemical A", "uom": "LTR", "available": 40},
+        {"code": "ITM005", "name": "Seed Maize", "uom": "BAG", "available": 15},
+    ]
+
+    farmers = get_active_farmers()
+
+    if request.method == "POST":
+        cart_json = request.POST.get("cart_json", "[]")
+
+        try:
+            cart = json.loads(cart_json)
+        except json.JSONDecodeError:
+            cart = []
+
+        if not cart:
+            return render(request, "requests_app/request_cart.html", {
+                "items": sample_items,
+                "farmers": farmers,
+                "error_message": "Please add at least one item to the cart."
+            })
+
+        header = {
+            "grower_number": request.POST.get("farmer", ""),
+            "required_date": request.POST.get("required_date", ""),
+            "collector_name": request.POST.get("collector_name", ""),
+            "collector_national_id": request.POST.get("collector_national_id", ""),
+            "truck_registration": request.POST.get("truck_registration", ""),
+            "trailer_registration": request.POST.get("trailer_registration", ""),
+            "authorization_required": request.POST.get("authorization_required", "0"),
+            "department_code": "DEP-005",
+            "justification": request.POST.get("justification", ""),
+        }
+
+        try:
+            request_number = create_request_from_cart(
+                user_email="vmukandatsama@premiumzimbabwe.com",
+                header=header,
+                cart=cart,
+            )
+
+            return render(request, "requests_app/request_success.html", {
+                "request_number": request_number,
+                "cart": cart,
+            })
+
+        except Exception as e:
+            return render(request, "requests_app/request_cart.html", {
+                "items": sample_items,
+                "farmers": farmers,
+                "error_message": str(e),
+            })
+
+    return render(request, "requests_app/request_cart.html", {
+        "items": sample_items,
+        "farmers": farmers,
+    })

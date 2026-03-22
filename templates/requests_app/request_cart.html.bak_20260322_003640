@@ -1,0 +1,430 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+{% if user_context %}
+<div style="position:fixed;right:18px;bottom:18px;width:320px;background:#fff;border:1px solid #ddd;border-radius:10px;box-shadow:0 8px 25px rgba(0,0,0,0.15);padding:12px;font-size:13px;z-index:999;">
+    <div style="font-weight:600;margin-bottom:8px;">User Context</div>
+    <div><b>Name:</b> {{ user_context.Name }}</div>
+    <div><b>Email:</b> {{ user_context.Email }}</div>
+    <div><b>Dept:</b> {{ user_context.DepartmentName }}</div>
+    <div><b>Role:</b> {{ user_context.RoleName }}</div>
+</div>
+{% endif %}
+
+<style>
+    .page-header {
+        margin-bottom: 20px;
+    }
+
+    .request-header-card,
+    .catalog-card,
+    .cart-card {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        margin-bottom: 20px;
+    }
+
+    .request-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+    }
+
+    .request-grid .full-width {
+        grid-column: span 4;
+    }
+
+    .field label {
+        display: block;
+        font-size: 14px;
+        margin-bottom: 6px;
+        color: #374151;
+    }
+
+    .field input,
+    .field select,
+    .field textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .field textarea {
+        min-height: 80px;
+        resize: vertical;
+    }
+
+    .cart-layout {
+        display: grid;
+        grid-template-columns: 1.5fr 1fr;
+        gap: 20px;
+        align-items: start;
+    }
+
+    .catalog-list {
+        display: grid;
+        gap: 12px;
+    }
+
+    .item-card {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 14px;
+        display: grid;
+        grid-template-columns: 2fr 100px 100px 110px;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .item-name {
+        font-weight: bold;
+    }
+
+    .item-meta {
+        color: #6b7280;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    .qty-box input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .btn {
+        background: #1f2937;
+        color: white;
+        border: none;
+        padding: 10px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background: #111827;
+    }
+
+    .btn-light {
+        background: #e5e7eb;
+        color: #111827;
+    }
+
+    .btn-light:hover {
+        background: #d1d5db;
+    }
+
+    .cart-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .cart-table th,
+    .cart-table td {
+        padding: 10px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        font-size: 14px;
+    }
+
+    .cart-summary {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .actions-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+    }
+
+    .muted-small {
+        color: #6b7280;
+        font-size: 13px;
+    }
+
+    .danger-link {
+        color: #b91c1c;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 13px;
+    }
+
+    .search-box {
+        margin-bottom: 16px;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-sizing: border-box;
+    }
+
+    .error-box {
+        background: #fee2e2;
+        color: #991b1b;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+</style>
+
+<div class="page-header">
+    <h1>Create Request</h1>
+    <p class="muted">Build a request like a shopping cart.</p>
+</div>
+
+{% if error_message %}
+<div class="error-box">
+    {{ error_message }}
+</div>
+{% endif %}
+
+<form method="post" id="requestForm">
+    {% csrf_token %}
+
+    <div class="request-header-card">
+        <h3>Request Header</h3>
+        <div class="request-grid">
+            <div class="field">
+                <label>Farmer</label>
+                <select name="farmer" required>
+                    <option value="">Select farmer</option>
+                    {% for farmer in farmers %}
+                        <option value="{{ farmer.grower_number }}">
+                            {{ farmer.grower_name }} ({{ farmer.grower_number }})
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Required Date</label>
+                <input type="date" name="required_date" required>
+            </div>
+
+            <div class="field">
+                <label>Collector Name</label>
+                <input type="text" name="collector_name" required>
+            </div>
+
+            <div class="field">
+                <label>Collector National ID</label>
+                <input type="text" name="collector_national_id" required>
+            </div>
+
+            <div class="field">
+                <label>Truck Registration</label>
+                <input type="text" name="truck_registration" required>
+            </div>
+
+            <div class="field">
+                <label>Trailer Registration</label>
+                <input type="text" name="trailer_registration">
+            </div>
+
+            <div class="field">
+                <label>Authorization Required</label>
+                <select name="authorization_required">
+                    <option value="0">No</option>
+                    <option value="1">Yes</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label>Department</label>
+                <input type="text" name="department" value="{{ user_context.DepartmentName }}" readonly>
+            </div>
+
+            <div class="field full-width">
+                <label>Justification</label>
+                <textarea name="justification" placeholder="Enter reason for request"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-layout">
+        <div class="catalog-card">
+            <h3>Item Catalog</h3>
+            <div class="search-box">
+                <input type="text" id="itemSearch" placeholder="Search items by code or name">
+            </div>
+
+            <div class="catalog-list" id="catalogList">
+                {% for item in items %}
+                <div class="item-card" data-code="{{ item.code }}" data-name="{{ item.name|lower }}">
+                    <div>
+                        <div class="item-name">{{ item.name }}</div>
+                        <div class="item-meta">
+                            {{ item.code }} • UOM: {{ item.uom }} • Available: {{ item.available }}
+                        </div>
+                    </div>
+                    <div class="muted-small">{{ item.uom }}</div>
+                    <div class="qty-box">
+                        <input type="number" min="1" value="1" id="qty_{{ item.code }}">
+                    </div>
+                    <div>
+                        <button
+                            type="button"
+                            class="btn"
+                            onclick="addToCart('{{ item.code }}', '{{ item.name|escapejs }}', '{{ item.uom }}', {{ item.available }})">
+                            Add
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="cart-card">
+            <h3>Request Cart</h3>
+            <table class="cart-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Qty</th>
+                        <th>UOM</th>
+                        <th>Available</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="cartBody">
+                    <tr id="emptyRow">
+                        <td colspan="5" class="muted-small">No items in cart yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="cart-summary">
+                <div><strong>Total Lines:</strong> <span id="totalLines">0</span></div>
+                <div><strong>Total Quantity:</strong> <span id="totalQty">0</span></div>
+            </div>
+
+            <div class="actions-row">
+                <button type="button" class="btn-light btn" onclick="clearCart()">Clear Cart</button>
+                <button type="submit" class="btn">Submit Request</button>
+            </div>
+
+            <input type="hidden" name="cart_json" id="cartJson">
+        </div>
+    </div>
+</form>
+
+<script>
+    let cart = [];
+
+    function refreshCart() {
+        const cartBody = document.getElementById('cartBody');
+        const totalLines = document.getElementById('totalLines');
+        const totalQty = document.getElementById('totalQty');
+        const cartJson = document.getElementById('cartJson');
+
+        cartBody.innerHTML = '';
+
+        if (cart.length === 0) {
+            cartBody.innerHTML = `
+                <tr id="emptyRow">
+                    <td colspan="5" class="muted-small">No items in cart yet.</td>
+                </tr>
+            `;
+        } else {
+            cart.forEach((item, index) => {
+                cartBody.innerHTML += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td>
+                            <input type="number" min="1" value="${item.qty}" style="width:70px;"
+                                   onchange="updateQty(${index}, this.value)">
+                        </td>
+                        <td>${item.uom}</td>
+                        <td>${item.available}</td>
+                        <td><a class="danger-link" onclick="removeItem(${index})">Remove</a></td>
+                    </tr>
+                `;
+            });
+        }
+
+        totalLines.textContent = cart.length;
+        totalQty.textContent = cart.reduce((sum, item) => sum + Number(item.qty), 0);
+        cartJson.value = JSON.stringify(cart);
+    }
+
+    function addToCart(code, name, uom, available) {
+        const qtyInput = document.getElementById(`qty_${code}`);
+        const qty = Number(qtyInput.value);
+
+        if (!qty || qty <= 0) {
+            alert('Enter a valid quantity.');
+            return;
+        }
+
+        const existing = cart.find(item => item.code === code);
+
+        if (existing) {
+            existing.qty = Number(existing.qty) + qty;
+        } else {
+            cart.push({
+                code: code,
+                name: name,
+                qty: qty,
+                uom: uom,
+                available: available
+            });
+        }
+
+        qtyInput.value = 1;
+        refreshCart();
+    }
+
+    function removeItem(index) {
+        cart.splice(index, 1);
+        refreshCart();
+    }
+
+    function updateQty(index, value) {
+        const qty = Number(value);
+
+        if (!qty || qty <= 0) {
+            cart[index].qty = 1;
+        } else {
+            cart[index].qty = qty;
+        }
+
+        refreshCart();
+    }
+
+    function clearCart() {
+        cart = [];
+        refreshCart();
+    }
+
+    document.getElementById('itemSearch').addEventListener('input', function() {
+        const search = this.value.toLowerCase();
+        const cards = document.querySelectorAll('.item-card');
+
+        cards.forEach(card => {
+            const code = card.dataset.code.toLowerCase();
+            const name = card.dataset.name.toLowerCase();
+
+            if (code.includes(search) || name.includes(search)) {
+                card.style.display = 'grid';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+
+    refreshCart();
+</script>
+
+{% endblock %}

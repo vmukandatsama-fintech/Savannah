@@ -1,0 +1,125 @@
+﻿{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    {% if not_found %}
+        <h1>Request Not Found</h1>
+        <p>No request details were found for {{ request_number }}.</p>
+        <p><a href="/requests/my-requests/">Back to My Requests</a></p>
+    {% else %}
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div>
+                <h1 style="margin:0;">Request Details</h1>
+                <div class="muted">{{ header.RequestNumber }}</div>
+            </div>
+            <div>
+                <a href="/requests/my-requests/">Back to My Requests</a>
+            </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
+            <div class="card" style="margin-bottom:0;">
+                <div><strong>Request Number:</strong> {{ header.RequestNumber }}</div>
+                <div><strong>Request Date:</strong> {{ header.RequestDate|date:"d-m-Y H:i" }}</div>
+                <div><strong>Required Date:</strong> {{ header.RequiredDate|date:"d-m-Y" }}</div>
+                <div><strong>Status:</strong> {{ header.StatusName }}</div>
+            </div>
+
+            <div class="card" style="margin-bottom:0;">
+                <div><strong>Farmer:</strong> {{ header.FarmerName }}</div>
+                <div><strong>Grower Number:</strong> {{ header.GrowerNumber }}</div>
+                <div><strong>Department:</strong> {{ header.DepartmentCode }}</div>
+                <div><strong>Requested By:</strong> {{ header.RequestorEmail }}</div>
+            </div>
+
+            <div class="card" style="margin-bottom:0;">
+                <div><strong>Collector:</strong> {{ header.CollectorName }}</div>
+                <div><strong>Collector ID:</strong> {{ header.CollectorNationalID }}</div>
+                <div><strong>Truck:</strong> {{ header.TruckRegistration }}</div>
+                <div><strong>Trailer:</strong> {{ header.TrailerRegistration|default:"-" }}</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Justification</h3>
+            <div>{{ header.Justification|default:"-" }}</div>
+            <div style="margin-top:10px;">
+                <strong>Authorization Required:</strong>
+                {% if header.AuthorizationRequired %}Yes{% else %}No{% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Requested Items</h3>
+            <table style="width:100%;border-collapse:collapse;background:white;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Line</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Item Code</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Item Name</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Requested</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Issued</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Reserved</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">UOM</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Stock Status</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Line Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines %}
+                    <tr>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.LineNumber }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.ItemCode }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.ItemName }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityRequested }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityIssued }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityReserved }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.UOMCode }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.StockStatus }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.LineStatus }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="padding:12px;">No line items found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card">
+            <h3>Approvals</h3>
+            <table style="width:100%;border-collapse:collapse;background:white;">
+                <thead>
+                    <tr>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Level</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Approver</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Role</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Status</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Current</th>
+                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Created</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for approval in approvals %}
+                    <tr>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApprovalLevel }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApproverEmail }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApprovalRole }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApprovalStatusName }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">
+                            {% if approval.IsCurrent %}Yes{% else %}No{% endif %}
+                        </td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.CreatedDate|date:"d-m-Y H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="padding:12px;">No approvals found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

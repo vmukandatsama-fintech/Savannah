@@ -1,0 +1,51 @@
+import json
+from django.db import connection
+
+
+def create_request_from_cart(user_email, header, cart):
+    cart_json = json.dumps([
+        {
+            "LineNumber": index + 1,
+            "ItemCode": item["code"],
+            "QuantityRequested": float(item["qty"]),
+            "UOMCode": item["uom"],
+        }
+        for index, item in enumerate(cart)
+    ])
+
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            EXEC sp_CreateRequest
+                @RequestorEmail = %s,
+                @DepartmentCode = %s,
+                @RequiredDate = %s,
+                @GrowerNumber = %s,
+                @CollectorName = %s,
+                @CollectorNationalID = %s,
+                @TruckRegistration = %s,
+                @TrailerRegistration = %s,
+                @AuthorizationRequired = %s,
+                @Justification = %s,
+                @CartJson = %s
+            """,
+            [
+                user_email,
+                header["department_code"],
+                header["required_date"],
+                header["grower_number"],
+                header["collector_name"],
+                header["collector_national_id"],
+                header["truck_registration"],
+                header["trailer_registration"],
+                header["authorization_required"],
+                header["justification"],
+                cart_json,
+            ]
+        )
+
+        row = cursor.fetchone()
+        if row:
+            return row[0]
+
+    return None

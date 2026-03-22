@@ -1,0 +1,195 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savannah Stores</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+        }
+
+        .topbar {
+            background: #1f2937;
+            color: white;
+            padding: 14px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 52px);
+        }
+
+        .sidebar {
+            width: 240px;
+            background: #111827;
+            color: white;
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 52px);
+            position: sticky;
+            top: 52px;
+        }
+
+        .sidebar a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 12px 20px;
+        }
+
+        .sidebar a:hover {
+            background: #1f2937;
+        }
+
+        .content {
+            flex: 1;
+            padding: 24px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        .login-wrap {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f4f6f8;
+        }
+
+        .login-card {
+            width: 360px;
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: #1f2937;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #111827;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .stat-box {
+            background: white;
+            padding: 18px;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .errorlist {
+            color: #b91c1c;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-user-context {
+            margin-top: auto;
+            padding: 14px 20px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 13px;
+            color: #e5e7eb;
+        }
+
+        .sidebar-user-context-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-user-context-email {
+            opacity: 0.75;
+            font-size: 12px;
+            margin-bottom: 8px;
+            word-break: break-word;
+        }
+
+        .sidebar-user-context-meta {
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    {% if user.is_authenticated %}
+        <div class="topbar">
+            <div><strong>Savannah Stores</strong></div>
+            <div>
+                {{ user.username }} |
+                <a href="{% url 'logout' %}" style="color:white;">Logout</a>
+            </div>
+        </div>
+
+        <div class="layout">
+            <div class="sidebar">
+                <a href="/dashboard/">Dashboard</a>
+                <a href="/requests/create/">Requests</a>
+                <a href="#">Collections</a>
+                <a href="#">Stock</a>
+                <a href="#">Reports</a>
+
+                {% if user_context %}
+                <div class="sidebar-user-context">
+                    <div class="sidebar-user-context-title">User Context</div>
+                    <div><strong>Name:</strong> {{ user_context.Name }}</div>
+                    <div class="sidebar-user-context-email">{{ user_context.Email }}</div>
+                    <div class="sidebar-user-context-meta">
+                        <div><strong>Dept:</strong> {{ user_context.DepartmentName }}</div>
+                        <div><strong>Role:</strong> {{ user_context.RoleName }}</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    {% else %}
+        {% block auth_content %}{% endblock %}
+    {% endif %}
+</body>
+</html>

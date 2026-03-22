@@ -1,0 +1,68 @@
+﻿{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <h1>My Requests</h1>
+
+    <form method="get" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+        <input type="text" name="search" value="{{ filters.search }}" placeholder="Request number" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+        
+        <select name="status" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+            <option value="">All Statuses</option>
+            <option value="Pending Approval" {% if filters.status == 'Pending Approval' %}selected{% endif %}>Pending Approval</option>
+            <option value="Pending Collection" {% if filters.status == 'Pending Collection' %}selected{% endif %}>Pending Collection</option>
+            <option value="Rejected" {% if filters.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+            <option value="Collected" {% if filters.status == 'Collected' %}selected{% endif %}>Collected</option>
+        </select>
+
+        <select name="page_size" style="padding:10px;border:1px solid #d1d5db;border-radius:8px;">
+            <option value="10" {% if filters.page_size == 10 %}selected{% endif %}>10</option>
+            <option value="20" {% if filters.page_size == 20 %}selected{% endif %}>20</option>
+            <option value="30" {% if filters.page_size == 30 %}selected{% endif %}>30</option>
+        </select>
+
+        <button type="submit">Apply</button>
+    </form>
+
+    <table style="width:100%;border-collapse:collapse;background:white;">
+        <thead>
+            <tr>
+                <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Request Number</th>
+                <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Date</th>
+                <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Farmer</th>
+                <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Department</th>
+                <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Status</th>
+                <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Total Lines</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in request_history.rows %}
+            <tr>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ row.request_number }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ row.request_date|date:"d-m-Y H:i" }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ row.farmer_name }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ row.department_code }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ row.status_name }}</td>
+                <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ row.total_lines }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding:12px;">No requests found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+        <div>Showing {{ request_history.rows|length }} of {{ request_history.total_count }}</div>
+        <div>
+            {% if request_history.has_previous %}
+                <a href="?search={{ filters.search }}&status={{ filters.status }}&page_size={{ filters.page_size }}&page={{ request_history.previous_page }}" style="margin-right:12px;">Previous</a>
+            {% endif %}
+            {% if request_history.has_next %}
+                <a href="?search={{ filters.search }}&status={{ filters.status }}&page_size={{ filters.page_size }}&page={{ request_history.next_page }}">Next</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

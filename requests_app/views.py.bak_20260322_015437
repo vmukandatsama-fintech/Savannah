@@ -1,0 +1,139 @@
+﻿import json
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+
+from services.farmer_service import get_active_farmers
+from services.item_service import get_item_categories, get_item_uoms, get_requestable_items
+from services.request_service import create_request_from_cart
+from services.user_service import get_user_context
+
+
+@login_required
+def request_cart(request):
+    farmers = get_active_farmers()
+
+    user_email = (request.user.email or "").strip()
+    user_context = get_user_context(user_email) if user_email else None
+
+    if not user_context:
+        return render(
+            request,
+            "requests_app/request_cart.html",
+            {
+                "farmers": farmers,
+                "items": [],
+                "categories": [],
+                "uoms": [],
+                "error_message": "No active user context was found for your account.",
+            },
+        )
+
+    search_text = ""
+    category_code = request.GET.get("category", "").strip()
+    stock_filter = request.GET.get("stock_filter", "").strip()
+    uom_code = request.GET.get("uom", "").strip()
+    page = 1
+    page_size = 10
+
+    catalog_result = get_requestable_items(
+        search_text=search_text,
+        category_code=category_code,
+        stock_filter=stock_filter,
+        uom_code=uom_code,
+        page=page,
+        page_size=page_size,
+    )
+
+    items = catalog_result["items"]
+    categories = get_item_categories()
+    uoms = get_item_uoms()
+
+    filters = {
+        "search": search_text,
+        "category": category_code,
+        "stock_filter": stock_filter,
+        "uom": uom_code,
+    }
+
+    if request.method == "POST":
+        cart_json = request.POST.get("cart_json", "[]")
+
+        try:
+            cart = json.loads(cart_json)
+        except json.JSONDecodeError:
+            cart = []
+
+        if not cart:
+            return render(
+                request,
+                "requests_app/request_cart.html",
+                {
+                    "items": items,
+                    "farmers": farmers,
+                    "categories": categories,
+                    "uoms": uoms,
+                    "user_context": user_context,
+                    "filters": filters,
+                    "catalog": catalog_result,
+                    "error_message": "Please add at least one item to the cart.",
+                },
+            )
+
+        header = {
+            "grower_number": request.POST.get("farmer", ""),
+            "required_date": request.POST.get("required_date", ""),
+            "collector_name": request.POST.get("collector_name", ""),
+            "collector_national_id": request.POST.get("collector_national_id", ""),
+            "truck_registration": request.POST.get("truck_registration", ""),
+            "trailer_registration": request.POST.get("trailer_registration", ""),
+            "authorization_required": 1 if request.POST.get("authorization_required") else 0,
+            "department_code": user_context["DepartmentCode"],
+            "justification": request.POST.get("justification", ""),
+        }
+
+        try:
+            request_number = create_request_from_cart(
+                user_email=user_email,
+                header=header,
+                cart=cart,
+            )
+
+            return render(
+                request,
+                "requests_app/request_success.html",
+                {
+                    "request_number": request_number,
+                    "cart": cart,
+                    "user_context": user_context,
+                },
+            )
+
+        except Exception as e:
+            return render(
+                request,
+                "requests_app/request_cart.html",
+                {
+                    "items": items,
+                    "farmers": farmers,
+                    "categories": categories,
+                    "uoms": uoms,
+                    "user_context": user_context,
+                    "filters": filters,
+                    "catalog": catalog_result,
+                    "error_message": str(e),
+                },
+            )
+
+    return render(
+        request,
+        "requests_app/request_cart.html",
+        {
+            "items": items,
+            "farmers": farmers,
+            "categories": categories,
+            "uoms": uoms,
+            "user_context": user_context,
+            "filters": filters,
+            "catalog": catalog_result,
+        },
+    )
