@@ -57,9 +57,9 @@
                                 <td>{{ line.LineNumber }}</td>
                                 <td>{{ line.ItemCode }}</td>
                                 <td>{{ line.ItemName|default:"-" }}</td>
-                                <td>{{ line.QuantityRequested }}</td>
-                                <td>{{ line.QuantityIssued }}</td>
-                                <td>{{ line.QuantityReserved }}</td>
+                                <td>{{ line.QuantityRequested|floatformat:0 }}</td>
+                                <td>{{ line.QuantityIssued|floatformat:0 }}</td>
+                                <td>{{ line.QuantityReserved|floatformat:0 }}</td>
                                 <td>{{ line.UOMCode }}</td>
                                 <td>{{ line.StockStatus }}</td>
                                 <td>{{ line.LineStatus }}</td>

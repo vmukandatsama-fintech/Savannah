@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <a href="{% url 'collection_history' %}">← Back to Collection History</a>
+</div>
+
+<div class="card">
+    <h2 style="margin-top:0;">Collection Detail</h2>
+
+    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+        <div><strong>Collection Number:</strong> {{ header.CollectionNumber }}</div>
+        <div><strong>Collection Date:</strong> {{ header.CollectionDate|date:"d-m-Y H:i" }}</div>
+
+        <div><strong>Request Number:</strong> {{ header.RequestNumber }}</div>
+        <div><strong>Status:</strong> {{ header.StatusName }}</div>
+
+        <div><strong>Department:</strong> {{ header.DepartmentName }}</div>
+        <div><strong>Disbursed By:</strong> {{ header.DisbursedByName|default:header.DisbursedBy }}</div>
+
+        <div><strong>Farmer:</strong> {{ header.FarmerName|default:"-" }}</div>
+        <div><strong>Collector:</strong> {{ header.CollectorName|default:"-" }}</div>
+
+        <div><strong>National ID:</strong> {{ header.CollectorNationalID|default:"-" }}</div>
+        <div><strong>Truck:</strong> {{ header.TruckRegistration|default:"-" }}</div>
+
+        <div><strong>Trailer:</strong> {{ header.TrailerRegistration|default:"-" }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Voucher</h3>
+
+    <p><strong>Status:</strong> {{ header.VoucherStatus|default:"-" }}</p>
+
+    <p>
+        <strong>Path:</strong>
+        {% if header.VoucherPath %}
+            {{ header.VoucherPath }}
+        {% else %}
+            -
+        {% endif %}
+    </p>
+
+    <p>
+        <strong>Error:</strong>
+        {% if header.VoucherError %}
+            {{ header.VoucherError }}
+        {% else %}
+            -
+        {% endif %}
+    </p>
+
+    <div style="margin-top:15px; display:flex; gap:10px; flex-wrap:wrap;">
+        {% if header.VoucherPath %}
+        <a href="{% url 'open_collection_voucher' header.CollectionNumber %}" target="_blank">
+            <button type="button">Open Voucher</button>
+        </a>
+
+        <a href="{% url 'download_collection_voucher' header.CollectionNumber %}">
+            <button type="button">Download Voucher</button>
+        </a>
+        {% endif %}
+
+        <a href="{% url 'regenerate_collection_voucher' header.CollectionNumber %}">
+            <button type="button">Regenerate Voucher</button>
+        </a>
+    </div>
+</div>
+{% if request.GET.auto_open == "1" and header.VoucherPath %}
+<script>
+    window.open("{% url 'open_collection_voucher' header.CollectionNumber %}", "_blank");
+</script>
+{% endif %}
+
+<div class="card">
+    <h3 style="margin-top:0;">Collection Items</h3>
+
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Line</th>
+                    <th style="padding:10px;">Item Code</th>
+                    <th style="padding:10px;">Item Name</th>
+                    <th style="padding:10px;">UOM</th>
+                    <th style="padding:10px;">Requested</th>
+                    <th style="padding:10px;">This Issue</th>
+                    <th style="padding:10px;">Total Issued To Date</th>
+                    <th style="padding:10px;">Remaining After Issue</th>
+                    <th style="padding:10px;">Created</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in lines %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ line.LineNumber }}</td>
+                    <td style="padding:10px;">{{ line.ItemCode }}</td>
+                    <td style="padding:10px;">{{ line.ItemName }}</td>
+                    <td style="padding:10px;">{{ line.UOM }}</td>
+                    <td style="padding:10px;">{{ line.QuantityRequested|floatformat:0 }}</td>
+                    <td style="padding:10px;">{{ line.ThisIssueQty|floatformat:0 }}</td>
+                    <td style="padding:10px;">
+                        {% if line.TotalIssuedToDate is not None %}
+                            {{ line.TotalIssuedToDate|floatformat:0 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="padding:10px;">
+                        {% if line.RemainingAfterIssue is not None %}
+                            {{ line.RemainingAfterIssue|floatformat:0 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td style="padding:10px;">{{ line.CreatedDate|date:"d-m-Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" style="padding:20px; text-align:center;" class="muted">
+                        No collection lines found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

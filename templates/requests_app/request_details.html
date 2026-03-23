@@ -71,9 +71,9 @@
                         <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.LineNumber }}</td>
                         <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.ItemCode }}</td>
                         <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.ItemName }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityRequested }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityIssued }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityReserved }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityRequested|floatformat:0 }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityIssued|floatformat:0 }}</td>
+                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityReserved|floatformat:0 }}</td>
                         <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.UOMCode }}</td>
                         <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.StockStatus }}</td>
                         <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.LineStatus }}</td>

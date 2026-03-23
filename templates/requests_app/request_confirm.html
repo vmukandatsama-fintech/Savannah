@@ -87,7 +87,7 @@
             <tr>
                 <td>{{ item.code }}</td>
                 <td>{{ item.name }}</td>
-                <td>{{ item.qty }}</td>
+                <td>{{ item.qty|floatformat:0 }}</td>
                 <td>{{ item.uom }}</td>
                 <td>{{ item.available }}</td>
             </tr>
@@ -100,7 +100,7 @@
     </table>
 
     <p><strong>Total Lines:</strong> {{ total_lines }}</p>
-    <p><strong>Total Quantity:</strong> {{ total_qty }}</p>
+    <p><strong>Total Quantity:</strong> {{ total_qty|floatformat:0 }}</p>
 </div>
 
 <div class="confirm-card">

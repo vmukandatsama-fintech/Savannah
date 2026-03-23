@@ -93,7 +93,7 @@ def get_requestable_items(
             i.Name,
             i.CategoryCode,
             i.UOMCode,
-            CAST(ISNULL(b.AvailableStock, 0) AS DECIMAL(18,2)) AS AvailableStock
+            CAST(ISNULL(b.AvailableStock, 0) AS INT) AS AvailableStock
         FROM dbo.Inventory i
         LEFT JOIN dbo.vw_StockBalance b
             ON i.ItemCode = b.ItemCode
@@ -115,7 +115,7 @@ def get_requestable_items(
             "name": row[1],
             "category": row[2],
             "uom": row[3],
-            "available": float(row[4] or 0),
+            "available": int(row[4] or 0),
         }
         for row in rows
     ]

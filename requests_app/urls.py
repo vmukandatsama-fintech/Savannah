@@ -9,6 +9,11 @@ from .views import (
     collection_inbox,
     collection_detail,
     disburse_request_view,
+    collection_history,
+    collection_history_detail,
+    regenerate_collection_voucher_view,
+    open_collection_voucher_view,
+    download_collection_voucher_view,
 )
 
 urlpatterns = [
@@ -19,6 +24,27 @@ urlpatterns = [
     path("approvals/", approval_inbox, name="approval_inbox"),
     path("approvals/<str:request_number>/", approval_detail, name="approval_detail"),
     path("approvals/<str:request_number>/action/", approval_action, name="approval_action"),
+
+    # Collection History routes (must be above collections/)
+
+
+    path("collections/history/", collection_history, name="collection_history"),
+    path("collections/history/<str:collection_number>/", collection_history_detail, name="collection_history_detail"),
+    path(
+        "collections/history/<str:collection_number>/regenerate-voucher/",
+        regenerate_collection_voucher_view,
+        name="regenerate_collection_voucher",
+    ),
+    path(
+        "collections/history/<str:collection_number>/open-voucher/",
+        open_collection_voucher_view,
+        name="open_collection_voucher",
+    ),
+    path(
+        "collections/history/<str:collection_number>/download-voucher/",
+        download_collection_voucher_view,
+        name="download_collection_voucher",
+    ),
 
     path("collections/", collection_inbox, name="collection_inbox"),
     path("collections/<str:request_number>/", collection_detail, name="collection_detail"),

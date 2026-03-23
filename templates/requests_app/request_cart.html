@@ -387,9 +387,9 @@
                             {% if item.available == 0 %}
                                 <span class="stock-red">Out of Stock</span>
                             {% elif item.available < 20 %}
-                                <span class="stock-amber">Low Stock ({{ item.available }})</span>
+                                <span class="stock-amber">Low Stock ({{ item.available|floatformat:0 }})</span>
                             {% else %}
-                                <span class="stock-green">In Stock ({{ item.available }})</span>
+                                <span class="stock-green">In Stock ({{ item.available|floatformat:0 }})</span>
                             {% endif %}
                         </div>
                     </div>
@@ -397,7 +397,7 @@
                     <div class="muted-small item-uom">{{ item.uom }}</div>
 
                     <div class="qty-box">
-                        <input type="number" min="1" value="1" id="qty_{{ item.code }}" {% if item.available == 0 %}disabled{% endif %}>
+                        <input type="number" min="1" step="1" value="1" id="qty_{{ item.code }}" {% if item.available == 0 %}disabled{% endif %}>
                     </div>
 
                     <div class="item-action">
@@ -496,7 +496,7 @@
             `;
         } else {
             cart.forEach((item, index) => {
-                const remaining = Math.max(Number(item.available) - Number(item.qty), 0);
+                const remaining = Math.floor(Math.max(Number(item.available) - Number(item.qty), 0));
                 cartBody.innerHTML += `
                     <tr>
                         <td>${item.name}</td>
@@ -513,7 +513,7 @@
         }
 
         totalLines.textContent = cart.length;
-        totalQty.textContent = cart.reduce((sum, item) => sum + Number(item.qty), 0);
+        totalQty.textContent = cart.reduce((sum, item) => sum + Math.floor(Number(item.qty)), 0);
         cartJson.value = JSON.stringify(cart);
     }
 
