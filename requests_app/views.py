@@ -1,65 +1,28 @@
-﻿# === VOUCHER OPEN/DOWNLOAD ===
-@sql_login_required
-@feature_required("collections")
-def open_collection_voucher_view(request, collection_number):  # Keeping the correct version
-    detail = get_collection_history_detail(collection_number)
-
-    if not detail or not detail["header"].get("VoucherPath"):
-        messages.error(request, "Voucher not found.")
-        return redirect("collection_history_detail", collection_number=collection_number)
-
-    voucher_path = detail["header"]["VoucherPath"]
-
-    if voucher_path.lower().startswith("http://") or voucher_path.lower().startswith("https://"):
-        return HttpResponseRedirect(voucher_path)
-
-    if not os.path.exists(voucher_path):
-        raise Http404("Voucher file not found.")
-
-    return FileResponse(open(voucher_path, "rb"), content_type="application/pdf")
-
-
-@sql_login_required
-@feature_required("collections")
-def download_collection_voucher_view(request, collection_number):  # Keeping the correct version
-    detail = get_collection_history_detail(collection_number)
-
-    if not detail or not detail["header"].get("VoucherPath"):
-        messages.error(request, "Voucher not found.")
-        return redirect("collection_history_detail", collection_number=collection_number)
-
-    voucher_path = detail["header"]["VoucherPath"]
-
-    if voucher_path.lower().startswith("http://") or voucher_path.lower().startswith("https://"):
-        response = requests.get(voucher_path, timeout=60)
-        response.raise_for_status()
-        download_name = f"{collection_number}.pdf"
-        http_response = HttpResponse(response.content, content_type="application/pdf")
-        http_response["Content-Disposition"] = f'attachment; filename="{download_name}"'
-        return http_response
-
-    if not os.path.exists(voucher_path):
-        raise Http404("Voucher file not found.")
-
-    return FileResponse(
-        open(voucher_path, "rb"),
-        as_attachment=True,
-        filename=f"{collection_number}.pdf",
-        content_type="application/pdf",
-    )
-
-import os
+﻿import os
 import json
 import requests
-from urllib.parse import urlparse
-from django.http import FileResponse, Http404, HttpResponseRedirect, HttpResponse
+
 from django.contrib import messages
+from django.http import FileResponse, Http404, HttpResponseRedirect, HttpResponse
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
-from core.decorators import feature_required
-from core.session_auth import get_session_user_email, sql_login_required
-from services.collection_service import get_pending_collections, get_collection_detail, get_collection_departments, get_collection_history, get_collection_history_detail, disburse_request as disburse_request_service
-from services.approval_service import get_approval_history, get_approval_inbox, process_approval
+
+from core.decorators import sql_login_required, feature_required
+from core.session_auth import get_session_user_email
+
+from services.approval_service import (
+    get_approval_history,
+    get_approval_inbox,
+    process_approval,
+)
+from services.collection_service import (
+    get_pending_collections,
+    get_collection_detail,
+    get_collection_departments,
+    get_collection_history,
+    get_collection_history_detail,
+    disburse_request as disburse_request_service,
+)
 from services.farmer_service import get_active_farmers
 from services.item_service import get_requestable_items
 from services.request_details_service import get_request_details
@@ -68,86 +31,272 @@ from services.request_service import create_request_from_cart
 from services.user_service import get_user_context
 from services.voucher_service import regenerate_collection_voucher
 
-# === VOUCHER OPEN/DOWNLOAD ===
-@sql_login_required
-@feature_required("collections")
-def open_collection_voucher_view(request, collection_number):
-    detail = get_collection_history_detail(collection_number)
 
-    if not detail or not detail["header"].get("VoucherPath"):
-        messages.error(request, "Voucher not found.")
-        return redirect("collection_history_detail", collection_number=collection_number)
-
-    voucher_path = detail["header"]["VoucherPath"]
-
-    if voucher_path.lower().startswith("http://") or voucher_path.lower().startswith("https://"):
-        return HttpResponseRedirect(voucher_path)
-
-    if not os.path.exists(voucher_path):
-        raise Http404("Voucher file not found.")
-
-    return FileResponse(open(voucher_path, "rb"), content_type="application/pdf")
-
+# ============================================================
+# REQUESTS
+# ============================================================
 
 @sql_login_required
-@feature_required("collections")
-def download_collection_voucher_view(request, collection_number):
-    detail = get_collection_history_detail(collection_number)
+@feature_required("create_request")
+def request_cart(request):
+    items_data = get_requestable_items()
+    items = items_data["items"] if isinstance(items_data, dict) and "items" in items_data else items_data
+    farmers = get_active_farmers()
 
-    if not detail or not detail["header"].get("VoucherPath"):
-        messages.error(request, "Voucher not found.")
-        return redirect("collection_history_detail", collection_number=collection_number)
+    user_email = get_session_user_email(request)
+    user_context = get_user_context(user_email) if user_email else None
 
-    voucher_path = detail["header"]["VoucherPath"]
+    if not user_context:
+        return render(
+            request,
+            "requests_app/request_cart.html",
+            {
+                "items": items,
+                "farmers": farmers,
+                "error_message": "No active user context was found.",
+            },
+        )
 
-    if voucher_path.lower().startswith("http://") or voucher_path.lower().startswith("https://"):
-        response = requests.get(voucher_path, timeout=60)
-        response.raise_for_status()
-        download_name = f"{collection_number}.pdf"
-        http_response = HttpResponse(response.content, content_type="application/pdf")
-        http_response["Content-Disposition"] = f'attachment; filename="{download_name}"'
-        return http_response
+    if request.method == "POST":
+        cart_json = request.POST.get("cart_json", "[]")
 
-    if not os.path.exists(voucher_path):
-        raise Http404("Voucher file not found.")
+        try:
+            cart = json.loads(cart_json)
+        except json.JSONDecodeError:
+            cart = []
 
-    return FileResponse(
-        open(voucher_path, "rb"),
-        as_attachment=True,
-        filename=f"{collection_number}.pdf",
-        content_type="application/pdf",
+        if not cart:
+            return render(
+                request,
+                "requests_app/request_cart.html",
+                {
+                    "items": items,
+                    "farmers": farmers,
+                    "error_message": "Please add at least one item to the cart.",
+                },
+            )
+
+        header = {
+            "grower_number": request.POST.get("farmer"),
+            "required_date": request.POST.get("required_date"),
+            "collector_name": request.POST.get("collector_name"),
+            "collector_national_id": request.POST.get("collector_national_id"),
+            "truck_registration": request.POST.get("truck_registration"),
+            "trailer_registration": request.POST.get("trailer_registration"),
+            "authorization_required": 1 if request.POST.get("authorization_required") else 0,
+            "department_code": user_context["DepartmentCode"],
+            "justification": request.POST.get("justification"),
+        }
+
+        try:
+            request_number = create_request_from_cart(
+                user_email=user_email,
+                header=header,
+                cart=cart,
+            )
+            messages.success(request, f"Request {request_number} created successfully.")
+            return redirect("my_requests")
+        except Exception as ex:
+            return render(
+                request,
+                "requests_app/request_cart.html",
+                {
+                    "items": items,
+                    "farmers": farmers,
+                    "error_message": str(ex),
+                },
+            )
+
+    return render(
+        request,
+        "requests_app/request_cart.html",
+        {
+            "items": items,
+            "farmers": farmers,
+        },
     )
 
-# === COLLECTION HISTORY ===
 
-# === COLLECTION HISTORY ===
+@sql_login_required
+@feature_required("my_requests")
+def my_requests(request):
+    user_email = get_session_user_email(request)
+    search = request.GET.get("search", "").strip()
+    status = request.GET.get("status", "").strip()
+    page = int(request.GET.get("page", 1) or 1)
+    page_size = int(request.GET.get("page_size", 10) or 10)
+
+    result = get_my_requests(
+        user_email=user_email,
+        search=search,
+        status=status,
+        page=page,
+        page_size=page_size,
+    )
+
+    return render(
+        request,
+        "requests_app/my_requests.html",
+        {
+            "request_history": result,
+            "filters": {
+                "search": search,
+                "status": status,
+                "page_size": page_size,
+            },
+        },
+    )
+
+
+@sql_login_required
+@feature_required("my_requests")
+def request_details(request, request_number):
+    user_email = get_session_user_email(request)
+    details = get_request_details(request_number, user_email)
+
+    if not details:
+        return render(
+            request,
+            "requests_app/request_details.html",
+            {
+                "not_found": True,
+                "request_number": request_number,
+            },
+        )
+
+    return render(
+        request,
+        "requests_app/request_details.html",
+        {
+            "details": details,
+            "header": details["header"],
+            "lines": details["lines"],
+            "approvals": details["approvals"],
+        },
+    )
+
+
+# ============================================================
+# APPROVALS
+# ============================================================
+
+@sql_login_required
+@feature_required("approvals")
+def approval_inbox(request):
+    user_email = get_session_user_email(request)
+    mode = request.GET.get("mode", "Pending").strip() or "Pending"
+    approvals = get_approval_inbox(user_email, mode)
+
+    pending_count = len(
+        [
+            row for row in approvals
+            if (row.get("ApprovalStatusName") or "").strip() == "Pending"
+            and row.get("IsCurrent") in (1, True, "1", "True", "true")
+        ]
+    )
+
+    return render(
+        request,
+        "requests_app/approval_inbox.html",
+        {
+            "approvals": approvals,
+            "mode": mode,
+            "pending_count": pending_count,
+        },
+    )
+
+
+@sql_login_required
+@feature_required("approvals")
+def approval_detail(request, request_number):
+    user_email = get_session_user_email(request)
+    details = get_request_details(request_number, user_email)
+
+    if not details:
+        return render(
+            request,
+            "requests_app/approval_detail.html",
+            {
+                "not_found": True,
+                "request_number": request_number,
+            },
+        )
+
+    approval_history = get_approval_history(request_number)
+
+    can_act = any(
+        (row.get("ApproverEmail") or "").strip().lower() == user_email.lower()
+        and (row.get("ApprovalStatusName") or "").strip() == "Pending"
+        and row.get("IsCurrent") in (1, True, "1", "True", "true")
+        for row in approval_history
+    )
+
+    return render(
+        request,
+        "requests_app/approval_detail.html",
+        {
+            "details": details,
+            "header": details["header"],
+            "lines": details["lines"],
+            "approvals": details["approvals"],
+            "approval_history": approval_history,
+            "can_act": can_act,
+        },
+    )
+
+
+@sql_login_required
+@feature_required("approvals")
+@require_http_methods(["POST"])
+def approval_action(request, request_number):
+    user_email = get_session_user_email(request)
+    decision = request.POST.get("decision")
+    comments = request.POST.get("comments")
+
+    try:
+        process_approval(
+            request_number=request_number,
+            approver_email=user_email,
+            decision=decision,
+            comments=comments,
+        )
+        messages.success(request, "Approval processed successfully.")
+    except Exception as ex:
+        messages.error(request, str(ex))
+
+    return redirect("approval_detail", request_number=request_number)
+
+
+# ============================================================
+# COLLECTIONS / DISBURSEMENT
+# ============================================================
+
 @sql_login_required
 @feature_required("collections")
-def collection_history(request):
+def collection_inbox(request):
     search = request.GET.get("search", "").strip()
-    collection_number = request.GET.get("collection_number", "").strip()
     request_number = request.GET.get("request_number", "").strip()
     department = request.GET.get("department", "").strip()
     date_from = request.GET.get("date_from", "").strip()
     date_to = request.GET.get("date_to", "").strip()
 
-    rows = get_collection_history(
+    rows = get_pending_collections(
         search=search,
-        collection_number=collection_number,
+        department_code=None,
         request_number=request_number,
         department_code_filter=department,
         date_from=date_from,
         date_to=date_to,
     )
+
     departments = get_collection_departments()
 
     return render(
         request,
-        "requests_app/collection_history.html",
+        "requests_app/collection_inbox.html",
         {
             "rows": rows,
             "search": search,
-            "collection_number": collection_number,
             "request_number": request_number,
             "department": department,
             "date_from": date_from,
@@ -155,6 +304,26 @@ def collection_history(request):
             "departments": departments,
         },
     )
+
+
+@sql_login_required
+@feature_required("collections")
+def collection_detail(request, request_number):
+    detail = get_collection_detail(request_number)
+
+    if not detail:
+        messages.error(request, "Collection request not found.")
+        return redirect("collection_inbox")
+
+    return render(
+        request,
+        "requests_app/collection_detail.html",
+        {
+            "header": detail["header"],
+            "lines": detail["lines"],
+        },
+    )
+
 
 @sql_login_required
 @feature_required("collections")
@@ -196,10 +365,7 @@ def disburse_request_view(request, request_number):
             issue_lines=issue_lines,
         )
 
-        collection_number = None
-        if result:
-            collection_number = result.get("CollectionNumber")
-
+        collection_number = result.get("CollectionNumber") if result else None
         voucher_path = None
 
         if collection_number:
@@ -218,36 +384,63 @@ def disburse_request_view(request, request_number):
                 request,
                 f"Disbursement successful. Collection Number: {collection_number}. Voucher generated."
             )
-        elif collection_number:
+            return redirect(f"/requests/collections/history/{collection_number}/?auto_open=1")
+
+        if collection_number:
             messages.success(
                 request,
                 f"Disbursement successful. Collection Number: {collection_number}."
             )
-        else:
-            messages.success(request, "Disbursement successful.")
+            return redirect("collection_history_detail", collection_number=collection_number)
 
+        messages.success(request, "Disbursement successful.")
         return redirect("collection_history")
 
-    except Exception as e:
-        messages.error(request, f"Error: {e}")
+    except Exception as ex:
+        messages.error(request, f"Error: {ex}")
         return redirect("collection_detail", request_number=request_number)
 
 
+# ============================================================
+# COLLECTION HISTORY
+# ============================================================
+
 @sql_login_required
 @feature_required("collections")
-def regenerate_collection_voucher_view(request, collection_number):
-    try:
-        result = regenerate_collection_voucher(collection_number)
-        voucher_path = result.get("VoucherPath") if result else None
+def collection_history(request):
+    search = request.GET.get("search", "").strip()
+    collection_number = request.GET.get("collection_number", "").strip()
+    request_number = request.GET.get("request_number", "").strip()
+    department = request.GET.get("department", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
 
-        if voucher_path:
-            messages.success(request, f"Voucher regenerated successfully for {collection_number}.")
-        else:
-            messages.warning(request, f"Voucher regeneration completed, but no voucher path was returned.")
-    except Exception as ex:
-        messages.error(request, f"Voucher regeneration failed: {ex}")
+    rows = get_collection_history(
+        search=search,
+        collection_number=collection_number,
+        request_number=request_number,
+        department_code_filter=department,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    departments = get_collection_departments()
 
-    return redirect("collection_history_detail", collection_number=collection_number)
+    return render(
+        request,
+        "requests_app/collection_history.html",
+        {
+            "rows": rows,
+            "search": search,
+            "collection_number": collection_number,
+            "request_number": request_number,
+            "department": department,
+            "date_from": date_from,
+            "date_to": date_to,
+            "departments": departments,
+        },
+    )
+
+
 @sql_login_required
 @feature_required("collections")
 def collection_history_detail(request, collection_number):
@@ -266,222 +459,73 @@ def collection_history_detail(request, collection_number):
         },
     )
 
-# Restored approval_inbox view
-@sql_login_required
-@feature_required("approvals")
-def approval_inbox(request):
-    user_email = (request.user.email or "").strip()
-    if not user_email:
-        user_email = (request.user.username or "").strip()
 
-    mode = request.GET.get("mode", "Pending").strip() or "Pending"
-    approvals = get_approval_inbox(user_email, mode)
-
-    pending_count = len(
-        [
-            row for row in approvals
-            if row.get("ApprovalStatusName") == "Pending"
-            and row.get("IsCurrent") in (1, True)
-        ]
-    )
-
-    return render(
-        request,
-        "requests_app/approval_inbox.html",
-        {
-            "approvals": approvals,
-            "mode": mode,
-            "pending_count": pending_count,
-        },
-    )
-# Restored my_requests view
-@sql_login_required
-@feature_required("approvals")
-def my_requests(request):
-    user_email = get_session_user_email(request)
-    search = request.GET.get("search", "").strip()
-    status = request.GET.get("status", "").strip()
-    page = int(request.GET.get("page", 1) or 1)
-    page_size = int(request.GET.get("page_size", 10) or 10)
-
-    result = get_my_requests(
-        user_email=user_email,
-        search=search,
-        status=status,
-        page=page,
-        page_size=page_size,
-    )
-
-    return render(
-        request,
-        "requests_app/my_requests.html",
-        {
-            "request_history": result,
-            "filters": {
-                "search": search,
-                "status": status,
-                "page_size": page_size,
-            },
-        },
-    )
-
-# Restored request_details view
-@sql_login_required
-@feature_required("approvals")
-def request_details(request, request_number):
-    user_email = get_session_user_email(request)
-    details = get_request_details(request_number, user_email)
-
-    if not details:
-        return render(
-            request,
-            "requests_app/request_details.html",
-            {
-                "not_found": True,
-                "request_number": request_number,
-            },
-        )
-
-    return render(
-        request,
-        "requests_app/request_details.html",
-        {
-            "details": details,
-            "header": details["header"],
-            "lines": details["lines"],
-            "approvals": details["approvals"],
-        },
-    )
-
-    departments = get_collection_departments()
-
-    return render(
-        request,
-        "requests_app/collection_inbox.html",
-        {
-            "rows": rows,
-            "search": search,
-            "request_number": request_number,
-            "department": department,
-            "date_from": date_from,
-            "date_to": date_to,
-            "departments": departments,
-        },
-    )
+# ============================================================
+# VOUCHER ACTIONS
+# ============================================================
 
 @sql_login_required
 @feature_required("collections")
-def collection_detail(request, request_number):
-    detail = get_collection_detail(request_number)
-
-    if not detail:
-        messages.error(request, "Collection request not found.")
-        return redirect("collection_inbox")
-
-    return render(
-        request,
-        "requests_app/collection_detail.html",
-        {
-            "header": detail["header"],
-            "lines": detail["lines"],
-        },
-    )
-
-@sql_login_required
-@feature_required("collections")
-@require_http_methods(["POST"])
-
-@sql_login_required
-@feature_required("create_request")
-def request_cart(request):
-    items_data = get_requestable_items()
-    items = items_data["items"]
-    farmers = get_active_farmers()
-
-    user_email = get_session_user_email(request)
-    user_context = get_user_context(user_email) if user_email else None
-
-    if not user_context:
-        return render(
-            request,
-            "requests_app/request_cart.html",
-            {
-                "items": items,
-                "farmers": farmers,
-                "error_message": "No active user context was found.",
-            },
-        )
-
-    if request.method == "POST":
-        cart_json = request.POST.get("cart_json", "[]")
-
-        try:
-            cart = json.loads(cart_json)
-        except json.JSONDecodeError:
-            cart = []
-
-
-@sql_login_required
-@feature_required("approvals")
-@require_http_methods(["POST"])
-def approval_action(request, request_number):
-    user_email = get_session_user_email(request)
-    decision = request.POST.get("decision")
-    comments = request.POST.get("comments")
-
+def regenerate_collection_voucher_view(request, collection_number):
     try:
-        process_approval(
-            request_number=request_number,
-            approver_email=user_email,
-            decision=decision,
-            comments=comments,
-        )
-        messages.success(request, "Approval processed successfully.")
+        result = regenerate_collection_voucher(collection_number)
+        voucher_path = result.get("VoucherPath") if result else None
 
-    except Exception as e:
-        messages.error(request, str(e))
+        if voucher_path:
+            messages.success(request, f"Voucher regenerated successfully for {collection_number}.")
+        else:
+            messages.warning(request, "Voucher regeneration completed, but no voucher path was returned.")
+    except Exception as ex:
+        messages.error(request, f"Voucher regeneration failed: {ex}")
 
-
-    return redirect("approval_detail", request_number=request_number)
+    return redirect("collection_history_detail", collection_number=collection_number)
 
 
 @sql_login_required
-@feature_required("approvals")
-def approval_detail(request, request_number):
-    user_email = (request.user.email or "").strip()
-    if not user_email:
-        user_email = (request.user.username or "").strip()
+@feature_required("collections")
+def open_collection_voucher_view(request, collection_number):
+    detail = get_collection_history_detail(collection_number)
 
-    details = get_request_details(request_number, user_email)
+    if not detail or not detail["header"].get("VoucherPath"):
+        messages.error(request, "Voucher not found.")
+        return redirect("collection_history_detail", collection_number=collection_number)
 
-    if not details:
-        return render(
-            request,
-            "requests_app/approval_detail.html",
-            {
-                "not_found": True,
-                "request_number": request_number,
-            },
-        )
+    voucher_path = detail["header"]["VoucherPath"]
 
-    approval_history = get_approval_history(request_number)
+    if voucher_path.lower().startswith(("http://", "https://")):
+        return HttpResponseRedirect(voucher_path)
 
-    can_act = any(
-        (row.get("ApproverEmail") or "").strip().lower() == user_email.lower()
-        and row.get("ApprovalStatusName") == "Pending"
-        and row.get("IsCurrent") in (1, True)
-        for row in approval_history
-    )
+    if not os.path.exists(voucher_path):
+        raise Http404("Voucher file not found.")
 
-    return render(
-        request,
-        "requests_app/approval_detail.html",
-        {
-            "details": details,
-            "header": details["header"],
-            "lines": details["lines"],
-            "approvals": details["approvals"],
-            "approval_history": approval_history,
-            "can_act": can_act,
-        },
+    return FileResponse(open(voucher_path, "rb"), content_type="application/pdf")
+
+
+@sql_login_required
+@feature_required("collections")
+def download_collection_voucher_view(request, collection_number):
+    detail = get_collection_history_detail(collection_number)
+
+    if not detail or not detail["header"].get("VoucherPath"):
+        messages.error(request, "Voucher not found.")
+        return redirect("collection_history_detail", collection_number=collection_number)
+
+    voucher_path = detail["header"]["VoucherPath"]
+
+    if voucher_path.lower().startswith(("http://", "https://")):
+        response = requests.get(voucher_path, timeout=60)
+        response.raise_for_status()
+        download_name = f"{collection_number}.pdf"
+        http_response = HttpResponse(response.content, content_type="application/pdf")
+        http_response["Content-Disposition"] = f'attachment; filename="{download_name}"'
+        return http_response
+
+    if not os.path.exists(voucher_path):
+        raise Http404("Voucher file not found.")
+
+    return FileResponse(
+        open(voucher_path, "rb"),
+        as_attachment=True,
+        filename=f"{collection_number}.pdf",
+        content_type="application/pdf",
     )
