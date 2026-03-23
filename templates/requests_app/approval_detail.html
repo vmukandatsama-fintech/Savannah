@@ -1,0 +1,124 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if not_found %}
+        <div class="alert alert-warning">
+            Request {{ request_number }} was not found or you do not have access.
+        </div>
+    {% else %}
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2>Approval Detail - {{ header.RequestNumber }}</h2>
+            <a href="{% url 'approval_inbox' %}" class="btn btn-secondary">Back</a>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Request Header</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4"><strong>Request Number:</strong> {{ header.RequestNumber }}</div>
+                    <div class="col-md-4"><strong>Status:</strong> {{ header.StatusName }}</div>
+                    <div class="col-md-4"><strong>Request Date:</strong> {{ header.RequestDate|date:"d-m-Y H:i" }}</div>
+                    <div class="col-md-4"><strong>Required Date:</strong> {{ header.RequiredDate|date:"d-m-Y" }}</div>
+                    <div class="col-md-4"><strong>Requestor:</strong> {{ header.RequestorEmail }}</div>
+                    <div class="col-md-4"><strong>Department:</strong> {{ header.DepartmentCode }}</div>
+                    <div class="col-md-4"><strong>Grower Number:</strong> {{ header.GrowerNumber|default:"-" }}</div>
+                    <div class="col-md-4"><strong>Farmer Name:</strong> {{ header.FarmerName|default:"-" }}</div>
+                    <div class="col-md-4"><strong>Collector Name:</strong> {{ header.CollectorName|default:"-" }}</div>
+                    <div class="col-md-4"><strong>National ID:</strong> {{ header.CollectorNationalID|default:"-" }}</div>
+                    <div class="col-md-4"><strong>Truck:</strong> {{ header.TruckRegistration|default:"-" }}</div>
+                    <div class="col-md-4"><strong>Trailer:</strong> {{ header.TrailerRegistration|default:"-" }}</div>
+                    <div class="col-md-12 mt-2"><strong>Justification:</strong> {{ header.Justification|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Request Lines</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Line</th>
+                                <th>Item Code</th>
+                                <th>Item Name</th>
+                                <th>Requested</th>
+                                <th>Issued</th>
+                                <th>Reserved</th>
+                                <th>UOM</th>
+                                <th>Stock Status</th>
+                                <th>Line Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for line in lines %}
+                            <tr>
+                                <td>{{ line.LineNumber }}</td>
+                                <td>{{ line.ItemCode }}</td>
+                                <td>{{ line.ItemName|default:"-" }}</td>
+                                <td>{{ line.QuantityRequested }}</td>
+                                <td>{{ line.QuantityIssued }}</td>
+                                <td>{{ line.QuantityReserved }}</td>
+                                <td>{{ line.UOMCode }}</td>
+                                <td>{{ line.StockStatus }}</td>
+                                <td>{{ line.LineStatus }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-3">
+            <div class="card-header">Approval History</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-sm">
+                        <thead>
+                            <tr>
+                                <th>Level</th>
+                                <th>Approver</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Current</th>
+                                <th>Created Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in approval_history %}
+                            <tr>
+                                <td>{{ row.ApprovalLevel }}</td>
+                                <td>{{ row.ApproverEmail }}</td>
+                                <td>{{ row.ApprovalRole }}</td>
+                                <td>{{ row.ApprovalStatusName }}</td>
+                                <td>{% if row.IsCurrent %}Yes{% else %}No{% endif %}</td>
+                                <td>{{ row.CreatedDate|date:"d-m-Y H:i" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if can_act %}
+        <div class="card">
+            <div class="card-header">Take Action</div>
+            <div class="card-body">
+                <form method="post" action="{% url 'approval_action' header.RequestNumber %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="comments" class="form-label">Comments</label>
+                        <textarea class="form-control" id="comments" name="comments" rows="4"></textarea>
+                    </div>
+                    <button type="submit" name="decision" value="Approved" class="btn btn-success">Approve</button>
+                    <button type="submit" name="decision" value="Rejected" class="btn btn-danger">Reject</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

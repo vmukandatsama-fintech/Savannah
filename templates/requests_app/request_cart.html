@@ -302,15 +302,17 @@
 
             <div class="field">
                 <label>Authorization Required</label>
-                <select name="authorization_required">
-                    <option value="0">No</option>
-                    <option value="1">Yes</option>
+                <select name="authorization_required" disabled>
+                    <option value="0" {% if user_context.AuthRequired == False %}selected{% endif %}>No</option>
+                    <option value="1" {% if user_context.AuthRequired == True %}selected{% endif %}>Yes</option>
                 </select>
+                <input type="hidden" name="authorization_required" value="{% if user_context.AuthRequired %}1{% else %}0{% endif %}">
             </div>
 
             <div class="field">
                 <label>Department</label>
-                <input type="text" value="{{ user_context.DepartmentName }}" readonly>
+                <input type="text" value="{{ user_context.DepartmentName }}" readonly name="department_display">
+                <input type="hidden" name="department_code" value="{{ user_context.DepartmentCode }}">
             </div>
 
             <div class="field full-width">

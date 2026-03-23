@@ -1,0 +1,36 @@
+﻿from django.contrib import admin
+from .models import Roles, UserDepartmentRoles, Users
+
+
+@admin.register(Users)
+class UsersAdmin(admin.ModelAdmin):
+    list_display = ("email", "name", "userid", "isactive")
+    search_fields = ("email", "name")
+    list_filter = ("isactive",)
+    ordering = ("name", "email")
+
+
+@admin.register(Roles)
+class RolesAdmin(admin.ModelAdmin):
+    list_display = ("roleid", "name", "description")
+    search_fields = ("name", "description")
+    ordering = ("name",)
+
+
+@admin.register(UserDepartmentRoles)
+class UserDepartmentRolesAdmin(admin.ModelAdmin):
+    list_display = (
+        "mapid",
+        "useremail",
+        "departmentcode",
+        "departmentname",
+        "roleid",
+        "rolename",
+    )
+    search_fields = (
+        "useremail__email",
+        "useremail__name",
+        "departmentname",
+        "rolename",
+    )
+    list_select_related = ("useremail", "departmentcode", "roleid")

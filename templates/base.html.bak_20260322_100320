@@ -127,16 +127,11 @@
         }
 
         .sidebar-user-context {
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 240px;
-            background: #111827;
+            margin-top: auto;
             padding: 14px 20px;
             border-top: 1px solid rgba(255,255,255,0.1);
             font-size: 13px;
             color: #e5e7eb;
-            z-index: 1100;
         }
 
         .sidebar-user-context-title {
@@ -159,61 +154,38 @@
     </style>
 </head>
 <body>
-    {% if request.session.user_email %}
+    {% if user.is_authenticated %}
         <div class="topbar">
-            <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
-                <span><strong>Savannah Stores</strong></span>
-                <span>{{ session_user_name|default:session_user_email }}</span>
+            <div><strong>Savannah Stores</strong></div>
+            <div>
+                {{ user.username }} |
+                <a href="{% url 'logout' %}" style="color:white;">Logout</a>
             </div>
         </div>
+
         <div class="layout">
             <div class="sidebar">
-                {% if session_features.dashboard %}
                 <a href="/dashboard/">Dashboard</a>
-                {% endif %}
-
-                {% if session_features.create_request %}
                 <a href="/requests/create/">Create Request</a>
-                {% endif %}
-
-                {% if session_features.my_requests %}
                 <a href="/requests/my-requests/">My Requests</a>
-                {% endif %}
-
-                {% if session_features.approvals %}
-                <a href="/requests/approvals/">Approvals</a>
-                {% endif %}
-
-                {% if session_features.collections %}
-                <a href="/requests/collections/">Pending Collections</a>
-                {% endif %}
-
-                {% if session_features.reports %}
+                <a href="#">Collections</a>
+                <a href="#">Stock</a>
                 <a href="#">Reports</a>
-                {% endif %}
 
+                {% if user_context %}
                 <div class="sidebar-user-context">
                     <div class="sidebar-user-context-title">User Context</div>
-                    <div><strong>Name:</strong> {{ session_user_name|default:"-" }}</div>
-                    <div class="sidebar-user-context-email">{{ session_user_email|default:"" }}</div>
+                    <div><strong>Name:</strong> {{ user_context.Name }}</div>
+                    <div class="sidebar-user-context-email">{{ user_context.Email }}</div>
                     <div class="sidebar-user-context-meta">
-                        <div><strong>Dept:</strong> {{ session_department_name|default:session_department_code|default:"-" }}</div>
-                        <div><strong>Role:</strong> {{ session_role_name|default:"-" }}</div>
+                        <div><strong>Dept:</strong> {{ user_context.DepartmentName }}</div>
+                        <div><strong>Role:</strong> {{ user_context.RoleName }}</div>
                     </div>
-                    <form method="post" action="{% url 'sql_logout' %}" class="logout-inline-form" style="margin-top:10px;">
-                        {% csrf_token %}
-                        <button type="submit" class="logout-link-button">Logout</button>
-                    </form>
                 </div>
-            </div>
-            <div class="content">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="card" style="border-left: 4px solid #1f2937;">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
                 {% endif %}
+            </div>
+
+            <div class="content">
                 {% block content %}{% endblock %}
             </div>
         </div>
@@ -222,6 +194,3 @@
     {% endif %}
 </body>
 </html>
-
-
-

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <h2 style="margin-top: 0;">Dashboard</h2>
+    <div class="muted">Role: {{ role_name }}</div>
+</div>
+
+<div class="stats">
+    {% if "my_open_requests" in cards %}
+    <div class="stat-box">
+        <div class="muted">My Open Requests</div>
+        <div style="font-size: 30px; font-weight: 700;">{{ metrics.MyOpenRequests|default:0 }}</div>
+    </div>
+    {% endif %}
+
+    {% if "my_pending_approvals" in cards %}
+    <div class="stat-box">
+        <div class="muted">My Pending Approvals</div>
+        <div style="font-size: 30px; font-weight: 700;">{{ metrics.MyPendingApprovals|default:0 }}</div>
+    </div>
+    {% endif %}
+
+    {% if "pending_collections" in cards %}
+    <div class="stat-box">
+        <div class="muted">Pending Collections</div>
+        <div style="font-size: 30px; font-weight: 700;">{{ metrics.PendingCollections|default:0 }}</div>
+    </div>
+    {% endif %}
+
+    {% if "low_stock_items" in cards %}
+    <div class="stat-box">
+        <div class="muted">Low Stock Items</div>
+        <div style="font-size: 30px; font-weight: 700;">{{ metrics.LowStockItems|default:0 }}</div>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3 style="margin-top: 0;">Quick Actions</h3>
+
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+        {% if session_features.create_request %}
+        <a href="/requests/create/" style="text-decoration:none;">
+            <button type="button">Create Request</button>
+        </a>
+        {% endif %}
+
+        {% if session_features.my_requests %}
+        <a href="/requests/my-requests/" style="text-decoration:none;">
+            <button type="button">My Requests</button>
+        </a>
+        {% endif %}
+
+        {% if session_features.approvals %}
+        <a href="/requests/approvals/" style="text-decoration:none;">
+            <button type="button">Approvals</button>
+        </a>
+        {% endif %}
+
+        {% if session_features.collections %}
+        <a href="/requests/collections/" style="text-decoration:none;">
+            <button type="button">Pending Collections</button>
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

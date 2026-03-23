@@ -1,35 +1,8 @@
 ﻿from django.db import models
 
 
-class Departments(models.Model):
-    departmentid = models.IntegerField(db_column="DepartmentID")
-    departmentcode = models.CharField(
-        db_column="DepartmentCode",
-        primary_key=True,
-        max_length=50,
-        db_collation="Latin1_General_CI_AS",
-    )
-    name = models.CharField(
-        db_column="Name",
-        max_length=255,
-        db_collation="Latin1_General_CI_AS",
-    )
-    isactive = models.BooleanField(db_column="IsActive", blank=True, null=True)
-    authrequired = models.BooleanField(db_column="AuthRequired", blank=True, null=True)
-    createdat = models.DateTimeField(db_column="CreatedAt", blank=True, null=True)
-
-    class Meta:
-        managed = False
-        db_table = "departments"
-        verbose_name = "Department"
-        verbose_name_plural = "Departments"
-
-    def __str__(self):
-        return f"{self.departmentcode} - {self.name}"
-
-
 class Users(models.Model):
-    userid = models.IntegerField(db_column="UserID", primary_key=True, editable=False)
+    userid = models.AutoField(db_column="UserID")
     name = models.CharField(
         db_column="Name",
         max_length=255,
@@ -37,6 +10,7 @@ class Users(models.Model):
     )
     email = models.CharField(
         db_column="Email",
+        primary_key=True,
         max_length=255,
         db_collation="Latin1_General_CI_AS",
     )
@@ -94,15 +68,16 @@ class Roles(models.Model):
 
 class UserDepartmentRoles(models.Model):
     mapid = models.AutoField(db_column="MapID", primary_key=True)
-    useremail = models.CharField(
+    useremail = models.OneToOneField(
+        Users,
+        models.DO_NOTHING,
         db_column="UserEmail",
-        max_length=255,
-        db_collation="Latin1_General_CI_AS",
         blank=True,
         null=True,
+        related_name="department_role",
     )
     departmentcode = models.ForeignKey(
-        Departments,
+        "Departments",
         models.DO_NOTHING,
         db_column="DepartmentCode",
         blank=True,
@@ -137,26 +112,7 @@ class UserDepartmentRoles(models.Model):
         verbose_name_plural = "User Department Roles"
 
     def __str__(self):
-        user = self.useremail or "Unknown User"
+        user = self.useremail_id or "Unknown User"
         dept = self.departmentcode_id or self.departmentname or "No Department"
         role = self.roleid_id or self.rolename or "No Role"
         return f"{user} | {dept} | {role}"
-
-
-class RoleFeature(models.Model):
-    role = models.OneToOneField(Roles, on_delete=models.CASCADE, primary_key=True)
-    dashboard = models.BooleanField(default=False)
-    create_request = models.BooleanField(default=False)
-    my_requests = models.BooleanField(default=False)
-    approvals = models.BooleanField(default=False)
-    collections = models.BooleanField(default=False)
-    reports = models.BooleanField(default=False)
-    admin = models.BooleanField(default=False)
-
-    class Meta:
-        db_table = "RoleFeatures"
-        verbose_name = "Role Feature Matrix"
-        verbose_name_plural = "Role Feature Matrices"
-
-    def __str__(self):
-        return f"Features for {self.role.name}"

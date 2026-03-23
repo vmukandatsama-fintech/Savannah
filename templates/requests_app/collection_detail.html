@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <a href="{% url 'collection_inbox' %}">Back</a>
+</div>
+
+<div class="card">
+    <h3 style="margin-top: 0;">Collection Header</h3>
+
+    <p><strong>Request Number:</strong> {{ header.RequestNumber }}</p>
+    <p><strong>Status:</strong> {{ header.StatusName }}</p>
+    <p><strong>Request Date:</strong> {{ header.RequestDate|date:"d-m-Y H:i" }}</p>
+    <p><strong>Required Date:</strong> {{ header.RequiredDate|date:"d-m-Y" }}</p>
+    <p><strong>Requestor:</strong> {{ header.RequestorName }}</p>
+    <p><strong>Department:</strong> {{ header.DepartmentName }}</p>
+    <p><strong>Grower Number:</strong> {{ header.GrowerNumber|default:"-" }}</p>
+    <p><strong>Collector Name:</strong> {{ header.CollectorName|default:"-" }}</p>
+    <p><strong>National ID:</strong> {{ header.CollectorNationalID|default:"-" }}</p>
+    <p><strong>Truck:</strong> {{ header.TruckRegistration|default:"-" }}</p>
+    <p><strong>Trailer:</strong> {{ header.TrailerRegistration|default:"-" }}</p>
+    <p><strong>Justification:</strong> {{ header.Justification|default:"-" }}</p>
+</div>
+
+<div class="card">
+    <h3 style="margin-top: 0;">Items to Issue</h3>
+
+    <form method="post" action="{% url 'disburse_request' header.RequestNumber %}">
+        {% csrf_token %}
+
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom:1px solid #ddd;">
+                        <th style="padding:10px;">Line</th>
+                        <th style="padding:10px;">Item Code</th>
+                        <th style="padding:10px;">Item Name</th>
+                        <th style="padding:10px;">Requested</th>
+                        <th style="padding:10px;">Reserved</th>
+                        <th style="padding:10px;">Issued</th>
+                        <th style="padding:10px;">Available</th>
+                        <th style="padding:10px;">UOM</th>
+                        <th style="padding:10px;">Stock Status</th>
+                        <th style="padding:10px;">Issue Now</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines %}
+                    <tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:10px;">{{ line.LineNumber }}</td>
+                        <td style="padding:10px;">{{ line.ItemCode }}</td>
+                        <td style="padding:10px;">{{ line.ItemName }}</td>
+                        <td style="padding:10px;">{{ line.QuantityRequested }}</td>
+                        <td style="padding:10px;">{{ line.QuantityReserved }}</td>
+                        <td style="padding:10px;">{{ line.QuantityIssued }}</td>
+                        <td style="padding:10px;">{{ line.AvailableStock }}</td>
+                        <td style="padding:10px;">{{ line.UOMName|default:line.UOMCode }}</td>
+                        <td style="padding:10px;">{{ line.StockStatus|default:line.LineStatus }}</td>
+                        <td style="padding:10px;">
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                max="{{ line.QuantityReserved }}"
+                                name="issue_qty_{{ line.LineNumber }}"
+                                value="{{ line.QuantityReserved }}"
+                                style="width:100px; padding:8px;"
+                            >
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:20px;">
+            <button type="submit">Disburse Stock</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <a href="{% url 'collection_inbox' %}">Back</a>
+</div>
+
+<div class="card">
+    <h3 style="margin-top: 0;">Collection Header</h3>
+
+    <p><strong>Request Number:</strong> {{ header.RequestNumber }}</p>
+    <p><strong>Status:</strong> {{ header.StatusName }}</p>
+    <p><strong>Request Date:</strong> {{ header.RequestDate|date:"d-m-Y H:i" }}</p>
+    <p><strong>Required Date:</strong> {{ header.RequiredDate|date:"d-m-Y" }}</p>
+    <p><strong>Requestor:</strong> {{ header.RequestorName }}</p>
+    <p><strong>Department:</strong> {{ header.DepartmentName }}</p>
+    <p><strong>Grower Number:</strong> {{ header.GrowerNumber|default:"-" }}</p>
+    <p><strong>Collector Name:</strong> {{ header.CollectorName|default:"-" }}</p>
+    <p><strong>National ID:</strong> {{ header.CollectorNationalID|default:"-" }}</p>
+    <p><strong>Truck:</strong> {{ header.TruckRegistration|default:"-" }}</p>
+    <p><strong>Trailer:</strong> {{ header.TrailerRegistration|default:"-" }}</p>
+    <p><strong>Justification:</strong> {{ header.Justification|default:"-" }}</p>
+</div>
+
+<div class="card">
+    <h3 style="margin-top: 0;">Items to Issue</h3>
+
+    <form method="post" action="{% url 'disburse_request' header.RequestNumber %}">
+        {% csrf_token %}
+
+        <div style="overflow-x:auto;">
+            <table style="width:100%; border-collapse: collapse;">
+                <thead>
+                    <tr style="text-align:left; border-bottom:1px solid #ddd;">
+                        <th style="padding:10px;">Line</th>
+                        <th style="padding:10px;">Item Code</th>
+                        <th style="padding:10px;">Item Name</th>
+                        <th style="padding:10px;">Requested</th>
+                        <th style="padding:10px;">Reserved</th>
+                        <th style="padding:10px;">Issued</th>
+                        <th style="padding:10px;">Available</th>
+                        <th style="padding:10px;">UOM</th>
+                        <th style="padding:10px;">Issue Now</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines %}
+                    <tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:10px;">{{ line.LineNumber }}</td>
+                        <td style="padding:10px;">{{ line.ItemCode }}</td>
+                        <td style="padding:10px;">{{ line.ItemName }}</td>
+                        <td style="padding:10px;">{{ line.QuantityRequested }}</td>
+                        <td style="padding:10px;">{{ line.QuantityReserved }}</td>
+                        <td style="padding:10px;">{{ line.QuantityIssued }}</td>
+                        <td style="padding:10px;">{{ line.AvailableStock }}</td>
+                        <td style="padding:10px;">{{ line.UOMName|default:line.UOMCode }}</td>
+                        <td style="padding:10px;">
+                            <input
+                                type="number"
+                                step="0.01"
+                                min="0"
+                                name="issue_qty_{{ line.LineNumber }}"
+                                value="{{ line.QuantityReserved }}"
+                                style="width:100px; padding:8px;"
+                            >
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:20px;">
+            <button type="submit">Disburse Stock</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

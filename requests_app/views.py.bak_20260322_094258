@@ -1,79 +1,11 @@
-$ErrorActionPreference = "Stop"
-
-$contextProcessorPath = ".\core\context_processors.py"
-$settingsPath = ".\config\settings.py"
-$viewsPath = ".\requests_app\views.py"
-
-if (-not (Test-Path ".\core")) {
-    throw "core folder not found."
-}
-
-if (-not (Test-Path $settingsPath)) {
-    throw "settings.py not found at: $settingsPath"
-}
-
-if (-not (Test-Path $viewsPath)) {
-    throw "views.py not found at: $viewsPath"
-}
-
-$timestamp = Get-Date -Format "yyyyMMdd_HHmmss"
-
-if (Test-Path $contextProcessorPath) {
-    Copy-Item $contextProcessorPath "$contextProcessorPath.bak_$timestamp"
-}
-
-Copy-Item $settingsPath "$settingsPath.bak_$timestamp"
-Copy-Item $viewsPath "$viewsPath.bak_$timestamp"
-
-Write-Host "Backups created."
-
-$contextProcessorContent = @'
-from services.user_service import get_user_context
-
-
-def global_user_context(request):
-    if not getattr(request, "user", None):
-        return {}
-
-    if not request.user.is_authenticated:
-        return {}
-
-    user_email = (getattr(request.user, "email", "") or "").strip()
-    if not user_email:
-        return {}
-
-    try:
-        user_context = get_user_context(user_email)
-        return {"user_context": user_context} if user_context else {}
-    except Exception:
-        return {}
-'@
-
-Set-Content -Path $contextProcessorPath -Value $contextProcessorContent -Encoding UTF8
-Write-Host "Created/Updated: $contextProcessorPath"
-
-$settingsContent = Get-Content $settingsPath -Raw
-
-if ($settingsContent -notmatch "core\.context_processors\.global_user_context") {
-    $settingsContent = $settingsContent -replace (
-        "'django\.contrib\.messages\.context_processors\.messages',",
-        "'django.contrib.messages.context_processors.messages',`r`n                'core.context_processors.global_user_context',"
-    )
-
-    Set-Content -Path $settingsPath -Value $settingsContent -Encoding UTF8
-    Write-Host "Updated settings.py with global_user_context"
-}
-else {
-    Write-Host "settings.py already contains global_user_context"
-}
-
-$viewsContent = @'
-import json
+﻿import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
 from services.farmer_service import get_active_farmers
 from services.item_service import get_requestable_items
+from services.request_details_service import get_request_details
+from services.request_history_service import get_my_requests
 from services.request_service import create_request_from_cart
 from services.user_service import get_user_context
 
@@ -84,6 +16,9 @@ def request_cart(request):
     farmers = get_active_farmers()
 
     user_email = (request.user.email or "").strip()
+    if not user_email:
+        user_email = (request.user.username or "").strip()
+
     user_context = get_user_context(user_email) if user_email else None
 
     if not user_context:
@@ -163,15 +98,66 @@ def request_cart(request):
             "farmers": farmers,
         },
     )
-'@
 
-Set-Content -Path $viewsPath -Value $viewsContent -Encoding UTF8
-Write-Host "Updated: $viewsPath"
 
-Write-Host ""
-Write-Host "Patch applied successfully."
-Write-Host "Next:"
-Write-Host "1. Run: python manage.py runserver"
-Write-Host "2. Refresh the request page"
-Write-Host "3. Confirm user context still appears in base.html sidebar"
-Write-Host "4. Confirm other pages can now also use {{ user_context }}"
+@login_required
+def my_requests(request):
+    user_email = (request.user.email or "").strip()
+    if not user_email:
+        user_email = (request.user.username or "").strip()
+
+    search = request.GET.get("search", "").strip()
+    status = request.GET.get("status", "").strip()
+    page = int(request.GET.get("page", 1) or 1)
+    page_size = int(request.GET.get("page_size", 10) or 10)
+
+    result = get_my_requests(
+        user_email=user_email,
+        search=search,
+        status=status,
+        page=page,
+        page_size=page_size,
+    )
+
+    return render(
+        request,
+        "requests_app/my_requests.html",
+        {
+            "request_history": result,
+            "filters": {
+                "search": search,
+                "status": status,
+                "page_size": page_size,
+            },
+        },
+    )
+
+
+@login_required
+def request_details(request, request_number):
+    user_email = (request.user.email or "").strip()
+    if not user_email:
+        user_email = (request.user.username or "").strip()
+
+    details = get_request_details(request_number, user_email)
+
+    if not details:
+        return render(
+            request,
+            "requests_app/request_details.html",
+            {
+                "not_found": True,
+                "request_number": request_number,
+            },
+        )
+
+    return render(
+        request,
+        "requests_app/request_details.html",
+        {
+            "details": details,
+            "header": details["header"],
+            "lines": details["lines"],
+            "approvals": details["approvals"],
+        },
+    )
