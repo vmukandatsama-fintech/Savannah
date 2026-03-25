@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-3">
+        <h3 class="mb-0">
+            {% if mode == "create" %}
+                Create UOM
+            {% else %}
+                Edit UOM - {{ uom.UOMCode }}
+            {% endif %}
+        </h3>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if mode == "create" %}
+                <div class="mb-3">
+                    <label class="form-label">UOM Code *</label>
+                    <input type="text" name="uom_code" class="form-control" required>
+                </div>
+                {% else %}
+                <div class="mb-3">
+                    <label class="form-label">UOM Code</label>
+                    <input type="text" class="form-control" value="{{ uom.UOMCode }}" readonly>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label">Name *</label>
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           value="{{ uom.Name|default:'' }}"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">UOM Type</label>
+                    <input type="text"
+                           name="uom_type"
+                           class="form-control"
+                           value="{{ uom.UOMType|default:'' }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-control" rows="3">{{ uom.Description|default:'' }}</textarea>
+                </div>
+
+                <button type="submit" class="btn btn-success">
+                    {% if mode == "create" %}Create UOM{% else %}Save Changes{% endif %}
+                </button>
+                <a href="{% url 'uom_list' %}" class="btn btn-secondary">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

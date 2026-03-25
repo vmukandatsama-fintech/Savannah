@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0">Inventory Items</h3>
+            <small class="text-muted">Manage item master data for stores operations.</small>
+        </div>
+        <a href="{% url 'inventory_create' %}" class="btn btn-primary">
+            Add Inventory Item
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body table-responsive">
+            <table class="table table-striped table-bordered align-middle">
+                <thead>
+                    <tr>
+                        <th>Item Code</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>UOM</th>
+                        <th>Reorder</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                        <th>Current Stock</th>
+                        <th>Active</th>
+                        <th>Alert</th>
+                        <th style="width: 180px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.ItemCode }}</td>
+                        <td>{{ item.Name }}</td>
+                        <td>{{ item.CategoryName|default:item.CategoryCode }}</td>
+                        <td>{{ item.UOMName|default:item.UOMCode }}</td>
+                        <td>{{ item.ReorderLevel }}</td>
+                        <td>{{ item.MinStockLevel }}</td>
+                        <td>{{ item.MaxStockLevel }}</td>
+                        <td>{{ item.CurrentStock }}</td>
+                        <td>
+                            {% if item.IsActive %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.EnabledStockAlert %}
+                                <span class="badge bg-warning text-dark">Enabled</span>
+                            {% else %}
+                                <span class="badge bg-light text-muted">Disabled</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'inventory_edit' item.ItemCode %}" class="btn btn-sm btn-outline-primary">Edit</a>
+                            <a href="{% url 'inventory_toggle' item.ItemCode %}" class="btn btn-sm btn-outline-secondary">Toggle</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="11" class="text-center">No inventory items found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

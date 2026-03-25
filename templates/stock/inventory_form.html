@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="mb-3">
+        <h3 class="mb-0">
+            {% if mode == "create" %}
+                Create Inventory Item
+            {% else %}
+                Edit Inventory Item - {{ item.ItemCode }}
+            {% endif %}
+        </h3>
+        <small class="text-muted">
+            Item code is generated automatically by SQL.
+        </small>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+
+                {% if mode == "edit" %}
+                <div class="mb-3">
+                    <label class="form-label">Item Code</label>
+                    <input type="text" class="form-control" value="{{ item.ItemCode }}" readonly>
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label class="form-label">Name *</label>
+                    <input type="text"
+                           name="name"
+                           class="form-control"
+                           value="{{ item.Name|default:'' }}"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Description</label>
+                    <textarea name="description" class="form-control" rows="3">{{ item.Description|default:'' }}</textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Item Type</label>
+                    <select name="item_type" class="form-select">
+                        <option value="">-- Select Item Type --</option>
+                        {% for t in item_types %}
+                        <option value="{{ t.ItemTypeCode }}" {% if item.ItemType == t.ItemTypeCode %}selected{% endif %}>
+                            {{ t.ItemTypeName }} ({{ t.ItemTypeCode }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                {% if mode == "edit" %}
+                <div class="mb-3">
+                    <label class="form-label">Status</label><br>
+                    {% if item.IsActive %}
+                        <span class="badge bg-success">Active</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                    {% endif %}
+                </div>
+                <form method="post" action="{% url 'inventory_toggle' item.ItemCode %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-secondary mb-3">
+                        {% if item.IsActive %}Deactivate{% else %}Activate{% endif %}
+                    </button>
+                </form>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Category</label>
+                        <select name="category_code" class="form-select">
+                            <option value="">-- Select --</option>
+                            {% for code in categories %}
+                                <option value="{{ code }}" {% if item.CategoryCode == code %}selected{% endif %}>{{ code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">UOM</label>
+                        <select name="uom_code" class="form-select">
+                            <option value="">-- Select --</option>
+                            {% for code in uoms %}
+                                <option value="{{ code }}" {% if item.UOMCode == code %}selected{% endif %}>{{ code }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Reorder Level</label>
+                        <input type="number" step="any" name="reorder_level" class="form-control" value="{{ item.ReorderLevel|default:'' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Min Stock Level</label>
+                        <input type="number" step="any" name="min_stock_level" class="form-control" value="{{ item.MinStockLevel|default:'' }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Max Stock Level</label>
+                        <input type="number" step="any" name="max_stock_level" class="form-control" value="{{ item.MaxStockLevel|default:'' }}">
+                    </div>
+                </div>
+
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" name="enabled_stock_alert" id="enabled_stock_alert" {% if item.EnabledStockAlert %}checked{% endif %}>
+                    <label class="form-check-label" for="enabled_stock_alert">Enable Stock Alert</label>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Item Image Path</label>
+                    <input type="text" name="item_image_path" class="form-control" value="{{ item.ItemImagePath|default:'' }}">
+                </div>
+
+                <button type="submit" class="btn btn-primary">{% if mode == "create" %}Create{% else %}Update{% endif %}</button>
+                <a href="{% url 'inventory_list' %}" class="btn btn-secondary ms-2">Cancel</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

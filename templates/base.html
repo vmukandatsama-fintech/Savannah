@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Savannah Stores</title>
     <style>
+                /* Cascading menu styles */
+                .sidebar .dropdown {
+                    position: relative;
+                }
+                .sidebar .dropdown-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    width: 100%;
+                    background: none;
+                    border: none;
+                    color: white;
+                    padding: 12px 20px;
+                    font-size: 16px;
+                    cursor: pointer;
+                }
+                .sidebar .dropdown-content {
+                    display: none;
+                    flex-direction: column;
+                    background: #222b3a;
+                    position: static;
+                    margin-left: 10px;
+                }
+                .sidebar .dropdown.open .dropdown-content {
+                    display: flex;
+                }
+                .sidebar .dropdown-content a {
+                    padding-left: 36px;
+                    font-size: 15px;
+                }
+                .sidebar .dropdown-btn:after {
+                    content: '\25BC';
+                    font-size: 12px;
+                    margin-left: 8px;
+                    transition: transform 0.2s;
+                }
+                .sidebar .dropdown.open .dropdown-btn:after {
+                    transform: rotate(-180deg);
+                }
         body {
             margin: 0;
             font-family: Arial, sans-serif;
@@ -162,6 +201,20 @@
             line-height: 1.5;
         }
     </style>
+    <script>
+        function toggleDropdown(id) {
+            var el = document.getElementById(id);
+            if (el.classList.contains('open')) {
+                el.classList.remove('open');
+            } else {
+                // Close other dropdowns
+                document.querySelectorAll('.sidebar .dropdown').forEach(function(d) {
+                    d.classList.remove('open');
+                });
+                el.classList.add('open');
+            }
+        }
+    </script>
 </head>
 <body>
     {% if request.session.user_email %}
@@ -172,37 +225,67 @@
             </div>
         </div>
         <div class="layout">
+
             <div class="sidebar">
                 {% if session_features.dashboard %}
                 <a href="/dashboard/">Dashboard</a>
                 {% endif %}
 
-                {% if session_features.create_request %}
-                <a href="/requests/create/">Create Request</a>
+                <!-- Requests Group -->
+                <div class="dropdown" id="requestsDropdown">
+                    <button class="dropdown-btn" type="button" onclick="toggleDropdown('requestsDropdown')">Requests</button>
+                    <div class="dropdown-content">
+                        {% if session_features.create_request %}
+                        <a href="/requests/create/">Create Request</a>
+                        {% endif %}
+                        {% if session_features.my_requests %}
+                        <a href="/requests/my-requests/">My Requests</a>
+                        {% endif %}
+                        {% if session_features.approvals %}
+                        <a href="/requests/approvals/">Approvals</a>
+                        {% endif %}
+                        {% if session_features.collections or request.session.role_name == "Stores Controller" %}
+                        <a href="{% url 'collection_inbox' %}">Pending Collections</a>
+                        <a href="{% url 'collection_history' %}">Collection History</a>
+                        <a href="{% url 'returns_list' %}">Returns</a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Inventory Management Group -->
+                {% if request.session.role_name == "Stores Controller" %}
+                <div class="dropdown" id="inventoryDropdown">
+                    <button class="dropdown-btn" type="button" onclick="toggleDropdown('inventoryDropdown')">Inventory Management</button>
+                    <div class="dropdown-content">
+                        <a href="{% url 'inventory_list' %}" class="nav-link">
+                            <i class="bi bi-box-seam"></i>
+                            <span>Inventory Items</span>
+                        </a>
+                        <a href="{% url 'item_type_list' %}" class="nav-link">
+                            <i class="bi bi-tags"></i>
+                            <span>Item Types</span>
+                        </a>
+                        <a href="{% url 'uom_list' %}" class="nav-link">
+                            <i class="bi bi-rulers"></i>
+                            <span>UOMs</span>
+                        </a>
+                    </div>
+                </div>
                 {% endif %}
 
-                {% if session_features.my_requests %}
-                <a href="/requests/my-requests/">My Requests</a>
-                {% endif %}
-
-                {% if session_features.approvals %}
-                <a href="/requests/approvals/">Approvals</a>
-                {% endif %}
-
-
-                {% if session_features.collections or request.session.role_name == "Stores Controller" %}
-                <a href="{% url 'collection_inbox' %}">Pending Collections</a>
-                <a href="{% url 'collection_history' %}">Collection History</a>
-                <a href="{% url 'returns_list' %}">Returns</a>
-                {% endif %}
-
+                <!-- Reports Group -->
                 {% if session_features.reports or request.session.role_name == "Stores Controller" or request.session.role_name == "Approver" or request.session.role_name == "Authorizer" %}
-                <a href="{% url 'stock_reports' %}">Stock Reports</a>
-                <a href="{% url 'farmer_reports' %}">Farmer Reports</a>
-                <a href="{% url 'request_tracker' %}">Request Tracker</a>
-                <a href="{% url 'exception_reports' %}">Exception Reports</a>
-                <a href="{% url 'department_reports' %}">Department Reports</a>
-                <a href="{% url 'reversal_reports' %}">Reversal Reports</a>
+                <div class="dropdown" id="reportsDropdown">
+                    <button class="dropdown-btn" type="button" onclick="toggleDropdown('reportsDropdown')">Reports</button>
+                    <div class="dropdown-content">
+                        <a href="{% url 'stock_reports' %}">Stock Reports</a>
+                        <a href="{% url 'farmer_reports' %}">Farmer Reports</a>
+                        <a href="{% url 'request_tracker' %}">Request Tracker</a>
+                        <a href="{% url 'exception_reports' %}">Exception Reports</a>
+                        <a href="{% url 'department_reports' %}">Department Reports</a>
+                        <a href="{% url 'reversal_reports' %}">Reversal Reports</a>
+                    </div>
+                </div>
                 {% endif %}
 
                 <div class="sidebar-user-context">

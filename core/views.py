@@ -84,3 +84,7 @@ def sql_test(request):
     return HttpResponse(
         f"Connected successfully. Database: {row[0]} | Server: {row[1]}"
     )
+
+
+def root_redirect_view(request):
+    return redirect('sql_login')
