@@ -1,0 +1,732 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <h2 class="mb-3">{{ page_title }}</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <form method="post" id="delivery-form">
+                {% csrf_token %}
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Delivery Date</label>
+                        <input
+                            type="datetime-local"
+                            class="form-control"
+                            name="delivery_date"
+                            value="{{ draft.delivery_date|default:'' }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Supplier</label>
+                        <select class="form-select" name="supplier_code" required>
+                            <option value="">Select supplier</option>
+                            {% for s in suppliers %}
+                                <option value="{{ s.SupplierCode }}" {% if draft.supplier_code == s.SupplierCode %}selected{% endif %}>
+                                    {{ s.Name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Vehicle Registration</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="vehicle_registration"
+                            value="{{ draft.vehicle_registration|default:'' }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Driver Name</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="driver_name"
+                            value="{{ draft.driver_name|default:'' }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Waybill Number</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="waybill_number"
+                            value="{{ draft.waybill_number|default:'' }}"
+                        >
+                    </div>
+
+                    <div class="col-md-9">
+                        <label class="form-label">Remarks</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="remarks"
+                            value="{{ draft.remarks|default:'' }}"
+                        >
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Delivery Lines</h5>
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-line">
+                        Add Line
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="delivery-lines-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">#</th>
+                                <th>Item</th>
+                                <th style="width: 120px;">UOM</th>
+                                <th style="width: 140px;">Quantity</th>
+                                <th style="width: 150px;">Batch</th>
+                                <th style="width: 180px;">Expiry</th>
+                                <th style="width: 160px;">Condition</th>
+                                <th>Remarks</th>
+                                <th style="width: 90px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delivery-lines-body"></tbody>
+                    </table>
+                </div>
+
+                <input
+                    type="hidden"
+                    name="line_items_json"
+                    id="line_items_json"
+                    value="{{ draft.line_items_json|default:'[]' }}"
+                >
+
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary" id="btn-submit-delivery">
+                        Create Delivery
+                    </button>
+                    <a href="{% url 'delivery_list' %}" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{ inventory_items|json_script:"inventory-items-data" }}
+{{ draft.line_items_json|default:"[]"|json_script:"draft-line-items-data" }}
+
+<script>
+    const inventoryItems = JSON.parse(
+        document.getElementById("inventory-items-data").textContent
+    );
+
+    const draftLineItems = JSON.parse(
+        document.getElementById("draft-line-items-data").textContent || "[]"
+    );
+
+    const linesBody = document.getElementById("delivery-lines-body");
+    const hiddenJsonInput = document.getElementById("line_items_json");
+    const addLineButton = document.getElementById("btn-add-line");
+    const submitButton = document.getElementById("btn-submit-delivery");
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function itemOptions(selectedValue = "") {
+        let html = '<option value="">Select item</option>';
+        inventoryItems.forEach((item) => {
+            const selected = item.ItemCode === selectedValue ? "selected" : "";
+            html += `
+                <option
+                    value="${escapeHtml(item.ItemCode)}"
+                    data-uom="${escapeHtml(item.UOMCode || "")}"
+                    data-name="${escapeHtml(item.Name || "")}"
+                    ${selected}
+                >
+                    ${escapeHtml(item.ItemCode)} - ${escapeHtml(item.Name || "")}
+                </option>
+            `;
+        });
+        return html;
+    }
+
+    function formatDateForInput(value) {
+        if (!value) {
+            return "";
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
+
+        const pad = (n) => String(n).padStart(2, "0");
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function renumberLines() {
+        const rows = linesBody.querySelectorAll("tr");
+        rows.forEach((row, index) => {
+            const lineCell = row.querySelector(".line-number");
+            if (lineCell) {
+                lineCell.textContent = index + 1;
+            }
+        });
+    }
+
+    function isDuplicateItem(itemCode, currentRow) {
+        const rows = linesBody.querySelectorAll("tr");
+
+        for (const row of rows) {
+            if (row === currentRow) continue;
+
+            const existing = row.querySelector(".item-code").value;
+            if (existing === itemCode) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function syncUom(selectElement) {
+        const row = selectElement.closest("tr");
+        const selectedValue = selectElement.value;
+
+        if (selectedValue && isDuplicateItem(selectedValue, row)) {
+            alert("This item has already been added to the delivery.");
+            selectElement.value = "";
+            row.querySelector(".uom-code").value = "";
+            buildLineItemsJson();
+            return;
+        }
+
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const uom = selectedOption ? (selectedOption.getAttribute("data-uom") || "") : "";
+        row.querySelector(".uom-code").value = uom;
+
+        buildLineItemsJson();
+    }
+
+    function removeLine(buttonElement) {
+        const row = buttonElement.closest("tr");
+        row.remove();
+        renumberLines();
+        buildLineItemsJson();
+    }
+
+    function addLine(line = null) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td class="line-number"></td>
+            <td>
+                <select class="form-select item-code">
+                    ${itemOptions(line?.ItemCode || "")}
+                </select>
+            </td>
+            <td>
+                <input
+                    type="text"
+                    class="form-control uom-code"
+                    value="${escapeHtml(line?.UOMCode || "")}"
+                    readonly
+                >
+            </td>
+            <td>
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    class="form-control quantity"
+                    value="${escapeHtml(line?.QuantityReceived || "")}"
+                >
+            </td>
+            <td>
+                <input
+                    type="text"
+                    class="form-control batch-number"
+                    value="${escapeHtml(line?.BatchNumber || "")}"
+                >
+            </td>
+            <td>
+                <input
+                    type="datetime-local"
+                    class="form-control expiry-date"
+                    value="${escapeHtml(formatDateForInput(line?.ExpiryDate))}"
+                >
+            </td>
+            <td>
+                <select class="form-select condition">
+                    <option value="Good" ${(line?.ConditionOnArrival || "Good") === "Good" ? "selected" : ""}>Good</option>
+                    <option value="Damaged" ${line?.ConditionOnArrival === "Damaged" ? "selected" : ""}>Damaged</option>
+                    <option value="Partial Damage" ${line?.ConditionOnArrival === "Partial Damage" ? "selected" : ""}>Partial Damage</option>
+                </select>
+            </td>
+            <td>
+                <input
+                    type="text"
+                    class="form-control line-remarks"
+                    value="${escapeHtml(line?.Remarks || "")}"
+                >
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">
+                    Remove
+                </button>
+            </td>
+        `;
+
+        linesBody.appendChild(tr);
+
+        const itemSelect = tr.querySelector(".item-code");
+        const removeButton = tr.querySelector(".btn-remove-line");
+
+        itemSelect.addEventListener("change", function () {
+            syncUom(this);
+        });
+
+        tr.querySelector(".quantity").addEventListener("input", buildLineItemsJson);
+        tr.querySelector(".batch-number").addEventListener("input", buildLineItemsJson);
+        tr.querySelector(".expiry-date").addEventListener("change", buildLineItemsJson);
+        tr.querySelector(".condition").addEventListener("change", buildLineItemsJson);
+        tr.querySelector(".line-remarks").addEventListener("input", buildLineItemsJson);
+
+        removeButton.addEventListener("click", function () {
+            removeLine(this);
+        });
+
+        if (itemSelect.value) {
+            syncUom(itemSelect);
+        }
+
+        renumberLines();
+        buildLineItemsJson();
+    }
+
+    function buildLineItemsJson() {
+        const rows = linesBody.querySelectorAll("tr");
+        const items = [];
+
+        rows.forEach((row, index) => {
+            const itemCode = row.querySelector(".item-code").value;
+            const uomCode = row.querySelector(".uom-code").value;
+            const quantityValue = row.querySelector(".quantity").value;
+            const batchNumber = row.querySelector(".batch-number").value.trim();
+            const expiryDate = row.querySelector(".expiry-date").value;
+            const condition = row.querySelector(".condition").value;
+            const remarks = row.querySelector(".line-remarks").value.trim();
+
+            if (itemCode && quantityValue) {
+                items.push({
+                    LineNumber: index + 1,
+                    ItemCode: itemCode,
+                    QuantityReceived: parseFloat(quantityValue),
+                    UOMCode: uomCode,
+                    BatchNumber: batchNumber || null,
+                    ExpiryDate: expiryDate || null,
+                    ConditionOnArrival: condition || "Good",
+                    Remarks: remarks || null
+                });
+            }
+        });
+
+        hiddenJsonInput.value = JSON.stringify(items);
+    }
+
+    addLineButton.addEventListener("click", function () {
+        addLine();
+    });
+
+    submitButton.addEventListener("click", function () {
+        buildLineItemsJson();
+    });
+
+    if (Array.isArray(draftLineItems) && draftLineItems.length > 0) {
+        draftLineItems.forEach((line) => addLine(line));
+    } else {
+        addLine();
+    }
+</script>
+{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <h2 class="mb-3">{{ page_title }}</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <form method="post" id="delivery-form">
+                {% csrf_token %}
+
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Delivery Date</label>
+                        <input
+                            type="datetime-local"
+                            class="form-control"
+                            name="delivery_date"
+                            value="{{ draft.delivery_date|default:'' }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Supplier</label>
+                        <select class="form-select" name="supplier_code" required>
+                            <option value="">Select supplier</option>
+                            {% for s in suppliers %}
+                                <option value="{{ s.SupplierCode }}" {% if draft.supplier_code == s.SupplierCode %}selected{% endif %}>
+                                    {{ s.Name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Vehicle Registration</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="vehicle_registration"
+                            value="{{ draft.vehicle_registration|default:'' }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Driver Name</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="driver_name"
+                            value="{{ draft.driver_name|default:'' }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Waybill Number</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="waybill_number"
+                            value="{{ draft.waybill_number|default:'' }}"
+                        >
+                    </div>
+
+                    <div class="col-md-9">
+                        <label class="form-label">Remarks</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            name="remarks"
+                            value="{{ draft.remarks|default:'' }}"
+                        >
+                    </div>
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Delivery Lines</h5>
+                    <button type="button" class="btn btn-sm btn-primary" id="btn-add-line">
+                        Add Line
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered align-middle" id="delivery-lines-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 60px;">#</th>
+                                <th>Item</th>
+                                <th style="width: 120px;">UOM</th>
+                                <th style="width: 140px;">Quantity</th>
+                                <th style="width: 150px;">Batch</th>
+                                <th style="width: 180px;">Expiry</th>
+                                <th style="width: 160px;">Condition</th>
+                                <th>Remarks</th>
+                                <th style="width: 90px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="delivery-lines-body"></tbody>
+                    </table>
+                </div>
+
+                <input
+                    type="hidden"
+                    name="line_items_json"
+                    id="line_items_json"
+                    value="{{ draft.line_items_json|default:'[]' }}"
+                >
+
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary" id="btn-submit-delivery">
+                        Create Delivery
+                    </button>
+                    <a href="{% url 'delivery_list' %}" class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{ inventory_items|json_script:"inventory-items-data" }}
+{{ draft.line_items_json|default:"[]"|json_script:"draft-line-items-data" }}
+
+<script>
+    const inventoryItems = JSON.parse(
+        document.getElementById("inventory-items-data").textContent
+    );
+
+    const draftLineItems = JSON.parse(
+        document.getElementById("draft-line-items-data").textContent || "[]"
+    );
+
+    const linesBody = document.getElementById("delivery-lines-body");
+    const hiddenJsonInput = document.getElementById("line_items_json");
+    const addLineButton = document.getElementById("btn-add-line");
+    const submitButton = document.getElementById("btn-submit-delivery");
+
+    function escapeHtml(value) {
+        return String(value ?? "")
+            .replaceAll("&", "&amp;")
+            .replaceAll("<", "&lt;")
+            .replaceAll(">", "&gt;")
+            .replaceAll('"', "&quot;")
+            .replaceAll("'", "&#039;");
+    }
+
+    function itemOptions(selectedValue = "") {
+        let html = '<option value="">Select item</option>';
+        inventoryItems.forEach((item) => {
+            const selected = item.ItemCode === selectedValue ? "selected" : "";
+            html += `
+                <option
+                    value="${escapeHtml(item.ItemCode)}"
+                    data-uom="${escapeHtml(item.UOMCode || "")}"
+                    data-name="${escapeHtml(item.Name || "")}"
+                    ${selected}
+                >
+                    ${escapeHtml(item.ItemCode)} - ${escapeHtml(item.Name || "")}
+                </option>
+            `;
+        });
+        return html;
+    }
+
+    function formatDateForInput(value) {
+        if (!value) {
+            return "";
+        }
+
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return "";
+        }
+
+        const pad = (n) => String(n).padStart(2, "0");
+
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    function renumberLines() {
+        const rows = linesBody.querySelectorAll("tr");
+        rows.forEach((row, index) => {
+            const lineCell = row.querySelector(".line-number");
+            if (lineCell) {
+                lineCell.textContent = index + 1;
+            }
+        });
+    }
+
+    function syncUom(selectElement) {
+        const row = selectElement.closest("tr");
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        const uom = selectedOption ? (selectedOption.getAttribute("data-uom") || "") : "";
+        row.querySelector(".uom-code").value = uom;
+    }
+
+    function removeLine(buttonElement) {
+        const row = buttonElement.closest("tr");
+        row.remove();
+        renumberLines();
+        buildLineItemsJson();
+    }
+
+    function addLine(line = null) {
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td class="line-number"></td>
+            <td>
+                <select class="form-select item-code">
+                    ${itemOptions(line?.ItemCode || "")}
+                </select>
+            </td>
+            <td>
+                <input
+                    type="text"
+                    class="form-control uom-code"
+                    value="${escapeHtml(line?.UOMCode || "")}"
+                    readonly
+                >
+            </td>
+            <td>
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    class="form-control quantity"
+                    value="${escapeHtml(line?.QuantityReceived || "")}"
+                >
+            </td>
+            <td>
+                <input
+                    type="text"
+                    class="form-control batch-number"
+                    value="${escapeHtml(line?.BatchNumber || "")}"
+                >
+            </td>
+            <td>
+                <input
+                    type="datetime-local"
+                    class="form-control expiry-date"
+                    value="${escapeHtml(formatDateForInput(line?.ExpiryDate))}"
+                >
+            </td>
+            <td>
+                <select class="form-select condition">
+                    <option value="Good" ${(line?.ConditionOnArrival || "Good") === "Good" ? "selected" : ""}>Good</option>
+                    <option value="Damaged" ${line?.ConditionOnArrival === "Damaged" ? "selected" : ""}>Damaged</option>
+                    <option value="Partial Damage" ${line?.ConditionOnArrival === "Partial Damage" ? "selected" : ""}>Partial Damage</option>
+                </select>
+            </td>
+            <td>
+                <input
+                    type="text"
+                    class="form-control line-remarks"
+                    value="${escapeHtml(line?.Remarks || "")}"
+                >
+            </td>
+            <td>
+                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">
+                    Remove
+                </button>
+            </td>
+        `;
+
+        linesBody.appendChild(tr);
+
+        const itemSelect = tr.querySelector(".item-code");
+        const removeButton = tr.querySelector(".btn-remove-line");
+
+        itemSelect.addEventListener("change", function () {
+            syncUom(this);
+            buildLineItemsJson();
+        });
+
+        tr.querySelector(".quantity").addEventListener("input", buildLineItemsJson);
+        tr.querySelector(".batch-number").addEventListener("input", buildLineItemsJson);
+        tr.querySelector(".expiry-date").addEventListener("change", buildLineItemsJson);
+        tr.querySelector(".condition").addEventListener("change", buildLineItemsJson);
+        tr.querySelector(".line-remarks").addEventListener("input", buildLineItemsJson);
+
+        removeButton.addEventListener("click", function () {
+            removeLine(this);
+        });
+
+        if (itemSelect.value) {
+            syncUom(itemSelect);
+        }
+
+        renumberLines();
+        buildLineItemsJson();
+    }
+
+    function buildLineItemsJson() {
+        const rows = linesBody.querySelectorAll("tr");
+        const items = [];
+
+        rows.forEach((row, index) => {
+            const itemCode = row.querySelector(".item-code").value;
+            const uomCode = row.querySelector(".uom-code").value;
+            const quantityValue = row.querySelector(".quantity").value;
+            const batchNumber = row.querySelector(".batch-number").value.trim();
+            const expiryDate = row.querySelector(".expiry-date").value;
+            const condition = row.querySelector(".condition").value;
+            const remarks = row.querySelector(".line-remarks").value.trim();
+
+            if (itemCode && quantityValue) {
+                items.push({
+                    LineNumber: index + 1,
+                    ItemCode: itemCode,
+                    QuantityReceived: parseFloat(quantityValue),
+                    UOMCode: uomCode,
+                    BatchNumber: batchNumber || null,
+                    ExpiryDate: expiryDate || null,
+                    ConditionOnArrival: condition || "Good",
+                    Remarks: remarks || null
+                });
+            }
+        });
+
+        hiddenJsonInput.value = JSON.stringify(items);
+    }
+
+    addLineButton.addEventListener("click", function () {
+        addLine();
+    });
+
+    submitButton.addEventListener("click", function () {
+        buildLineItemsJson();
+    });
+
+    if (Array.isArray(draftLineItems) && draftLineItems.length > 0) {
+        draftLineItems.forEach((line) => addLine(line));
+    } else {
+        addLine();
+    }
+</script>
+{% endblock %}

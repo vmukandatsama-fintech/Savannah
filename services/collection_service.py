@@ -3,26 +3,13 @@ import json
 from django.db import connection
 
 
-
-    return dict(zip(columns, row))
-                d.DepartmentCode,
-        sql = """
-        cursor.execute(
-
-                @IssueJson=%s
-        sql += " ORDER BY c.CollectionDate DESC"
-from typing import Any
-import json
-from django.db import connection
-
-
-            """,
+def _fetch_all(cursor) -> list[dict[str, Any]]:
     columns = [col[0] for col in cursor.description]
     rows = cursor.fetchall()
     return [dict(zip(columns, row)) for row in rows]
 
 
-            [collection_number],
+def _fetch_one(cursor) -> dict[str, Any] | None:
     columns = [col[0] for col in cursor.description]
     row = cursor.fetchone()
     if not row:
@@ -30,7 +17,7 @@ from django.db import connection
     return dict(zip(columns, row))
 
 
-        )
+def get_collection_departments() -> list[dict[str, Any]]:
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -47,7 +34,22 @@ from django.db import connection
         return _fetch_all(cursor)
 
 
-        lines = _fetch_all(cursor)
+def get_pending_collections(
+    search: str = "",
+    department_code: str | None = None,
+    department_code_filter: str | None = None,
+    request_number: str = "",
+    date_from: str = "",
+    date_to: str = "",
+    collection_number: str = "",
+    **_ignored: Any,
+) -> list[dict[str, Any]]:
+    """
+    Backward-compatible pending collections filter.
+
+    Accepts both old and new parameter names so requests_app.views does not break
+    while the service layer is being cleaned up.
+    """
     with connection.cursor() as cursor:
         sql = """
             SELECT
@@ -74,9 +76,27 @@ from django.db import connection
         """
         params: list[Any] = []
 
-        if department_code:
+        effective_department = department_code or department_code_filter
+
+        if effective_department:
             sql += " AND r.DepartmentCode = %s"
-            params.append(department_code)
+            params.append(effective_department)
+
+        if request_number:
+            sql += " AND r.RequestNumber LIKE %s"
+            params.append(f"%{request_number}%")
+
+        if date_from:
+            sql += " AND CAST(r.RequestDate AS date) >= %s"
+            params.append(date_from)
+
+        if date_to:
+            sql += " AND CAST(r.RequestDate AS date) <= %s"
+            params.append(date_to)
+
+        # kept only for compatibility; Requests doesn't have CollectionNumber
+        if collection_number:
+            sql += " AND 1 = 0"
 
         if search:
             sql += """
@@ -97,7 +117,26 @@ from django.db import connection
         return _fetch_all(cursor)
 
 
+def disburse_request(
+    request_number: str,
+    disbursed_by: str,
+    issue_lines: list[dict[str, Any]],
+) -> None:
+    payload = json.dumps(issue_lines)
 
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """
+            EXEC dbo.sp_DisburseRequest
+                @RequestNumber=%s,
+                @DisbursedBy=%s,
+                @IssueJson=%s
+            """,
+            [request_number, disbursed_by, payload],
+        )
+
+
+def get_collection_detail(request_number: str) -> dict[str, Any] | None:
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -160,30 +199,20 @@ from django.db import connection
         )
         lines = _fetch_all(cursor)
 
-    return {"header": header, "lines": lines}
-
-
     return {
-    payload = json.dumps(issue_lines)
-    with connection.cursor() as cursor:
-        cursor.execute(
-            """
-            EXEC dbo.sp_DisburseRequest
-                @RequestNumber=%s,
-                @DisbursedBy=%s,
-                @IssueJson=%s
-            """,
-            [request_number, disbursed_by, payload],
-        )
-
-
         "header": header,
+        "lines": lines,
+    }
+
+
+def get_collection_history(
     search: str = "",
     collection_number: str = "",
     request_number: str = "",
     department_code_filter: str = "",
     date_from: str = "",
     date_to: str = "",
+    **_ignored: Any,
 ) -> list[dict[str, Any]]:
     with connection.cursor() as cursor:
         sql = """
@@ -250,7 +279,7 @@ from django.db import connection
         return _fetch_all(cursor)
 
 
-        "lines": lines,
+def get_collection_history_detail(collection_number: str) -> dict[str, Any] | None:
     with connection.cursor() as cursor:
         cursor.execute(
             """
@@ -312,5 +341,7 @@ from django.db import connection
         )
         lines = _fetch_all(cursor)
 
-    return {"header": header, "lines": lines}
+    return {
+        "header": header,
+        "lines": lines,
     }

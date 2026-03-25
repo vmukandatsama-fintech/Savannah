@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{ page_title }}</h2>
+            <small class="text-muted">Manage category master data</small>
+        </div>
+        <a href="{% url 'category_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i> New Category
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <form method="get" class="row g-2">
+                <div class="col-md-6">
+                    <label for="search" class="form-label">Search</label>
+                    <input
+                        type="text"
+                        class="form-control"
+                        id="search"
+                        name="search"
+                        value="{{ search }}"
+                        placeholder="Search by category code or name"
+                    >
+                </div>
+
+                <div class="col-md-3">
+                    <label for="status" class="form-label">Status</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="" {% if not status %}selected{% endif %}>All</option>
+                        <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Inactive</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
+                    <a href="{% url 'category_list' %}" class="btn btn-outline-secondary w-100">Clear</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 120px;">ID</th>
+                            <th style="width: 180px;">Category Code</th>
+                            <th>Name</th>
+                            <th style="width: 140px;">Status</th>
+                            <th style="width: 220px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in categories %}
+                            <tr>
+                                <td>{{ row.CategoryID }}</td>
+                                <td>{{ row.CategoryCode }}</td>
+                                <td>{{ row.Name }}</td>
+                                <td>
+                                    {% if row.IsActive %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a href="{% url 'category_edit' row.CategoryID %}" class="btn btn-sm btn-outline-primary">
+                                            Edit
+                                        </a>
+
+                                        <form method="post" action="{% url 'category_toggle' row.CategoryID %}" class="d-inline">
+                                            {% csrf_token %}
+                                            {% if row.IsActive %}
+                                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                    Deactivate
+                                                </button>
+                                            {% else %}
+                                                <button type="submit" class="btn btn-sm btn-outline-success">
+                                                    Activate
+                                                </button>
+                                            {% endif %}
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    No categories found.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

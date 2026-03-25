@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{ delivery.DeliveryNumber }}</h2>
+            <small class="text-muted">Delivery detail</small>
+        </div>
+        <a href="{% url 'delivery_list' %}" class="btn btn-outline-secondary">Back</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-3">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3"><strong>Date:</strong><br>{{ delivery.DeliveryDate }}</div>
+                <div class="col-md-3"><strong>Supplier:</strong><br>{{ delivery.SupplierName|default:delivery.SupplierCode }}</div>
+                <div class="col-md-2"><strong>Vehicle:</strong><br>{{ delivery.VehicleRegistration|default:"-" }}</div>
+                <div class="col-md-2"><strong>Driver:</strong><br>{{ delivery.DriverName|default:"-" }}</div>
+                <div class="col-md-2"><strong>Waybill:</strong><br>{{ delivery.WaybillNumber|default:"-" }}</div>
+                <div class="col-md-4"><strong>Received By:</strong><br>{{ delivery.ReceivedByEmail }}</div>
+                <div class="col-md-8"><strong>Remarks:</strong><br>{{ delivery.Remarks|default:"-" }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Item Code</th>
+                        <th>Item Name</th>
+                        <th>Qty</th>
+                        <th>UOM</th>
+                        <th>Batch</th>
+                        <th>Expiry</th>
+                        <th>Condition</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in lines %}
+                    <tr>
+                        <td>{{ row.ItemCode }}</td>
+                        <td>{{ row.ItemName }}</td>
+                        <td>{{ row.QuantityReceived }}</td>
+                        <td>{{ row.UOMName|default:row.UOMCode }}</td>
+                        <td>{{ row.BatchNumber|default:"-" }}</td>
+                        <td>{{ row.ExpiryDate|default:"-" }}</td>
+                        <td>{{ row.ConditionOnArrival|default:"-" }}</td>
+                        <td>{{ row.Remarks|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">No delivery lines found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
