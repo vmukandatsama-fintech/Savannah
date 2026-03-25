@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+            <h2 style="margin-top:0;">Farmer Reports</h2>
+            <div class="muted">Farmer summary and outstanding balance reporting.</div>
+        </div>
+        <div>
+            <a href="{% url 'farmer_reports_export_excel' %}?grower_number={{ filters.grower_number|urlencode }}&farmer_name={{ filters.farmer_name|urlencode }}&department_code={{ filters.department_code|urlencode }}&date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+        </div>
+    </div>
+
+    <form method="get" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:12px; align-items:end; margin-top:16px;">
+        <div>
+            <label>Grower Number</label>
+            <input type="text" name="grower_number" value="{{ filters.grower_number }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Farmer Name</label>
+            <input type="text" name="farmer_name" value="{{ filters.farmer_name }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Department</label>
+            <select name="department_code" style="width:100%; padding:8px;">
+                <option value="">All</option>
+                {% for d in departments %}
+                    <option value="{{ d.DepartmentCode }}" {% if filters.department_code == d.DepartmentCode %}selected{% endif %}>
+                        {{ d.DepartmentName }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Date From</label>
+            <input type="date" name="date_from" value="{{ filters.date_from }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Date To</label>
+            <input type="date" name="date_to" value="{{ filters.date_to }}" style="width:100%; padding:8px;">
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; gap:10px; justify-content:flex-end;">
+            <a href="{% url 'farmer_reports' %}" style="padding:8px 14px; border:1px solid #ccc; text-decoration:none;">Reset</a>
+            <button type="submit">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Farmer Summary</h3>
+
+    {% if rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px; text-align:left;">Grower Number</th>
+                    <th style="padding:10px; text-align:left;">Farmer Name</th>
+                    <th style="padding:10px; text-align:right;">Total Requested</th>
+                    <th style="padding:10px; text-align:right;">Total Issued</th>
+                    <th style="padding:10px; text-align:right;">Total Reserved</th>
+                    <th style="padding:10px; text-align:right;">Balance Remaining</th>
+                    <th style="padding:10px; text-align:right;">Requests</th>
+                    <th style="padding:10px; text-align:left;">Last Transaction</th>
+                    <th style="padding:10px; text-align:left;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ row.GrowerNumber|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.FarmerName|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalRequested|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalIssued|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalReserved|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.RequestCount|default:"0" }}</td>
+                    <td style="padding:10px;">{{ row.LastTransactionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td style="padding:10px;">
+                        <a href="{% url 'farmer_report_detail' row.GrowerNumber %}">View Statement</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No farmer records found.</div>
+    {% endif %}
+</div>
+{% endblock %}

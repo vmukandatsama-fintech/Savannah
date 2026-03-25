@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Request Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 6px; vertical-align: top; }
+        th { background: #f3f4f6; text-align: left; }
+        .right { text-align: right; }
+        @media print {
+            .no-print { display: none; }
+            body { margin: 10mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom:16px;">
+        <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <h1>Request Tracker</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Request No</th>
+                <th>Request Date</th>
+                <th>Required Date</th>
+                <th>Requested By</th>
+                <th>Department</th>
+                <th>Grower</th>
+                <th>Farmer</th>
+                <th>Status</th>
+                <th>Requested</th>
+                <th>Issued</th>
+                <th>Reserved</th>
+                <th>Balance</th>
+                <th>Age Days</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.RequestNumber|default:"-" }}</td>
+                <td>{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                <td>{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
+                <td>{{ row.RequestedBy|default:"-" }}</td>
+                <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
+                <td>{{ row.GrowerNumber|default:"-" }}</td>
+                <td>{{ row.FarmerName|default:"-" }}</td>
+                <td>{{ row.StatusName|default:"-" }}</td>
+                <td class="right">{{ row.TotalRequested|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.TotalIssued|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.TotalReserved|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.AgeDays|default:"0" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="13">No request records found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

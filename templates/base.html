@@ -47,6 +47,11 @@
             padding: 12px 20px;
         }
 
+        /* Farmer Reports sidebar link styling (optional) */
+        .sidebar a.farmer-reports-link {
+            font-weight: bold;
+        }
+
         .sidebar a:hover {
             background: #1f2937;
         }
@@ -184,13 +189,20 @@
                 <a href="/requests/approvals/">Approvals</a>
                 {% endif %}
 
-                {% if session_features.collections %}
-                <a href="/requests/collections/">Pending Collections</a>
-                <a href="/requests/collections/history/">Collection History</a>
+
+                {% if session_features.collections or request.session.role_name == "Stores Controller" %}
+                <a href="{% url 'collection_inbox' %}">Pending Collections</a>
+                <a href="{% url 'collection_history' %}">Collection History</a>
+                <a href="{% url 'returns_list' %}">Returns</a>
                 {% endif %}
 
-                {% if session_features.reports %}
-                <a href="#">Reports</a>
+                {% if session_features.reports or request.session.role_name == "Stores Controller" or request.session.role_name == "Approver" or request.session.role_name == "Authorizer" %}
+                <a href="{% url 'stock_reports' %}">Stock Reports</a>
+                <a href="{% url 'farmer_reports' %}">Farmer Reports</a>
+                <a href="{% url 'request_tracker' %}">Request Tracker</a>
+                <a href="{% url 'exception_reports' %}">Exception Reports</a>
+                <a href="{% url 'department_reports' %}">Department Reports</a>
+                <a href="{% url 'reversal_reports' %}">Reversal Reports</a>
                 {% endif %}
 
                 <div class="sidebar-user-context">

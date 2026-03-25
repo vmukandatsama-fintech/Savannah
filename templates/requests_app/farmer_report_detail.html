@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <a href="{% url 'farmer_reports' %}">← Back to Farmer Reports</a>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'farmer_report_detail_export_excel' summary.GrowerNumber %}?date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+            <a href="{% url 'farmer_report_detail_export_pdf' summary.GrowerNumber %}?date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" target="_blank" style="text-decoration:none;">
+                <button type="button">Export PDF</button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-top:0;">Farmer Statement</h2>
+    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+        <div><strong>Grower Number:</strong> {{ summary.GrowerNumber|default:"-" }}</div>
+        <div><strong>Farmer Name:</strong> {{ summary.FarmerName|default:"-" }}</div>
+        <div><strong>Total Requested:</strong> {{ summary.TotalRequested|floatformat:0|default:"0" }}</div>
+        <div><strong>Total Issued:</strong> {{ summary.TotalIssued|floatformat:0|default:"0" }}</div>
+        <div><strong>Total Reserved:</strong> {{ summary.TotalReserved|floatformat:0|default:"0" }}</div>
+        <div><strong>Balance Remaining:</strong> {{ summary.BalanceRemaining|floatformat:0|default:"0" }}</div>
+        <div><strong>Request Count:</strong> {{ summary.RequestCount|default:"0" }}</div>
+        <div><strong>Last Transaction:</strong> {{ summary.LastTransactionDate|date:"d-m-Y H:i"|default:"-" }}</div>
+    </div>
+
+    <form method="get" style="margin-top:16px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+        <div>
+            <label>Date From</label><br>
+            <input type="date" name="date_from" value="{{ filters.date_from }}" style="padding:8px;">
+        </div>
+        <div>
+            <label>Date To</label><br>
+            <input type="date" name="date_to" value="{{ filters.date_to }}" style="padding:8px;">
+        </div>
+        <div>
+            <button type="submit">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Outstanding / Request Balance View</h3>
+    {% if account_rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Date</th>
+                    <th style="padding:10px;">Request No</th>
+                    <th style="padding:10px;">Department</th>
+                    <th style="padding:10px;">Item Code</th>
+                    <th style="padding:10px;">Item Name</th>
+                    <th style="padding:10px;">Requested</th>
+                    <th style="padding:10px;">Issued</th>
+                    <th style="padding:10px;">Reserved</th>
+                    <th style="padding:10px;">Balance</th>
+                    <th style="padding:10px;">UOM</th>
+                    <th style="padding:10px;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in account_rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ row.TransactionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td style="padding:10px;">
+                        <a href="{% url 'request_details' row.RequestNumber %}">
+                            {{ row.RequestNumber|default:"-" }}
+                        </a>
+                    </td>
+                    <td style="padding:10px;">{{ row.DepartmentName|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemName|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.QuantityRequested|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.QuantityIssued|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.QuantityReserved|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px;">{{ row.UOMName|default:row.UOMCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.StatusName|default:row.StockStatus|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No account statement rows found.</div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Collection / Disbursement History</h3>
+    {% if collection_rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Date</th>
+                    <th style="padding:10px;">Collection No</th>
+                    <th style="padding:10px;">Request No</th>
+                    <th style="padding:10px;">Department</th>
+                    <th style="padding:10px;">Item Code</th>
+                    <th style="padding:10px;">Item Name</th>
+                    <th style="padding:10px;">Requested</th>
+                    <th style="padding:10px;">This Issue</th>
+                    <th style="padding:10px;">Total Issued</th>
+                    <th style="padding:10px;">Remaining</th>
+                    <th style="padding:10px;">UOM</th>
+                    <th style="padding:10px;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in collection_rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ row.TransactionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td style="padding:10px;">
+                        <a href="{% url 'collection_history_detail' row.CollectionNumber %}">
+                            {{ row.CollectionNumber|default:"-" }}
+                        </a>
+                    </td>
+                    <td style="padding:10px;">
+                        <a href="{% url 'request_details' row.RequestNumber %}">
+                            {{ row.RequestNumber|default:"-" }}
+                        </a>
+                    </td>
+                    <td style="padding:10px;">{{ row.DepartmentName|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemName|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.QuantityRequested|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.ThisIssueQty|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalIssuedToDate|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.RemainingAfterIssue|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px;">{{ row.UOM|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.StatusName|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No collection history rows found.</div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Returns List</h2>
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Collection No</th>
+                    <th style="padding:10px;">Collection Date</th>
+                    <th style="padding:10px;">Request No</th>
+                    <th style="padding:10px;">Grower</th>
+                    <th style="padding:10px;">Farmer</th>
+                    <th style="padding:10px;">Department Code</th>
+                    <th style="padding:10px;">Department Name</th>
+                    <th style="padding:10px;">Disbursed By</th>
+                    <th style="padding:10px;">Line Count</th>
+                    <th style="padding:10px;">Total Issued Qty</th>
+                    <th style="padding:10px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td style="padding:10px;">{{ row.CollectionNumber }}</td>
+                        <td style="padding:10px;">{{ row.CollectionDate }}</td>
+                        <td style="padding:10px;">{{ row.RequestNumber }}</td>
+                        <td style="padding:10px;">{{ row.GrowerNumber }}</td>
+                        <td style="padding:10px;">{{ row.FarmerName }}</td>
+                        <td style="padding:10px;">{{ row.DepartmentCode }}</td>
+                        <td style="padding:10px;">{{ row.DepartmentName }}</td>
+                        <td style="padding:10px;">{{ row.DisbursedBy }}</td>
+                        <td style="padding:10px;">{{ row.LineCount }}</td>
+                        <td style="padding:10px;">{{ row.TotalIssuedQty|floatformat:0|default:"0" }}</td>
+                        <td style="padding:10px;">
+                            <a href="{% url 'return_detail' row.CollectionNumber %}">Process Return</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr><td colspan="100%">No returns found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% if filters %}
+        <div class="mt-3">
+            <h5>Filters Applied:</h5>
+            <ul>
+                {% for key, value in filters.items %}
+                    <li><strong>{{ key|capfirst }}:</strong> {{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

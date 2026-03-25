@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Stock Card - {{ summary.ItemCode }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+        h1, h2, h3 { margin-bottom: 8px; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 24px;
+            margin-bottom: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            vertical-align: top;
+        }
+        th {
+            background: #f3f4f6;
+            text-align: left;
+        }
+        .right { text-align: right; }
+        @media print {
+            .no-print { display: none; }
+            body { margin: 10mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom:16px;">
+        <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <h1>Stock Card</h1>
+
+    {% if summary %}
+    <div class="summary-grid">
+        <div><strong>Item Code:</strong> {{ summary.ItemCode|default:"-" }}</div>
+        <div><strong>Item Name:</strong> {{ summary.ItemName|default:"-" }}</div>
+        <div><strong>Category:</strong> {{ summary.CategoryName|default:summary.CategoryCode|default:"-" }}</div>
+        <div><strong>UOM:</strong> {{ summary.UOMName|default:summary.UOMCode|default:"-" }}</div>
+        <div><strong>Physical Stock:</strong> {{ summary.PhysicalStock|floatformat:0|default:"0" }}</div>
+        <div><strong>Reserved Qty:</strong> {{ summary.ReservedQty|floatformat:0|default:"0" }}</div>
+        <div><strong>Available Stock:</strong> {{ summary.AvailableStock|floatformat:0|default:"0" }}</div>
+        <div><strong>Min Stock Level:</strong> {{ summary.MinStockLevel|floatformat:0|default:"0" }}</div>
+        <div><strong>Reorder Level:</strong> {{ summary.ReorderLevel|floatformat:0|default:"0" }}</div>
+        <div><strong>Max Stock Level:</strong> {{ summary.MaxStockLevel|floatformat:0|default:"0" }}</div>
+    </div>
+    {% endif %}
+
+    <h3>Movement History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Category Code</th>
+                <th>Transaction Type</th>
+                <th>Direction</th>
+                <th>Signed Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.TransactionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                <td>{{ row.ItemCode|default:"-" }}</td>
+                <td>{{ row.ItemName|default:"-" }}</td>
+                <td>{{ row.CategoryCode|default:"-" }}</td>
+                <td>{{ row.TransactionType|default:"-" }}</td>
+                <td>{{ row.Direction|default:"-" }}</td>
+                <td class="right">{{ row.SignedQuantity|floatformat:0|default:"0" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="9">No stock movements found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

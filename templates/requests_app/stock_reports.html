@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+            <h2 style="margin-top:0;">{{ page_title|default:"Stock Balance Report" }}</h2>
+            <div class="muted">Current physical, reserved, and available stock.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            {% if is_low_stock_page %}
+            <a href="{% url 'low_stock_report_export_excel' %}?item_code={{ filters.item_code|urlencode }}&item_name={{ filters.item_name|urlencode }}&category_code={{ filters.category_code|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+            <a href="{% url 'stock_reports' %}" style="text-decoration:none;">
+                <button type="button">All Stock</button>
+            </a>
+            {% else %}
+            <a href="{% url 'stock_reports_export_excel' %}?item_code={{ filters.item_code|urlencode }}&item_name={{ filters.item_name|urlencode }}&category_code={{ filters.category_code|urlencode }}&low_stock_only={{ filters.low_stock_only|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+            <a href="{% url 'low_stock_report' %}" style="text-decoration:none;">
+                <button type="button">Low Stock View</button>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <form method="get" style="display:grid; grid-template-columns: repeat(4, 1fr); gap:12px; align-items:end; margin-top:16px;">
+        <div>
+            <label>Item Code</label>
+            <input type="text" name="item_code" value="{{ filters.item_code }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Item Name</label>
+            <input type="text" name="item_name" value="{{ filters.item_name }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Category</label>
+            <select name="category_code" style="width:100%; padding:8px;">
+                <option value="">All</option>
+                {% for c in categories %}
+                    <option value="{{ c.CategoryCode }}" {% if filters.category_code == c.CategoryCode %}selected{% endif %}>
+                        {{ c.CategoryName|default:c.CategoryCode }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            {% if not is_low_stock_page %}
+            <label style="display:flex; gap:8px; align-items:center;">
+                <input type="checkbox" name="low_stock_only" value="1" {% if filters.low_stock_only == "1" %}checked{% endif %}>
+                Low Stock Only
+            </label>
+            {% endif %}
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; gap:10px; justify-content:flex-end;">
+            {% if is_low_stock_page %}
+            <a href="{% url 'low_stock_report' %}" style="padding:8px 14px; border:1px solid #ccc; text-decoration:none;">Reset</a>
+            {% else %}
+            <a href="{% url 'stock_reports' %}" style="padding:8px 14px; border:1px solid #ccc; text-decoration:none;">Reset</a>
+            {% endif %}
+            <button type="submit">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Results</h3>
+
+    {% if rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Item Code</th>
+                    <th style="padding:10px;">Item Name</th>
+                    <th style="padding:10px;">Category</th>
+                    <th style="padding:10px;">UOM</th>
+                    <th style="padding:10px; text-align:right;">Physical</th>
+                    <th style="padding:10px; text-align:right;">Reserved</th>
+                    <th style="padding:10px; text-align:right;">Available</th>
+                    <th style="padding:10px; text-align:right;">Min</th>
+                    <th style="padding:10px; text-align:right;">Reorder</th>
+                    <th style="padding:10px; text-align:right;">Max</th>
+                    <th style="padding:10px;">Low Stock</th>
+                    <th style="padding:10px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ row.ItemCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemName|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.CategoryName|default:row.CategoryCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.UOMName|default:row.UOMCode|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.PhysicalStock|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.ReservedQty|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.AvailableStock|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.MinStockLevel|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.ReorderLevel|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.MaxStockLevel|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px;">{% if row.IsLowStock %}Yes{% else %}No{% endif %}</td>
+                    <td style="padding:10px;">
+                        <a href="{% url 'stock_card' row.ItemCode %}">Stock Card</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No stock records found.</div>
+    {% endif %}
+</div>
+{% endblock %}

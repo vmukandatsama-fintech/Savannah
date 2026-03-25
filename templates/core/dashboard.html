@@ -58,9 +58,30 @@
         </a>
         {% endif %}
 
-        {% if session_features.collections %}
-        <a href="/requests/collections/" style="text-decoration:none;">
-            <button type="button">Pending Collections</button>
+        {% if session_features.collections or request.session.role_name == "Stores Controller" %}
+        <a href="{% url 'returns_list' %}" style="text-decoration:none;">
+            <button type="button">Returns</button>
+        </a>
+        {% endif %}
+
+        {% if session_features.reports or request.session.role_name == "Stores Controller" or request.session.role_name == "Approver" or request.session.role_name == "Authorizer" %}
+        <a href="{% url 'stock_reports' %}" style="text-decoration:none;">
+            <button type="button">Stock Reports</button>
+        </a>
+        <a href="{% url 'farmer_reports' %}" style="text-decoration:none;">
+            <button type="button">Farmer Reports</button>
+        </a>
+        <a href="{% url 'request_tracker' %}" style="text-decoration:none;">
+            <button type="button">Request Tracker</button>
+        </a>
+        <a href="{% url 'exception_reports' %}" style="text-decoration:none;">
+            <button type="button">Exception Reports</button>
+        </a>
+        <a href="{% url 'department_reports' %}" style="text-decoration:none;">
+            <button type="button">Department Reports</button>
+        </a>
+        <a href="{% url 'reversal_reports' %}" style="text-decoration:none;">
+            <button type="button">Reversal Reports</button>
         </a>
         {% endif %}
     </div>

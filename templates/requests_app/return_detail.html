@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Process Return - {{ header.CollectionNumber }}</h2>
+    <div class="card mb-4" style="padding:20px;">
+        <h5>Collection Details</h5>
+        <table class="table table-bordered">
+            <tr><th>Collection No</th><td>{{ header.CollectionNumber }}</td></tr>
+            <tr><th>Collection Date</th><td>{{ header.CollectionDate }}</td></tr>
+            <tr><th>Request No</th><td>{{ header.RequestNumber }}</td></tr>
+            <tr><th>Grower</th><td>{{ header.GrowerNumber }}</td></tr>
+            <tr><th>Farmer</th><td>{{ header.FarmerName }}</td></tr>
+            <tr><th>Department</th><td>{{ header.DepartmentName }}</td></tr>
+            <tr><th>Disbursed By</th><td>{{ header.DisbursedBy }}</td></tr>
+            <tr><th>Status</th><td>{{ header.StatusName }}</td></tr>
+        </table>
+    </div>
+    <form method="post" class="card" style="padding:20px;">
+        {% csrf_token %}
+        <h5>Return Items</h5>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Line</th>
+                    <th>Item Code</th>
+                    <th>Item Name</th>
+                    <th>UOM</th>
+                    <th>Issued Qty</th>
+                    <th>Return Qty</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for line in lines %}
+                <tr>
+                    <td>{{ line.LineNumber }}</td>
+                    <td>{{ line.ItemCode }}</td>
+                    <td>{{ line.ItemName }}</td>
+                    <td>{{ line.UOM }}</td>
+                    <td>{{ line.ThisIssueQty|floatformat:0 }}</td>
+                    <td>
+                        <input type="number" step="1" min="0" max="{{ line.ThisIssueQty|floatformat:0 }}" name="return_qty_{{ line.LineNumber }}" value="0" style="width:90px; padding:6px;">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div class="mb-3">
+            <label><strong>Return Reason</strong></label>
+            <textarea name="reason" rows="3" class="form-control" style="width:100%; padding:8px;" placeholder="Enter reason for return"></textarea>
+        </div>
+        <div style="display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn btn-primary">Submit Return</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

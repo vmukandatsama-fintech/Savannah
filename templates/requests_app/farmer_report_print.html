@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Farmer Statement - {{ summary.GrowerNumber }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+        h1, h2, h3 { margin-bottom: 8px; }
+        .muted { color: #555; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 24px;
+            margin-bottom: 24px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 24px;
+            font-size: 12px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            vertical-align: top;
+        }
+        th {
+            background: #f3f4f6;
+            text-align: left;
+        }
+        .right { text-align: right; }
+        @media print {
+            .no-print { display: none; }
+            body { margin: 10mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom:16px;">
+        <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <h1>Farmer Statement</h1>
+    <div class="muted">Savannah Stores</div>
+
+    <div class="summary-grid">
+        <div><strong>Grower Number:</strong> {{ summary.GrowerNumber|default:"-" }}</div>
+        <div><strong>Farmer Name:</strong> {{ summary.FarmerName|default:"-" }}</div>
+        <div><strong>Total Requested:</strong> {{ summary.TotalRequested|floatformat:0|default:"0" }}</div>
+        <div><strong>Total Issued:</strong> {{ summary.TotalIssued|floatformat:0|default:"0" }}</div>
+        <div><strong>Total Reserved:</strong> {{ summary.TotalReserved|floatformat:0|default:"0" }}</div>
+        <div><strong>Balance Remaining:</strong> {{ summary.BalanceRemaining|floatformat:0|default:"0" }}</div>
+        <div><strong>Request Count:</strong> {{ summary.RequestCount|default:"0" }}</div>
+        <div><strong>Last Transaction:</strong> {{ summary.LastTransactionDate|date:"d-m-Y H:i"|default:"-" }}</div>
+    </div>
+
+    <h3>Outstanding / Request Balance View</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Request No</th>
+                <th>Department</th>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Requested</th>
+                <th>Issued</th>
+                <th>Reserved</th>
+                <th>Balance</th>
+                <th>UOM</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in account_rows %}
+            <tr>
+                <td>{{ row.TransactionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                <td>{{ row.RequestNumber|default:"-" }}</td>
+                <td>{{ row.DepartmentName|default:"-" }}</td>
+                <td>{{ row.ItemCode|default:"-" }}</td>
+                <td>{{ row.ItemName|default:"-" }}</td>
+                <td class="right">{{ row.QuantityRequested|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.QuantityIssued|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.QuantityReserved|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
+                <td>{{ row.UOMName|default:row.UOMCode|default:"-" }}</td>
+                <td>{{ row.StatusName|default:row.StockStatus|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="11">No account statement rows found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h3>Collection / Disbursement History</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Collection No</th>
+                <th>Request No</th>
+                <th>Department</th>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>Requested</th>
+                <th>This Issue</th>
+                <th>Total Issued</th>
+                <th>Remaining</th>
+                <th>UOM</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in collection_rows %}
+            <tr>
+                <td>{{ row.TransactionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                <td>{{ row.CollectionNumber|default:"-" }}</td>
+                <td>{{ row.RequestNumber|default:"-" }}</td>
+                <td>{{ row.DepartmentName|default:"-" }}</td>
+                <td>{{ row.ItemCode|default:"-" }}</td>
+                <td>{{ row.ItemName|default:"-" }}</td>
+                <td class="right">{{ row.QuantityRequested|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.ThisIssueQty|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.TotalIssuedToDate|floatformat:0|default:"0" }}</td>
+                <td class="right">{{ row.RemainingAfterIssue|floatformat:0|default:"0" }}</td>
+                <td>{{ row.UOM|default:"-" }}</td>
+                <td>{{ row.StatusName|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="12">No collection history rows found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

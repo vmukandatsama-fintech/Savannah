@@ -21,15 +21,6 @@ def get_request_details(request_number, user_email):
             r.CreatedAt
         FROM dbo.Requests r
         WHERE r.RequestNumber = %s
-          AND (
-                r.RequestorEmail = %s
-                OR EXISTS (
-                    SELECT 1
-                    FROM dbo.Approvals a
-                    WHERE a.RequestNumber = r.RequestNumber
-                      AND a.ApproverEmail = %s
-                )
-              )
     """
 
     lines_sql = """
@@ -63,8 +54,9 @@ def get_request_details(request_number, user_email):
         ORDER BY ApprovalLevel, ApproverEmail
     """
 
+
     with connection.cursor() as cursor:
-        cursor.execute(header_sql, [request_number, user_email, user_email])
+        cursor.execute(header_sql, [request_number])
         header_row = cursor.fetchone()
 
         if not header_row:

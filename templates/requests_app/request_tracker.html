@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+            <h2 style="margin-top:0;">Request Tracker</h2>
+            <div class="muted">Track request lifecycle, balance, and ageing.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'request_tracker_export_excel' %}?request_number={{ filters.request_number|urlencode }}&status_name={{ filters.status_name|urlencode }}&department_code={{ filters.department_code|urlencode }}&grower_number={{ filters.grower_number|urlencode }}&date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+            <a href="{% url 'request_tracker_export_pdf' %}?request_number={{ filters.request_number|urlencode }}&status_name={{ filters.status_name|urlencode }}&department_code={{ filters.department_code|urlencode }}&grower_number={{ filters.grower_number|urlencode }}&date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" target="_blank" style="text-decoration:none;">
+                <button type="button">Export PDF</button>
+            </a>
+        </div>
+    </div>
+
+    <form method="get" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; align-items:end; margin-top:16px;">
+        <div>
+            <label>Request Number</label>
+            <input type="text" name="request_number" value="{{ filters.request_number }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Status</label>
+            <select name="status_name" style="width:100%; padding:8px;">
+                <option value="">All</option>
+                {% for s in statuses %}
+                    <option value="{{ s.StatusName }}" {% if filters.status_name == s.StatusName %}selected{% endif %}>
+                        {{ s.StatusName }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Department</label>
+            <select name="department_code" style="width:100%; padding:8px;">
+                <option value="">All</option>
+                {% for d in departments %}
+                    <option value="{{ d.DepartmentCode }}" {% if filters.department_code == d.DepartmentCode %}selected{% endif %}>
+                        {{ d.DepartmentName|default:d.DepartmentCode }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label>Grower Number</label>
+            <input type="text" name="grower_number" value="{{ filters.grower_number }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Date From</label>
+            <input type="date" name="date_from" value="{{ filters.date_from }}" style="width:100%; padding:8px;">
+        </div>
+        <div>
+            <label>Date To</label>
+            <input type="date" name="date_to" value="{{ filters.date_to }}" style="width:100%; padding:8px;">
+        </div>
+        <div style="grid-column: 1 / -1; display:flex; gap:10px; justify-content:flex-end;">
+            <a href="{% url 'request_tracker' %}" style="padding:8px 14px; border:1px solid #ccc; text-decoration:none;">Reset</a>
+            <button type="submit">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Results</h3>
+
+    {% if rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Request No</th>
+                    <th style="padding:10px;">Request Date</th>
+                    <th style="padding:10px;">Required Date</th>
+                    <th style="padding:10px;">Requested By</th>
+                    <th style="padding:10px;">Department</th>
+                    <th style="padding:10px;">Grower</th>
+                    <th style="padding:10px;">Farmer</th>
+                    <th style="padding:10px;">Status</th>
+                    <th style="padding:10px; text-align:right;">Requested</th>
+                    <th style="padding:10px; text-align:right;">Issued</th>
+                    <th style="padding:10px; text-align:right;">Reserved</th>
+                    <th style="padding:10px; text-align:right;">Balance</th>
+                    <th style="padding:10px; text-align:right;">Age Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">
+                        <a href="{% url 'request_details' row.RequestNumber %}">{{ row.RequestNumber }}</a>
+                    </td>
+                    <td style="padding:10px;">{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.RequestedBy|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.GrowerNumber|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.FarmerName|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.StatusName|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalRequested|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalIssued|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalReserved|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.AgeDays|default:"0" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No request records found.</div>
+    {% endif %}
+</div>
+{% endblock %}

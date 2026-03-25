@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div>
+            <h2 style="margin-top:0;">Exception Reports</h2>
+            <div class="muted">Overdue and failed workflow conditions.</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'exception_reports_export_excel' %}?age_days={{ filters.age_days|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+            <a href="{% url 'exception_reports_export_pdf' %}?age_days={{ filters.age_days|urlencode }}" target="_blank" style="text-decoration:none;">
+                <button type="button">Export PDF</button>
+            </a>
+        </div>
+    </div>
+
+    <form method="get" style="margin-top:16px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+        <div>
+            <label>Overdue After (Days)</label><br>
+            <input type="number" min="1" name="age_days" value="{{ filters.age_days|default:'3' }}" style="padding:8px; width:120px;">
+        </div>
+        <div>
+            <button type="submit">Run Report</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Summary</h3>
+    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;">
+        <div><strong>Pending Approval Overdue:</strong> {{ summary.PendingApprovalOverdue|default:"0" }}</div>
+        <div><strong>Pending Authorization Overdue:</strong> {{ summary.PendingAuthorizationOverdue|default:"0" }}</div>
+        <div><strong>Pending Collection Overdue:</strong> {{ summary.PendingCollectionOverdue|default:"0" }}</div>
+        <div><strong>Partially Issued Overdue:</strong> {{ summary.PartiallyIssuedOverdue|default:"0" }}</div>
+        <div><strong>Rejected Requests:</strong> {{ summary.RejectedRequests|default:"0" }}</div>
+        <div><strong>Voucher Errors:</strong> {{ summary.VoucherErrors|default:"0" }}</div>
+        <div><strong>Voucher Pending:</strong> {{ summary.VoucherPending|default:"0" }}</div>
+    </div>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Exception Details</h3>
+
+    {% if rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Exception Type</th>
+                    <th style="padding:10px;">Request No</th>
+                    <th style="padding:10px;">Request Date</th>
+                    <th style="padding:10px;">Required Date</th>
+                    <th style="padding:10px;">Department</th>
+                    <th style="padding:10px;">Grower</th>
+                    <th style="padding:10px;">Farmer</th>
+                    <th style="padding:10px;">Status</th>
+                    <th style="padding:10px; text-align:right;">Age Days</th>
+                    <th style="padding:10px;">Voucher Status</th>
+                    <th style="padding:10px;">Voucher Error</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ row.ExceptionType|default:"-" }}</td>
+                    <td style="padding:10px;">
+                        <a href="{% url 'request_details' row.RequestNumber %}">{{ row.RequestNumber }}</a>
+                    </td>
+                    <td style="padding:10px;">{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.GrowerNumber|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.FarmerName|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.StatusName|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.AgeDays|default:"0" }}</td>
+                    <td style="padding:10px;">{{ row.VoucherStatus|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.VoucherError|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No exception rows found.</div>
+    {% endif %}
+</div>
+{% endblock %}

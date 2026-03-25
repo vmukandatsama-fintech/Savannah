@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Exception Reports</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 6px; vertical-align: top; }
+        th { background: #f3f4f6; text-align: left; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px 24px;
+            margin-bottom: 24px;
+        }
+        .right { text-align: right; }
+        @media print {
+            .no-print { display: none; }
+            body { margin: 10mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom:16px;">
+        <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <h1>Exception Reports</h1>
+
+    <div class="summary-grid">
+        <div><strong>Pending Approval Overdue:</strong> {{ summary.PendingApprovalOverdue|default:"0" }}</div>
+        <div><strong>Pending Authorization Overdue:</strong> {{ summary.PendingAuthorizationOverdue|default:"0" }}</div>
+        <div><strong>Pending Collection Overdue:</strong> {{ summary.PendingCollectionOverdue|default:"0" }}</div>
+        <div><strong>Partially Issued Overdue:</strong> {{ summary.PartiallyIssuedOverdue|default:"0" }}</div>
+        <div><strong>Rejected Requests:</strong> {{ summary.RejectedRequests|default:"0" }}</div>
+        <div><strong>Voucher Errors:</strong> {{ summary.VoucherErrors|default:"0" }}</div>
+        <div><strong>Voucher Pending:</strong> {{ summary.VoucherPending|default:"0" }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Exception Type</th>
+                <th>Request No</th>
+                <th>Request Date</th>
+                <th>Required Date</th>
+                <th>Department</th>
+                <th>Grower</th>
+                <th>Farmer</th>
+                <th>Status</th>
+                <th>Age Days</th>
+                <th>Voucher Status</th>
+                <th>Voucher Error</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.ExceptionType|default:"-" }}</td>
+                <td>{{ row.RequestNumber|default:"-" }}</td>
+                <td>{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                <td>{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
+                <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
+                <td>{{ row.GrowerNumber|default:"-" }}</td>
+                <td>{{ row.FarmerName|default:"-" }}</td>
+                <td>{{ row.StatusName|default:"-" }}</td>
+                <td class="right">{{ row.AgeDays|default:"0" }}</td>
+                <td>{{ row.VoucherStatus|default:"-" }}</td>
+                <td>{{ row.VoucherError|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="11">No exception rows found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

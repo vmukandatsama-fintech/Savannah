@@ -231,7 +231,7 @@ def get_collection_departments() -> list[dict[str, Any]]:
             FROM dbo.Requests r
             INNER JOIN dbo.Departments d
                 ON d.DepartmentCode = r.DepartmentCode
-            WHERE r.StatusName = 'Pending Collection'
+            WHERE r.StatusName IN ('Pending Collection', 'Partially Issued')
             ORDER BY d.Name
             """
         )
@@ -265,7 +265,7 @@ def get_pending_collections(
                 ON u.Email = r.RequestorEmail
             LEFT JOIN dbo.Departments d
                 ON d.DepartmentCode = r.DepartmentCode
-            WHERE r.StatusName = 'Pending Collection'
+            WHERE r.StatusName IN ('Pending Collection', 'Partially Issued')
         """
         params: list[Any] = []
 

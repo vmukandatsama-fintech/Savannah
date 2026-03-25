@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Department Consumption Detail</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px 24px;
+            margin-bottom: 24px;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th, td { border: 1px solid #ddd; padding: 6px; vertical-align: top; }
+        th { background: #f3f4f6; text-align: left; }
+        .right { text-align: right; }
+        @media print {
+            .no-print { display: none; }
+            body { margin: 10mm; }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom:16px;">
+        <button onclick="window.print()">Print / Save as PDF</button>
+    </div>
+
+    <h1>Department Consumption Detail</h1>
+
+    {% if summary %}
+    <div class="summary-grid">
+        <div><strong>Department Code:</strong> {{ summary.DepartmentCode|default:"-" }}</div>
+        <div><strong>Department Name:</strong> {{ summary.DepartmentName|default:"-" }}</div>
+        <div><strong>Request Count:</strong> {{ summary.RequestCount|default:"0" }}</div>
+        <div><strong>Collection Count:</strong> {{ summary.CollectionCount|default:"0" }}</div>
+        <div><strong>Farmer Count:</strong> {{ summary.FarmerCount|default:"0" }}</div>
+        <div><strong>Total Issued Qty:</strong> {{ summary.TotalIssuedQty|floatformat:0|default:"0" }}</div>
+        <div><strong>Last Issue Date:</strong> {{ summary.LastIssueDate|date:"d-m-Y H:i"|default:"-" }}</div>
+    </div>
+    {% endif %}
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item Code</th>
+                <th>Item Name</th>
+                <th>UOM</th>
+                <th>Requests</th>
+                <th>Collections</th>
+                <th>Farmers</th>
+                <th>Total Issued Qty</th>
+                <th>Last Issue Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+                <td>{{ row.ItemCode|default:"-" }}</td>
+                <td>{{ row.ItemName|default:"-" }}</td>
+                <td>{{ row.UOM|default:"-" }}</td>
+                <td class="right">{{ row.RequestCount|default:"0" }}</td>
+                <td class="right">{{ row.CollectionCount|default:"0" }}</td>
+                <td class="right">{{ row.FarmerCount|default:"0" }}</td>
+                <td class="right">{{ row.TotalIssuedQty|floatformat:0|default:"0" }}</td>
+                <td>{{ row.LastIssueDate|date:"d-m-Y H:i"|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8">No detail rows found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

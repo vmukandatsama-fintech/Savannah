@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <a href="{% url 'department_reports' %}">← Back to Department Reports</a>
+        {% if summary and summary.DepartmentCode %}
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'department_report_detail_export_excel' summary.DepartmentCode %}?date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+            <a href="{% url 'department_report_detail_export_pdf' summary.DepartmentCode %}?date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" target="_blank" style="text-decoration:none;">
+                <button type="button">Export PDF</button>
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-top:0;">Department Consumption Detail</h2>
+
+    {% if summary %}
+    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+        <div><strong>Department Code:</strong> {{ summary.DepartmentCode|default:"-" }}</div>
+        <div><strong>Department Name:</strong> {{ summary.DepartmentName|default:"-" }}</div>
+        <div><strong>Request Count:</strong> {{ summary.RequestCount|default:"0" }}</div>
+        <div><strong>Collection Count:</strong> {{ summary.CollectionCount|default:"0" }}</div>
+        <div><strong>Farmer Count:</strong> {{ summary.FarmerCount|default:"0" }}</div>
+        <div><strong>Total Issued Qty:</strong> {{ summary.TotalIssuedQty|floatformat:0|default:"0" }}</div>
+        <div><strong>Last Issue Date:</strong> {{ summary.LastIssueDate|date:"d-m-Y H:i"|default:"-" }}</div>
+    </div>
+    {% else %}
+        <div class="muted">Department summary not found.</div>
+    {% endif %}
+
+    <form method="get" style="margin-top:16px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+        <div>
+            <label>Date From</label><br>
+            <input type="date" name="date_from" value="{{ filters.date_from }}" style="padding:8px;">
+        </div>
+        <div>
+            <label>Date To</label><br>
+            <input type="date" name="date_to" value="{{ filters.date_to }}" style="padding:8px;">
+        </div>
+        <div>
+            <button type="submit">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Item Consumption</h3>
+
+    {% if rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Item Code</th>
+                    <th style="padding:10px;">Item Name</th>
+                    <th style="padding:10px;">UOM</th>
+                    <th style="padding:10px; text-align:right;">Requests</th>
+                    <th style="padding:10px; text-align:right;">Collections</th>
+                    <th style="padding:10px; text-align:right;">Farmers</th>
+                    <th style="padding:10px; text-align:right;">Total Issued Qty</th>
+                    <th style="padding:10px;">Last Issue Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ row.ItemCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemName|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.UOM|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.RequestCount|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.CollectionCount|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.FarmerCount|default:"0" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.TotalIssuedQty|floatformat:0|default:"0" }}</td>
+                    <td style="padding:10px;">{{ row.LastIssueDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No item consumption rows found.</div>
+    {% endif %}
+</div>
+{% endblock %}

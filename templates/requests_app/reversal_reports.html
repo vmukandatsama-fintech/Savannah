@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Reversal Reports</h2>
+    <form method="get" class="mb-3 card" style="padding:16px;">
+        <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:end;">
+            <div>
+                <label>Item Code</label>
+                <input type="text" name="item_code" value="{{ filters.item_code|default:'' }}" class="form-control" style="width:160px;">
+            </div>
+            <div>
+                <label>Reference</label>
+                <input type="text" name="reference" value="{{ filters.reference|default:'' }}" class="form-control" style="width:160px;">
+            </div>
+            <div>
+                <label>Date From</label>
+                <input type="date" name="date_from" value="{{ filters.date_from|default:'' }}" class="form-control" style="width:160px;">
+            </div>
+            <div>
+                <label>Date To</label>
+                <input type="date" name="date_to" value="{{ filters.date_to|default:'' }}" class="form-control" style="width:160px;">
+            </div>
+            <div>
+                <button type="submit" class="btn btn-primary">Filter</button>
+            </div>
+        </div>
+    </form>
+    <div class="table-responsive card" style="padding:0;">
+        <table class="table table-bordered table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Item Code</th>
+                    <th>Reference</th>
+                    <th>Line</th>
+                    <th>Quantity</th>
+                    <th>Direction</th>
+                    <th>Type</th>
+                    <th>Department</th>
+                    <th>By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.TransactionDate }}</td>
+                    <td>{{ row.ItemCode }}</td>
+                    <td>{{ row.Reference }}</td>
+                    <td>{{ row.LineNumber }}</td>
+                    <td>{{ row.Quantity }}</td>
+                    <td>{{ row.Direction }}</td>
+                    <td>{{ row.TransactionTypeDisplay }}</td>
+                    <td>{{ row.ResponsibleDepartment }}</td>
+                    <td>{{ row.PerformedByEmail }}</td>
+                    <td>{{ row.Notes }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="10">No reversal records found.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

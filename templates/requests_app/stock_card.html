@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <a href="{% url 'stock_reports' %}">← Back to Stock Reports</a>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <a href="{% url 'stock_card_export_excel' summary.ItemCode %}?date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" style="text-decoration:none;">
+                <button type="button">Export Excel</button>
+            </a>
+            <a href="{% url 'stock_card_export_pdf' summary.ItemCode %}?date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" target="_blank" style="text-decoration:none;">
+                <button type="button">Export PDF</button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2 style="margin-top:0;">Stock Card</h2>
+
+    {% if summary %}
+    <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+        <div><strong>Item Code:</strong> {{ summary.ItemCode|default:"-" }}</div>
+        <div><strong>Item Name:</strong> {{ summary.ItemName|default:"-" }}</div>
+        <div><strong>Category:</strong> {{ summary.CategoryName|default:summary.CategoryCode|default:"-" }}</div>
+        <div><strong>UOM:</strong> {{ summary.UOMName|default:summary.UOMCode|default:"-" }}</div>
+        <div><strong>Physical Stock:</strong> {{ summary.PhysicalStock|floatformat:0|default:"0" }}</div>
+        <div><strong>Reserved Qty:</strong> {{ summary.ReservedQty|floatformat:0|default:"0" }}</div>
+        <div><strong>Available Stock:</strong> {{ summary.AvailableStock|floatformat:0|default:"0" }}</div>
+        <div><strong>Min Stock Level:</strong> {{ summary.MinStockLevel|floatformat:0|default:"0" }}</div>
+        <div><strong>Reorder Level:</strong> {{ summary.ReorderLevel|floatformat:0|default:"0" }}</div>
+        <div><strong>Max Stock Level:</strong> {{ summary.MaxStockLevel|floatformat:0|default:"0" }}</div>
+    </div>
+    {% else %}
+        <div class="muted">Item summary not found.</div>
+    {% endif %}
+
+    <form method="get" style="margin-top:16px; display:flex; gap:12px; align-items:end; flex-wrap:wrap;">
+        <div>
+            <label>Date From</label><br>
+            <input type="date" name="date_from" value="{{ filters.date_from }}" style="padding:8px;">
+        </div>
+        <div>
+            <label>Date To</label><br>
+            <input type="date" name="date_to" value="{{ filters.date_to }}" style="padding:8px;">
+        </div>
+        <div>
+            <button type="submit">Filter</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3 style="margin-top:0;">Movement History</h3>
+
+    {% if rows %}
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:1px solid #ddd;">
+                    <th style="padding:10px;">Date</th>
+                    <th style="padding:10px;">Item Code</th>
+                    <th style="padding:10px;">Item Name</th>
+                    <th style="padding:10px;">Category Code</th>
+                    <th style="padding:10px;">Transaction Type</th>
+                    <th style="padding:10px;">Direction</th>
+                    <th style="padding:10px; text-align:right;">Signed Quantity</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr style="border-bottom:1px solid #eee;">
+                    <td style="padding:10px;">{{ row.TransactionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.ItemName|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.CategoryCode|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.TransactionType|default:"-" }}</td>
+                    <td style="padding:10px;">{{ row.Direction|default:"-" }}</td>
+                    <td style="padding:10px; text-align:right;">{{ row.SignedQuantity|floatformat:0|default:"0" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No stock movements found.</div>
+    {% endif %}
+</div>
+{% endblock %}

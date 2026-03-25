@@ -67,24 +67,9 @@
         </a>
     </div>
 </div>
-
-{% if request.GET.auto_open == "1" %}
+{% if request.GET.auto_open == "1" and header.VoucherPath %}
 <script>
-window.addEventListener("load", function () {
-    const shouldOpen = sessionStorage.getItem("savannah_open_voucher_after_redirect");
-    const voucherUrl = "{% url 'open_collection_voucher' header.CollectionNumber %}";
-    const hasVoucherPath = "{% if header.VoucherPath %}1{% else %}0{% endif %}";
-
-    if (shouldOpen === "1" && hasVoucherPath === "1") {
-        const voucherWindow = window.open(voucherUrl, "savannah_voucher_window");
-        if (voucherWindow) {
-            sessionStorage.removeItem("savannah_open_voucher_after_redirect");
-            try {
-                voucherWindow.focus();
-            } catch (e) {}
-        }
-    }
-});
+    window.open("{% url 'open_collection_voucher' header.CollectionNumber %}", "_blank");
 </script>
 {% endif %}
 
