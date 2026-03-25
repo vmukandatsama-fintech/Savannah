@@ -1,4 +1,4 @@
-# === Collection History ===
+from typing import Any# === Collection History ===
 def get_collection_history(
     search: str = "",
     collection_number: str = "",
