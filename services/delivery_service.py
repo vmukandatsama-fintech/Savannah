@@ -303,3 +303,7 @@ def create_delivery(
         )
         rows = _fetch_first_resultset_as_dicts(cursor)
         return rows[0] if rows else None
+def get_inventory_for_delivery() -> list[dict[str, Any]]:
+    with connection.cursor() as cursor:
+        cursor.execute("EXEC dbo.sp_GetInventoryForDelivery")
+        return _fetch_first_resultset_as_dicts(cursor)

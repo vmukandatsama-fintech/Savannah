@@ -9,7 +9,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "dev-secret-key"
 DEBUG = True
 ALLOWED_HOSTS = [
-    'powerappssvr',
+    'powerappssvr','127.0.0.1', 'localhost'
 ]
 
 INSTALLED_APPS = [
