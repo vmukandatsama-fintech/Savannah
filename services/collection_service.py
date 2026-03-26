@@ -44,12 +44,6 @@ def get_pending_collections(
     collection_number: str = "",
     **_ignored: Any,
 ) -> list[dict[str, Any]]:
-    """
-    Backward-compatible pending collections filter.
-
-    Accepts both old and new parameter names so requests_app.views does not break
-    while the service layer is being cleaned up.
-    """
     with connection.cursor() as cursor:
         sql = """
             SELECT
@@ -94,7 +88,6 @@ def get_pending_collections(
             sql += " AND CAST(r.RequestDate AS date) <= %s"
             params.append(date_to)
 
-        # kept only for compatibility; Requests doesn't have CollectionNumber
         if collection_number:
             sql += " AND 1 = 0"
 
@@ -130,7 +123,7 @@ def disburse_request(
             EXEC dbo.sp_DisburseRequest
                 @RequestNumber=%s,
                 @DisbursedBy=%s,
-                @IssueJson=%s
+                @ItemsJson=%s
             """,
             [request_number, disbursed_by, payload],
         )
