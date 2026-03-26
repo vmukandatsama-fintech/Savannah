@@ -46,22 +46,8 @@
 	<h3 style="margin-top:0;">Items to Issue</h3>
 
 	{% if lines and lines|length > 0 %}
-	<script>
-	function prepareVoucherWindow() {
-		const voucherWindow = window.open("about:blank", "savannah_voucher_window");
-		if (voucherWindow) {
-			try {
-				voucherWindow.document.write(
-					"<html><head><title>Voucher</title></head><body style=\"font-family:Arial;padding:20px;\">Preparing voucher...</body></html>"
-				);
-				voucherWindow.document.close();
-			} catch (e) {}
-			sessionStorage.setItem("savannah_open_voucher_after_redirect", "1");
-		}
-		return true;
-	}
-	</script>
-	<form method="post" action="{% url 'disburse_request' header.RequestNumber %}" onsubmit="return prepareVoucherWindow();">
+	
+	<form method="post" action="{% url 'disburse_request' header.RequestNumber %}">
 		{% csrf_token %}
 
 		<div style="overflow-x:auto;">

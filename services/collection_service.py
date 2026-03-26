@@ -17,6 +17,23 @@ def _fetch_one(cursor) -> dict[str, Any] | None:
     return dict(zip(columns, row))
 
 
+def _fetch_first_resultset_as_dicts(cursor) -> list[dict[str, Any]]:
+    """
+    Reads the first resultset returned by a stored procedure, even if
+    earlier messages / empty resultsets are emitted first.
+    """
+    while True:
+        if cursor.description is not None:
+            columns = [col[0] for col in cursor.description]
+            rows = cursor.fetchall()
+            return [dict(zip(columns, row)) for row in rows]
+
+        if not cursor.nextset():
+            break
+
+    return []
+
+
 def get_collection_departments() -> list[dict[str, Any]]:
     with connection.cursor() as cursor:
         cursor.execute(
@@ -114,7 +131,7 @@ def disburse_request(
     request_number: str,
     disbursed_by: str,
     issue_lines: list[dict[str, Any]],
-) -> None:
+) -> dict[str, Any] | None:
     payload = json.dumps(issue_lines)
 
     with connection.cursor() as cursor:
@@ -127,6 +144,13 @@ def disburse_request(
             """,
             [request_number, disbursed_by, payload],
         )
+
+        rows = _fetch_first_resultset_as_dicts(cursor)
+
+    if not rows:
+        return None
+
+    return rows[0]
 
 
 def get_collection_detail(request_number: str) -> dict[str, Any] | None:

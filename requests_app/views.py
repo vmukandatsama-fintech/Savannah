@@ -1542,11 +1542,23 @@ def disburse_request_view(request, request_number):
             issue_lines=issue_lines,
         )
 
-        collection_number = result.get("CollectionNumber") if result else None
+
+        collection_number = (result or {}).get("CollectionNumber")
+        print("DISBURSE RESULT:", result)  # temporary debug
 
         if not collection_number:
-            messages.success(request, "Disbursement successful.")
+            messages.error(
+                request,
+                f"Disbursement succeeded but no CollectionNumber was returned. Result: {result}"
+            )
             return redirect("collection_history")
+
+        messages.success(
+            request,
+            f"Disbursement successful. Collection Number: {collection_number}."
+        )
+
+        return redirect(f"/requests/collections/history/{collection_number}/")
 
         try:
             regenerate_collection_voucher(collection_number)
@@ -1656,6 +1668,66 @@ def collection_history_detail(request, collection_number):
 # VOUCHER ACTIONS
 # ============================================================
 
+
+
+
+# ============================================================
+# COLLECTION HISTORY
+# ============================================================
+
+@sql_login_required
+@feature_required("collections")
+def collection_history(request):
+    search = request.GET.get("search", "").strip()
+    collection_number = request.GET.get("collection_number", "").strip()
+    request_number = request.GET.get("request_number", "").strip()
+    department = request.GET.get("department", "").strip()
+    date_from = request.GET.get("date_from", "").strip()
+    date_to = request.GET.get("date_to", "").strip()
+
+    rows = get_collection_history(
+        search=search,
+        collection_number=collection_number,
+        request_number=request_number,
+        department_code_filter=department,
+        date_from=date_from,
+        date_to=date_to,
+    )
+    departments = get_collection_departments()
+
+    return render(
+        request,
+        "requests_app/collection_history.html",
+        {
+            "rows": rows,
+            "search": search,
+            "collection_number": collection_number,
+            "request_number": request_number,
+            "department": department,
+            "date_from": date_from,
+            "date_to": date_to,
+            "departments": departments,
+        },
+    )
+
+
+@sql_login_required
+@feature_required("collections")
+def collection_history_detail(request, collection_number):
+    detail = get_collection_history_detail(collection_number)
+
+    if not detail:
+        messages.error(request, "Collection not found.")
+        return redirect("collection_history")
+
+    return render(
+        request,
+        "requests_app/collection_history_detail.html",
+        {
+            "header": detail["header"],
+            "lines": detail["lines"],
+        },
+    )
 
 @sql_login_required
 @feature_required("collections")

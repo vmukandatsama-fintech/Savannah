@@ -62,27 +62,51 @@
         </a>
         {% endif %}
 
-        <a href="{% url 'regenerate_collection_voucher' header.CollectionNumber %}">
+        <a href="{% url 'regenerate_collection_voucher' header.CollectionNumber %}" onclick="return prepareVoucherWindow();">
             <button type="button">Regenerate Voucher</button>
         </a>
     </div>
 </div>
 
+
 {% if request.GET.auto_open == "1" %}
 <script>
 window.addEventListener("load", function () {
-    const shouldOpen = sessionStorage.getItem("savannah_open_voucher_after_redirect");
     const voucherUrl = "{% url 'open_collection_voucher' header.CollectionNumber %}";
     const hasVoucherPath = "{% if header.VoucherPath %}1{% else %}0{% endif %}";
+    const retryCount = parseInt(sessionStorage.getItem("savannah_voucher_retry_count") || "0", 10);
+    const maxRetries = 12;
 
-    if (shouldOpen === "1" && hasVoucherPath === "1") {
+    if (hasVoucherPath === "1") {
         const voucherWindow = window.open(voucherUrl, "savannah_voucher_window");
-        if (voucherWindow) {
-            sessionStorage.removeItem("savannah_open_voucher_after_redirect");
-            try {
+
+        try {
+            if (voucherWindow) {
                 voucherWindow.focus();
-            } catch (e) {}
-        }
+            }
+        } catch (e) {}
+
+        try {
+            sessionStorage.removeItem("savannah_open_voucher_after_redirect");
+            sessionStorage.removeItem("savannah_voucher_retry_count");
+        } catch (e) {}
+
+        return;
+    }
+
+    if (retryCount < maxRetries) {
+        try {
+            sessionStorage.setItem("savannah_voucher_retry_count", String(retryCount + 1));
+        } catch (e) {}
+
+        setTimeout(function () {
+            window.location.reload();
+        }, 1200);
+    } else {
+        try {
+            sessionStorage.removeItem("savannah_open_voucher_after_redirect");
+            sessionStorage.removeItem("savannah_voucher_retry_count");
+        } catch (e) {}
     }
 });
 </script>
