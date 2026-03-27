@@ -34,9 +34,12 @@ def get_my_requests(user_email, search="", status="", page=1, page_size=10):
             r.RequestDate,
             r.FarmerName,
             r.DepartmentCode,
+            d.Name AS DepartmentName,
             r.StatusName,
             COUNT(ri.LineItemID) AS TotalLines
         FROM dbo.Requests r
+        LEFT JOIN dbo.Departments d
+            ON r.DepartmentCode = d.DepartmentCode
         LEFT JOIN dbo.RequestedItems ri
             ON r.RequestNumber = ri.RequestNumber
         WHERE {where_sql}
@@ -45,6 +48,7 @@ def get_my_requests(user_email, search="", status="", page=1, page_size=10):
             r.RequestDate,
             r.FarmerName,
             r.DepartmentCode,
+            d.Name,
             r.StatusName
         ORDER BY r.RequestDate DESC
         OFFSET %s ROWS FETCH NEXT %s ROWS ONLY
@@ -63,8 +67,9 @@ def get_my_requests(user_email, search="", status="", page=1, page_size=10):
             "request_date": row[1],
             "farmer_name": row[2],
             "department_code": row[3],
-            "status_name": row[4],
-            "total_lines": row[5],
+            "department_name": row[4],
+            "status_name": row[5],
+            "total_lines": row[6],
         }
         for row in rows
     ]

@@ -1,112 +1,123 @@
-
 {% extends "base.html" %}
-
+{% load humanize %}
 {% block content %}
 
-<!-- Back -->
 <div class="card">
-	<a href="{% url 'collection_inbox' %}">← Back to Pending Collections</a>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div>
+            <h2 style="margin:0;">Collection Detail</h2>
+            <div class="muted" style="margin-top:6px;">Review request information and issue stock</div>
+        </div>
+        <div>
+            <a href="{% url 'collection_inbox' %}" class="btn btn-light">← Back to Pending Collections</a>
+        </div>
+    </div>
 </div>
 
-<!-- Header -->
 <div class="card">
-	<h2 style="margin-top:0;">Collection Detail</h2>
+    {% if header %}
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:14px;">
+        <div><strong>Request Number:</strong><br>{{ header.RequestNumber|default:"-" }}</div>
+        <div><strong>Status:</strong><br>{{ header.StatusName|default:"-" }}</div>
 
-	{% if header %}
-	<div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
-		<div><strong>Request Number:</strong> {{ header.RequestNumber|default:"-" }}</div>
-		<div><strong>Status:</strong> {{ header.StatusName|default:"-" }}</div>
+        <div><strong>Request Date:</strong><br>{{ header.RequestDate|date:"d-m-Y H:i"|default:"-" }}</div>
+        <div><strong>Required Date:</strong><br>{{ header.RequiredDate|date:"d-m-Y"|default:"-" }}</div>
 
-		<div><strong>Request Date:</strong> {{ header.RequestDate|date:"d-m-Y H:i"|default:"-" }}</div>
-		<div><strong>Required Date:</strong> {{ header.RequiredDate|date:"d-m-Y"|default:"-" }}</div>
+        <div><strong>Requestor:</strong><br>{{ header.RequestorName|default:"-" }}</div>
+        <div><strong>Department:</strong><br>{{ header.DepartmentName|default:"-" }}</div>
 
-		<div><strong>Requestor:</strong> {{ header.RequestorName|default:"-" }}</div>
-		<div><strong>Department:</strong> {{ header.DepartmentName|default:"-" }}</div>
+        <div><strong>Grower:</strong><br>{{ header.GrowerNumber|default:"-" }}</div>
+        <div><strong>Collector:</strong><br>{{ header.CollectorName|default:"-" }}</div>
 
-		<div><strong>Grower:</strong> {{ header.GrowerNumber|default:"-" }}</div>
-		<div><strong>Collector:</strong> {{ header.CollectorName|default:"-" }}</div>
+        <div><strong>National ID:</strong><br>{{ header.CollectorNationalID|default:"-" }}</div>
+        <div><strong>Truck:</strong><br>{{ header.TruckRegistration|default:"-" }}</div>
 
-		<div><strong>National ID:</strong> {{ header.CollectorNationalID|default:"-" }}</div>
-		<div><strong>Truck:</strong> {{ header.TruckRegistration|default:"-" }}</div>
+        <div><strong>Trailer:</strong><br>{{ header.TrailerRegistration|default:"-" }}</div>
+    </div>
 
-		<div><strong>Trailer:</strong> {{ header.TrailerRegistration|default:"-" }}</div>
-	</div>
-
-	<div style="margin-top:10px;">
-		<strong>Justification:</strong><br>
-		{{ header.Justification|default:"-" }}
-	</div>
-	{% else %}
-		<div class="muted">No header information available.</div>
-	{% endif %}
+    <div style="margin-top:18px;">
+        <label>Justification</label>
+        <div style="padding:12px 14px; background:#f9fafb; border:1px solid #dfe3e8; border-radius:10px;">
+            {{ header.Justification|default:"-" }}
+        </div>
+    </div>
+    {% else %}
+        <div class="muted">No header information available.</div>
+    {% endif %}
 </div>
 
-<!-- Items -->
 <div class="card">
-	<h3 style="margin-top:0;">Items to Issue</h3>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
+        <div>
+            <h3 style="margin:0;">Items to Issue</h3>
+            <div class="muted" style="margin-top:6px;">Enter the quantities to disburse for each line</div>
+        </div>
+    </div>
 
-	{% if lines and lines|length > 0 %}
-	
-	<form method="post" action="{% url 'disburse_request' header.RequestNumber %}">
-		{% csrf_token %}
+    {% if lines and lines|length > 0 %}
+    <form method="post" action="{% url 'disburse_request' header.RequestNumber %}">
+        {% csrf_token %}
 
-		<div style="overflow-x:auto;">
-			<table style="width:100%; border-collapse: collapse;">
-				<thead>
-					<tr style="border-bottom:1px solid #ddd;">
-						<th style="padding:10px;">Line</th>
-						<th style="padding:10px;">Item Code</th>
-						<th style="padding:10px;">Item Name</th>
-						<th style="padding:10px;">Requested</th>
-						<th style="padding:10px;">Reserved</th>
-						<th style="padding:10px;">Issued</th>
-						<th style="padding:10px;">Available</th>
-						<th style="padding:10px;">UOM</th>
-						<th style="padding:10px;">Status</th>
-						<th style="padding:10px;">Issue Now</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for line in lines %}
-					<tr style="border-bottom:1px solid #eee;">
-						<td style="padding:10px;">{{ line.LineNumber|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.ItemCode|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.ItemName|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.QuantityRequested|floatformat:0|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.QuantityReserved|floatformat:0|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.QuantityIssued|floatformat:0|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.AvailableStock|floatformat:0|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.UOMName|default:line.UOMCode|default:"-" }}</td>
-						<td style="padding:10px;">{{ line.StockStatus|default:line.LineStatus|default:"-" }}</td>
-						<td style="padding:10px;">
-							{% if line.QuantityReserved and line.QuantityReserved > 0 %}
-							<input
-								type="number"
-								step="1"
-								min="0"
-								max="{{ line.QuantityReserved|floatformat:0 }}"
-								name="issue_qty_{{ line.LineNumber }}"
-								value="{{ line.QuantityReserved|floatformat:0 }}"
-								style="width:90px; padding:6px;"
-							>
-							{% else %}
-								<span class="muted">-</span>
-							{% endif %}
-						</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
-		</div>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Line</th>
+                        <th>Item Code</th>
+                        <th>Item Name</th>
+                        <th class="numeric">Requested</th>
+                        <th class="numeric">Reserved</th>
+                        <th class="numeric">Issued</th>
+                        <th class="numeric">Available</th>
+                        <th>UOM</th>
+                        <th>Status</th>
+                        <th class="numeric">Issue Now</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines %}
+                    <tr>
+                        <td>{{ line.LineNumber|default:"-" }}</td>
+                        <td>{{ line.ItemCode|default:"-" }}</td>
+                        <td>{{ line.ItemName|default:"-" }}</td>
 
-		<div style="margin-top:20px; display:flex; justify-content:flex-end;">
-			<button type="submit">Disburse Stock</button>
-		</div>
-	</form>
-	{% else %}
-		<div class="muted">No items to issue for this request.</div>
-	{% endif %}
+                        <td class="numeric">{{ line.QuantityRequested|floatformat:0|intcomma }}</td>
+                        <td class="numeric">{{ line.QuantityReserved|floatformat:0|intcomma }}</td>
+                        <td class="numeric">{{ line.QuantityIssued|floatformat:0|intcomma }}</td>
+                        <td class="numeric">{{ line.AvailableStock|floatformat:0|intcomma }}</td>
+
+                        <td>{{ line.UOMName|default:line.UOMCode|default:"-" }}</td>
+                        <td>{{ line.StockStatus|default:line.LineStatus|default:"-" }}</td>
+
+                        <td class="numeric" style="min-width:110px;">
+                            {% if line.QuantityReserved and line.QuantityReserved > 0 %}
+                            <input
+                                type="number"
+                                step="1"
+                                min="0"
+                                max="{{ line.QuantityReserved|floatformat:0 }}"
+                                name="issue_qty_{{ line.LineNumber }}"
+                                value="{{ line.QuantityReserved|floatformat:0 }}"
+                                class="numeric"
+                                style="max-width:100px;"
+                            >
+                            {% else %}
+                                <span class="muted">-</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div style="margin-top:20px; display:flex; justify-content:flex-end;">
+            <button type="submit" class="btn">Disburse Stock</button>
+        </div>
+    </form>
+    {% else %}
+        <div class="muted">No items to issue for this request.</div>
+    {% endif %}
 </div>
 
 {% endblock %}
-

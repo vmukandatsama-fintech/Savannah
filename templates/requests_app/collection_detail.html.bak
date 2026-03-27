@@ -1,4 +1,8 @@
 
+{% load app_extras %}
+
+{{ 1234567|number }}
+
 {% extends "base.html" %}
 
 {% block content %}

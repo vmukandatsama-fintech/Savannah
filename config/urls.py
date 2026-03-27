@@ -6,4 +6,5 @@ urlpatterns = [
     path("", include("core.urls")),
     path("requests/", include("requests_app.urls")),
     path("stock/", include("stock.urls")),
+    path("approvals/", include("requests_app.approval_urls")),
 ]

@@ -2,122 +2,126 @@
 
 {% block content %}
 <div class="card">
-    <h2 style="margin-top: 0;">Collection History</h2>
-    <div class="muted">View all issued collections</div>
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+        <div>
+            <h2 style="margin:0;">Collection History</h2>
+            <div class="muted" style="margin-top:6px;">View all issued collections</div>
+        </div>
+    </div>
 </div>
 
 <div class="card">
-    <form method="get" style="display:grid; grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1fr 1fr auto auto; gap:10px; margin-bottom:20px; align-items:end;">
-        <div>
-            <label><strong>Search</strong></label>
-            <input
-                type="text"
-                name="search"
-                value="{{ search }}"
-                placeholder="Collection, request, grower, collector, user"
-                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-            >
+    <form method="get">
+        <div class="form-row">
+            <div>
+                <label>Search</label>
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ search }}"
+                    placeholder="Collection, request, grower, collector, user"
+                >
+            </div>
+
+            <div>
+                <label>Collection Number</label>
+                <input
+                    type="text"
+                    name="collection_number"
+                    value="{{ collection_number }}"
+                    placeholder="COL-..."
+                >
+            </div>
+
+            <div>
+                <label>Request Number</label>
+                <input
+                    type="text"
+                    name="request_number"
+                    value="{{ request_number }}"
+                    placeholder="REQ-..."
+                >
+            </div>
+
+            <div>
+                <label>Department</label>
+                <select name="department">
+                    <option value="">All Departments</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.DepartmentCode }}" {% if department == dept.DepartmentCode %}selected{% endif %}>
+                        {{ dept.DepartmentName }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div>
+                <label>Date From</label>
+                <input
+                    type="date"
+                    name="date_from"
+                    value="{{ date_from }}"
+                >
+            </div>
+
+            <div>
+                <label>Date To</label>
+                <input
+                    type="date"
+                    name="date_to"
+                    value="{{ date_to }}"
+                >
+            </div>
         </div>
 
-        <div>
-            <label><strong>Collection Number</strong></label>
-            <input
-                type="text"
-                name="collection_number"
-                value="{{ collection_number }}"
-                placeholder="COL-..."
-                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-            >
-        </div>
-
-        <div>
-            <label><strong>Request Number</strong></label>
-            <input
-                type="text"
-                name="request_number"
-                value="{{ request_number }}"
-                placeholder="REQ-..."
-                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-            >
-        </div>
-
-        <div>
-            <label><strong>Department</strong></label>
-            <select
-                name="department"
-                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-            >
-                <option value="">All Departments</option>
-                {% for dept in departments %}
-                <option value="{{ dept.DepartmentCode }}" {% if department == dept.DepartmentCode %}selected{% endif %}>
-                    {{ dept.DepartmentName }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div>
-            <label><strong>Date From</strong></label>
-            <input
-                type="date"
-                name="date_from"
-                value="{{ date_from }}"
-                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-            >
-        </div>
-
-        <div>
-            <label><strong>Date To</strong></label>
-            <input
-                type="date"
-                name="date_to"
-                value="{{ date_to }}"
-                style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-            >
-        </div>
-
-        <div>
-            <button type="submit">Search</button>
-        </div>
-
-        <div>
-            <a href="{% url 'collection_history' %}" style="text-decoration:none;">
-                <button type="button">Clear</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+            <button type="submit" class="btn">Search</button>
+            <a href="{% url 'collection_history' %}">
+                <button type="button" class="btn btn-light">Clear</button>
             </a>
         </div>
     </form>
+</div>
+
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
+        <h3 style="margin:0;">Results</h3>
+        <div class="muted">{{ rows|length }} record{{ rows|length|pluralize }}</div>
+    </div>
 
     <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse: collapse;">
+        <table>
             <thead>
-                <tr style="text-align:left; border-bottom:1px solid #ddd;">
-                    <th style="padding:10px;">Collection No</th>
-                    <th style="padding:10px;">Date</th>
-                    <th style="padding:10px;">Request No</th>
-                    <th style="padding:10px;">Department</th>
-                    <th style="padding:10px;">Farmer</th>
-                    <th style="padding:10px;">Collector</th>
-                    <th style="padding:10px;">Disbursed By</th>
-                    <th style="padding:10px;"></th>
+                <tr>
+                    <th>Collection No</th>
+                    <th>Date</th>
+                    <th>Request No</th>
+                    <th>Department</th>
+                    <th>Farmer</th>
+                    <th>Collector</th>
+                    <th>Disbursed By</th>
+                    <th style="width:100px;">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in rows %}
-                <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:10px;">{{ row.CollectionNumber }}</td>
-                    <td style="padding:10px;">{{ row.CollectionDate|date:"d-m-Y H:i" }}</td>
-                    <td style="padding:10px;">{{ row.RequestNumber }}</td>
-                    <td style="padding:10px;">{{ row.DepartmentName }}</td>
-                    <td style="padding:10px;">{{ row.FarmerName|default:"-" }}</td>
-                    <td style="padding:10px;">{{ row.CollectorName }}</td>
-                    <td style="padding:10px;">{{ row.DisbursedByName|default:row.DisbursedBy }}</td>
-                    <td style="padding:10px;">
-                        <a href="{% url 'collection_history_detail' row.CollectionNumber %}">Open</a>
+                <tr>
+                    <td><strong>{{ row.CollectionNumber }}</strong></td>
+                    <td>{{ row.CollectionDate|date:"d-m-Y H:i" }}</td>
+                    <td>{{ row.RequestNumber }}</td>
+                    <td>{{ row.DepartmentName }}</td>
+                    <td>{{ row.FarmerName|default:"-" }}</td>
+                    <td>{{ row.CollectorName }}</td>
+                    <td>{{ row.DisbursedByName|default:row.DisbursedBy }}</td>
+                    <td>
+                        <a href="{% url 'collection_history_detail' row.CollectionNumber %}" class="btn btn-light" style="padding:8px 12px;">
+                            Open
+                        </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" style="padding:20px; text-align:center;" class="muted">
+                    <td colspan="8" class="muted" style="text-align:center; padding:24px;">
                         No collections found.
                     </td>
                 </tr>

@@ -1,335 +1,714 @@
-﻿<!DOCTYPE html>
+﻿{% load static %}
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Savannah Stores</title>
     <style>
-                /* Cascading menu styles */
-                .sidebar .dropdown {
-                    position: relative;
-                }
-                .sidebar .dropdown-btn {
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    width: 100%;
-                    background: none;
-                    border: none;
-                    color: white;
-                    padding: 12px 20px;
-                    font-size: 16px;
-                    cursor: pointer;
-                }
-                .sidebar .dropdown-content {
-                    display: none;
-                    flex-direction: column;
-                    background: #222b3a;
-                    position: static;
-                    margin-left: 10px;
-                }
-                .sidebar .dropdown.open .dropdown-content {
-                    display: flex;
-                }
-                .sidebar .dropdown-content a {
-                    padding-left: 36px;
-                    font-size: 15px;
-                }
-                .sidebar .dropdown-btn:after {
-                    content: '\25BC';
-                    font-size: 12px;
-                    margin-left: 8px;
-                    transition: transform 0.2s;
-                }
-                .sidebar .dropdown.open .dropdown-btn:after {
-                    transform: rotate(-180deg);
-                }
-        body {
-            margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
+        :root{
+            --bg:#f5f7fb;
+            --card:#ffffff;
+            --text:#1f2937;
+            --muted:#6b7280;
+            --border:#e5e7eb;
+
+            --primary:#2563eb;
+            --primary-soft:#dbeafe;
+
+            --success:#16a34a;
+            --success-soft:#dcfce7;
+
+            --warning:#d97706;
+            --warning-soft:#fef3c7;
+
+            --danger:#dc2626;
+            --danger-soft:#fee2e2;
+
+            --info:#0891b2;
+            --info-soft:#cffafe;
+
+            --secondary:#6b7280;
+            --secondary-soft:#f3f4f6;
+
+            --purple:#7c3aed;
+            --purple-soft:#ede9fe;
+
+            --sidebar-bg:#0f172a;
+            --sidebar-text:#e5e7eb;
+            --sidebar-muted:#94a3b8;
+            --sidebar-hover:#1e293b;
+            --topbar-height:64px;
+            --sidebar-width:270px;
         }
 
-        .topbar {
-            background: #1f2937;
-            color: white;
-            padding: 14px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+        *{
+            box-sizing:border-box;
         }
 
-        .layout {
-            display: flex;
-            min-height: calc(100vh - 52px);
+        html, body{
+            margin:0;
+            padding:0;
+            min-height:100%;
         }
 
-        .sidebar {
-            width: 240px;
-            background: #111827;
-            color: white;
-            padding: 20px 0;
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 52px);
-            position: sticky;
-            top: 52px;
+        body{
+            background:var(--bg);
+            color:var(--text);
+            font-family:"Segoe UI", Tahoma, sans-serif;
+            font-size:14px;
+            line-height:1.45;
         }
 
-        .sidebar a {
-            display: block;
-            color: white;
-            text-decoration: none;
-            padding: 12px 20px;
+        a{
+            color:var(--primary);
+            text-decoration:none;
         }
 
-        /* Farmer Reports sidebar link styling (optional) */
-        .sidebar a.farmer-reports-link {
-            font-weight: bold;
+        a:hover{
+            text-decoration:underline;
         }
 
-        .sidebar a:hover {
-            background: #1f2937;
+        /* ===== App Layout ===== */
+        .app-shell{
+            display:flex;
+            min-height:100vh;
+            background:var(--bg);
         }
 
-        .content {
-            flex: 1;
-            padding: 24px;
+        .sidebar{
+            width:var(--sidebar-width);
+            background:var(--sidebar-bg);
+            color:var(--sidebar-text);
+            display:flex;
+            flex-direction:column;
+            position:sticky;
+            top:0;
+            height:100vh;
+            border-right:1px solid rgba(255,255,255,0.06);
         }
 
-        .card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
+        .brand{
+            padding:20px 18px;
+            font-size:20px;
+            font-weight:700;
+            border-bottom:1px solid rgba(255,255,255,0.08);
         }
 
-        .login-wrap {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #f4f6f8;
+        .sidebar-scroll{
+            flex:1;
+            overflow-y:auto;
+            padding:14px 12px;
         }
 
-        .login-card {
-            width: 360px;
-            background: white;
-            padding: 24px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        .menu-section{
+            margin-bottom:10px;
         }
 
-        input[type="text"], input[type="password"] {
-            width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            margin-bottom: 16px;
-            border: 1px solid #d1d5db;
-            border-radius: 8px;
-            box-sizing: border-box;
+        .menu-link,
+        .menu-toggle,
+        .submenu a{
+            display:block;
+            width:100%;
+            border:none;
+            background:none;
+            color:var(--sidebar-text);
+            text-align:left;
+            padding:10px 12px;
+            border-radius:10px;
+            font-size:14px;
+            font-weight:600;
+            text-decoration:none;
+            cursor:pointer;
         }
 
-        button {
-            background: #1f2937;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 8px;
-            cursor: pointer;
+        .menu-link:hover,
+        .menu-toggle:hover,
+        .submenu a:hover{
+            background:var(--sidebar-hover);
+            text-decoration:none;
         }
 
-        button:hover {
-            background: #111827;
+        .menu-toggle{
+            position:relative;
         }
 
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
+        .menu-toggle::after{
+            content:"▾";
+            position:absolute;
+            right:12px;
+            color:var(--sidebar-muted);
+            font-size:12px;
         }
 
-        .stat-box {
-            background: white;
-            padding: 18px;
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+        .menu-section .submenu{
+            display:none;
+            padding-top:6px;
+            padding-left:8px;
         }
 
-        .muted {
-            color: #6b7280;
-            font-size: 14px;
+        .menu-section.open .submenu{
+            display:block;
         }
 
-        .errorlist {
-            color: #b91c1c;
-            margin-bottom: 10px;
+        .menu-section.open .menu-toggle{
+            background:var(--sidebar-hover);
         }
 
-        .sidebar-user-context {
-            position: fixed;
-            left: 0;
-            bottom: 0;
-            width: 240px;
-            background: #111827;
-            padding: 14px 20px;
-            border-top: 1px solid rgba(255,255,255,0.1);
-            font-size: 13px;
-            color: #e5e7eb;
-            z-index: 1100;
+        .submenu a{
+            color:var(--sidebar-muted);
+            font-weight:500;
+            padding:9px 12px;
         }
 
-        .sidebar-user-context-title {
-            font-weight: 600;
-            margin-bottom: 8px;
+        .submenu a:hover{
+            color:#fff;
         }
 
-        .sidebar-user-context-email {
-            opacity: 0.75;
-            font-size: 12px;
-            margin-bottom: 8px;
-            word-break: break-word;
+        .user-panel{
+            border-top:1px solid rgba(255,255,255,0.08);
+            padding:16px 18px 18px 18px;
+            font-size:13px;
         }
 
-        .sidebar-user-context-meta {
-            font-size: 12px;
-            opacity: 0.9;
-            line-height: 1.5;
+        .user-panel .label{
+            color:var(--sidebar-muted);
+            font-size:11px;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            margin-top:10px;
+            margin-bottom:2px;
         }
-    </style>
-    <script>
-        function toggleDropdown(id) {
-            var el = document.getElementById(id);
-            if (el.classList.contains('open')) {
-                el.classList.remove('open');
-            } else {
-                // Close other dropdowns
-                document.querySelectorAll('.sidebar .dropdown').forEach(function(d) {
-                    d.classList.remove('open');
-                });
-                el.classList.add('open');
+
+        .main{
+            flex:1;
+            min-width:0;
+            display:flex;
+            flex-direction:column;
+        }
+
+        .topbar{
+            height:var(--topbar-height);
+            background:#fff;
+            border-bottom:1px solid var(--border);
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            padding:0 22px;
+            position:sticky;
+            top:0;
+            z-index:20;
+        }
+
+        .topbar-title{
+            font-size:18px;
+            font-weight:700;
+        }
+
+        .topbar-user{
+            color:var(--muted);
+            font-weight:600;
+        }
+
+        .content{
+            padding:22px;
+        }
+
+        /* ===== Cards / Sections ===== */
+        .card{
+            background:var(--card);
+            border:1px solid var(--border);
+            border-radius:14px;
+            padding:18px;
+            margin-bottom:18px;
+            box-shadow:0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .page-title{
+            font-size:24px;
+            font-weight:700;
+            margin:0 0 6px 0;
+        }
+
+        .page-subtitle{
+            font-size:13px;
+            color:var(--muted);
+            margin:0 0 18px 0;
+        }
+
+        .section-title{
+            font-size:16px;
+            font-weight:700;
+            margin:0 0 12px 0;
+            color:var(--text);
+        }
+
+        .muted{
+            color:var(--muted);
+        }
+
+        /* ===== Tables ===== */
+        .table-wrap{
+            overflow-x:auto;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+        }
+
+        th{
+            text-align:left;
+            font-size:12px;
+            text-transform:uppercase;
+            letter-spacing:.04em;
+            color:var(--muted);
+            padding:10px 12px;
+            border-bottom:1px solid var(--border);
+            background:#f9fafb;
+            white-space:nowrap;
+        }
+
+        td{
+            padding:10px 12px;
+            border-bottom:1px solid #f1f5f9;
+            vertical-align:middle;
+        }
+
+        tr:hover td{
+            background:#fafcff;
+        }
+
+        .numeric{
+            text-align:right;
+            white-space:nowrap;
+            font-variant-numeric:tabular-nums;
+        }
+
+        .summary-row td{
+            font-weight:700;
+            background:#f8fafc;
+            border-top:2px solid var(--border);
+        }
+
+        /* ===== Forms ===== */
+        label{
+            display:block;
+            font-size:13px;
+            font-weight:600;
+            margin-bottom:6px;
+            color:var(--text);
+        }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="date"],
+        input[type="datetime-local"],
+        input[type="number"],
+        select,
+        textarea{
+            width:100%;
+            padding:10px 12px;
+            border:1px solid var(--border);
+            border-radius:10px;
+            background:#fff;
+            color:var(--text);
+            font-size:14px;
+            outline:none;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus{
+            border-color:var(--primary);
+            box-shadow:0 0 0 3px rgba(37,99,235,0.12);
+        }
+
+        textarea{
+            min-height:100px;
+            resize:vertical;
+        }
+
+        /* ===== Badges ===== */
+        .badge{
+            display:inline-block;
+            padding:4px 10px;
+            border-radius:999px;
+            font-size:12px;
+            font-weight:600;
+            line-height:1.2;
+            white-space:nowrap;
+        }
+
+        .badge-pending{
+            background:var(--warning-soft);
+            color:var(--warning);
+        }
+
+        .badge-info{
+            background:var(--primary-soft);
+            color:var(--primary);
+        }
+
+        .badge-success{
+            background:var(--success-soft);
+            color:var(--success);
+        }
+
+        .badge-danger{
+            background:var(--danger-soft);
+            color:var(--danger);
+        }
+
+        .badge-secondary{
+            background:var(--secondary-soft);
+            color:var(--secondary);
+        }
+
+        .badge-purple{
+            background:var(--purple-soft);
+            color:var(--purple);
+        }
+
+        /* ===== Buttons ===== */
+        .btn{
+            display:inline-block;
+            padding:10px 14px;
+            border-radius:10px;
+            font-size:14px;
+            font-weight:600;
+            text-decoration:none;
+            border:1px solid transparent;
+            cursor:pointer;
+            transition:.15s ease-in-out;
+            line-height:1.2;
+        }
+
+        .btn:hover{
+            text-decoration:none;
+            transform:translateY(-1px);
+        }
+
+        .btn-primary{
+            background:var(--primary);
+            color:#fff;
+        }
+
+        .btn-primary:hover{
+            filter:brightness(.96);
+        }
+
+        .btn-secondary{
+            background:#fff;
+            color:var(--text);
+            border-color:var(--border);
+        }
+
+        .btn-success{
+            background:var(--success);
+            color:#fff;
+        }
+
+        .btn-warning{
+            background:var(--warning);
+            color:#fff;
+        }
+
+        .btn-danger{
+            background:var(--danger);
+            color:#fff;
+        }
+
+        .btn-light{
+            background:#fff;
+            color:var(--text);
+            border:1px solid var(--border);
+        }
+
+        .btn-block{
+            width:100%;
+            display:block;
+            text-align:center;
+        }
+
+        /* ===== Text State Helpers ===== */
+        .text-success{ color:var(--success); font-weight:600; }
+        .text-warning{ color:var(--warning); font-weight:600; }
+        .text-danger{ color:var(--danger); font-weight:600; }
+        .text-info{ color:var(--primary); font-weight:600; }
+
+        /* ===== Alerts ===== */
+        .alert{
+            border-radius:12px;
+            padding:12px 14px;
+            margin-bottom:16px;
+            border:1px solid transparent;
+            font-weight:500;
+        }
+
+        .alert-success{
+            background:var(--success-soft);
+            color:var(--success);
+            border-color:#bbf7d0;
+        }
+
+        .alert-warning{
+            background:var(--warning-soft);
+            color:var(--warning);
+            border-color:#fde68a;
+        }
+
+        .alert-error{
+            background:var(--danger-soft);
+            color:var(--danger);
+            border-color:#fecaca;
+        }
+
+        .alert-info{
+            background:var(--info-soft);
+            color:var(--info);
+            border-color:#a5f3fc;
+        }
+
+        /* ===== Dashboard cards ===== */
+        .stats-grid{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));
+            gap:16px;
+            margin-bottom:20px;
+        }
+
+        .stat-card{
+            background:#fff;
+            border:1px solid var(--border);
+            border-radius:14px;
+            padding:18px;
+            box-shadow:0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        .stat-label{
+            font-size:13px;
+            color:var(--muted);
+            margin-bottom:8px;
+        }
+
+        .stat-value{
+            font-size:28px;
+            font-weight:700;
+            line-height:1.1;
+        }
+
+        .stat-note{
+            margin-top:6px;
+            font-size:12px;
+            color:var(--muted);
+        }
+
+        /* ===== Auth pages ===== */
+        .auth-wrap{
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:24px;
+        }
+
+        .auth-card{
+            width:100%;
+            max-width:460px;
+            background:#fff;
+            border:1px solid var(--border);
+            border-radius:16px;
+            padding:24px;
+            box-shadow:0 10px 30px rgba(15,23,42,0.08);
+        }
+
+        /* ===== Utilities ===== */
+        .grid-2{
+            display:grid;
+            grid-template-columns:repeat(2, minmax(0, 1fr));
+            gap:16px;
+        }
+
+        .grid-3{
+            display:grid;
+            grid-template-columns:repeat(3, minmax(0, 1fr));
+            gap:16px;
+        }
+
+        .mb-0{ margin-bottom:0; }
+        .mb-1{ margin-bottom:8px; }
+        .mb-2{ margin-bottom:12px; }
+        .mb-3{ margin-bottom:16px; }
+        .mb-4{ margin-bottom:20px; }
+
+        @media (max-width: 992px){
+            .sidebar{
+                width:220px;
+            }
+
+            .content{
+                padding:16px;
+            }
+
+            .grid-2,
+            .grid-3{
+                grid-template-columns:1fr;
             }
         }
-    </script>
+
+        @media (max-width: 768px){
+            .app-shell{
+                flex-direction:column;
+            }
+
+            .sidebar{
+                position:relative;
+                width:100%;
+                height:auto;
+            }
+
+            .topbar{
+                position:relative;
+            }
+        }
+    </style>
+
 </head>
 <body>
-    {% if request.session.user_email %}
+{% if request.session.user_email %}
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">Savannah Stores</div>
+
+        <div class="sidebar-scroll">
+            {% if session_features.dashboard %}
+            <div class="menu-section">
+                <a class="menu-link" href="/dashboard/">Dashboard</a>
+            </div>
+            {% endif %}
+
+            <div class="menu-section open">
+                <button class="menu-toggle" type="button">Requests</button>
+                <div class="submenu">
+                    {% if session_features.create_request %}
+                    <a href="/requests/create/">Create Request</a>
+                    {% endif %}
+
+                    {% if session_features.my_requests %}
+                    <a href="/requests/my-requests/">My Requests</a>
+                    {% endif %}
+
+                    {% if session_features.approvals %}
+                    <a href="/requests/approvals/">Approvals</a>
+                    {% endif %}
+
+                    {% if session_features.collections or request.session.role_name == "Stores Controller" %}
+                    <a href="{% url 'collection_inbox' %}">Pending Collections</a>
+                    <a href="{% url 'collection_history' %}">Collection History</a>
+                    <a href="{% url 'returns_list' %}">Returns</a>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if request.session.role_name == "Stores Controller" %}
+            <div class="menu-section">
+                <button class="menu-toggle" type="button">Inventory Management</button>
+                <div class="submenu">
+                    <a href="{% url 'inventory_list' %}">Inventory Items</a>
+                    <a href="{% url 'item_type_list' %}">Item Types</a>
+                    <a href="{% url 'uom_list' %}">UOMs</a>
+                    <a href="{% url 'category_list' %}">Categories</a>
+                    <a href="{% url 'supplier_list' %}">Suppliers</a>
+                    <a href="{% url 'delivery_list' %}">Deliveries</a>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if session_features.reports %}
+    <div class="menu-section">
+        <button class="menu-toggle" type="button">Reports</button>
+                <div class="submenu">
+                    <a href="{% url 'stock_reports' %}">Stock Reports</a>
+                    <a href="{% url 'farmer_reports' %}">Farmer Reports</a>
+                    <a href="{% url 'request_tracker' %}">Request Tracker</a>
+                    <a href="{% url 'exception_reports' %}">Exception Reports</a>
+                    <a href="{% url 'department_reports' %}">Department Reports</a>
+                    <a href="{% url 'reversal_reports' %}">Reversal Reports</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="user-panel">
+            <div class="label">Name</div>
+            <div>{{ session_user_name|default:"-" }}</div>
+
+            <div class="label">Email</div>
+            <div>{{ session_user_email|default:"-" }}</div>
+
+            <div class="label">Department</div>
+            <div>{{ session_department_name|default:session_department_code|default:"-" }}</div>
+
+            <div class="label">Role</div>
+            <div>{{ session_role_name|default:"-" }}</div>
+
+            <form method="post" action="{% url 'sql_logout' %}" style="margin-top:14px;">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-light btn-block">Logout</button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main">
         <div class="topbar">
-            <div style="width:100%;display:flex;justify-content:space-between;align-items:center;">
-                <span><strong>Savannah Stores</strong></span>
-                <span>{{ session_user_name|default:session_user_email }}</span>
-            </div>
+            <div class="topbar-title">Savannah Stores</div>
+            <div class="topbar-user">{{ session_user_name|default:session_user_email }}</div>
         </div>
-        <div class="layout">
 
-            <div class="sidebar">
-                {% if session_features.dashboard %}
-                <a href="/dashboard/">Dashboard</a>
-                {% endif %}
-
-                <!-- Requests Group -->
-                <div class="dropdown" id="requestsDropdown">
-                    <button class="dropdown-btn" type="button" onclick="toggleDropdown('requestsDropdown')">Requests</button>
-                    <div class="dropdown-content">
-                        {% if session_features.create_request %}
-                        <a href="/requests/create/">Create Request</a>
-                        {% endif %}
-                        {% if session_features.my_requests %}
-                        <a href="/requests/my-requests/">My Requests</a>
-                        {% endif %}
-                        {% if session_features.approvals %}
-                        <a href="/requests/approvals/">Approvals</a>
-                        {% endif %}
-                        {% if session_features.collections or request.session.role_name == "Stores Controller" %}
-                        <a href="{% url 'collection_inbox' %}">Pending Collections</a>
-                        <a href="{% url 'collection_history' %}">Collection History</a>
-                        <a href="{% url 'returns_list' %}">Returns</a>
-                        {% endif %}
+        <div class="content">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert
+                        {% if message.tags == 'success' %}alert-success
+                        {% elif message.tags == 'warning' %}alert-warning
+                        {% elif message.tags == 'error' %}alert-error
+                        {% else %}alert-info{% endif %}">
+                        {{ message }}
                     </div>
-                </div>
+                {% endfor %}
+            {% endif %}
 
-                <!-- Inventory Management Group -->
-                {% if request.session.role_name == "Stores Controller" %}
-                <div class="dropdown" id="inventoryDropdown">
-                    <button class="dropdown-btn" type="button" onclick="toggleDropdown('inventoryDropdown')">Inventory Management</button>
-                    <div class="dropdown-content">
-                        <a href="{% url 'inventory_list' %}" class="nav-link">
-                            <i class="bi bi-box-seam"></i>
-                            <span>Inventory Items</span>
-                        </a>
-                        <a href="{% url 'item_type_list' %}" class="nav-link">
-                            <i class="bi bi-tags"></i>
-                            <span>Item Types</span>
-                        </a>
-                        <a href="{% url 'uom_list' %}" class="nav-link">
-                            <i class="bi bi-rulers"></i>
-                            <span>UOMs</span>
-                        </a>
-                        <a href="{% url 'category_list' %}" class="nav-link">
-                            <i class="bi bi-collection"></i>
-                            <span>Categories</span>
-                        </a>
-                        <a href="{% url 'supplier_list' %}" class="nav-link">
-                            <i class="bi bi-truck"></i>
-                            <span>Suppliers</span>
-                        </a>
-                        <a href="{% url 'delivery_list' %}" class="nav-link">
-                            <i class="bi bi-truck"></i>
-                            <span>Deliveries</span>
-                        </a>
-                    </div>
-                </div>
-                {% endif %}
-
-                <!-- Reports Group -->
-                {% if session_features.reports or request.session.role_name == "Stores Controller" or request.session.role_name == "Approver" or request.session.role_name == "Authorizer" %}
-                <div class="dropdown" id="reportsDropdown">
-                    <button class="dropdown-btn" type="button" onclick="toggleDropdown('reportsDropdown')">Reports</button>
-                    <div class="dropdown-content">
-                        <a href="{% url 'stock_reports' %}">Stock Reports</a>
-                        <a href="{% url 'farmer_reports' %}">Farmer Reports</a>
-                        <a href="{% url 'request_tracker' %}">Request Tracker</a>
-                        <a href="{% url 'exception_reports' %}">Exception Reports</a>
-                        <a href="{% url 'department_reports' %}">Department Reports</a>
-                        <a href="{% url 'reversal_reports' %}">Reversal Reports</a>
-                    </div>
-                </div>
-                {% endif %}
-
-                <div class="sidebar-user-context">
-                    <div class="sidebar-user-context-title">User Context</div>
-                    <div><strong>Name:</strong> {{ session_user_name|default:"-" }}</div>
-                    <div class="sidebar-user-context-email">{{ session_user_email|default:"" }}</div>
-                    <div class="sidebar-user-context-meta">
-                        <div><strong>Dept:</strong> {{ session_department_name|default:session_department_code|default:"-" }}</div>
-                        <div><strong>Role:</strong> {{ session_role_name|default:"-" }}</div>
-                    </div>
-                    <form method="post" action="{% url 'sql_logout' %}" class="logout-inline-form" style="margin-top:10px;">
-                        {% csrf_token %}
-                        <button type="submit" class="logout-link-button">Logout</button>
-                    </form>
-                </div>
-            </div>
-            <div class="content">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="card" style="border-left: 4px solid #1f2937;">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                {% endif %}
-                {% block content %}{% endblock %}
-            </div>
+            {% block content %}{% endblock %}
         </div>
-    {% else %}
+    </main>
+</div>
+{% else %}
+<div class="auth-wrap">
+    <div class="auth-card">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert
+                    {% if message.tags == 'success' %}alert-success
+                    {% elif message.tags == 'warning' %}alert-warning
+                    {% elif message.tags == 'error' %}alert-error
+                    {% else %}alert-info{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+
         {% block auth_content %}{% endblock %}
-    {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<script>
+    document.querySelectorAll(".menu-toggle").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            btn.parentElement.classList.toggle("open");
+        });
+    });
+</script>
 </body>
 </html>
-
-
-

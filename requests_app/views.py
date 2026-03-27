@@ -1325,7 +1325,7 @@ def my_requests(request):
 
 
 @sql_login_required
-@feature_required("reports")
+@feature_required("my_requests")
 def request_details(request, request_number):
     user_email = get_session_user_email(request)
     details = get_request_details(request_number, user_email)
@@ -1351,7 +1351,6 @@ def request_details(request, request_number):
         },
     )
 
-
 # ============================================================
 # APPROVALS
 # ============================================================
@@ -1360,6 +1359,7 @@ def request_details(request, request_number):
 @feature_required("approvals")
 def approval_inbox(request):
     user_email = get_session_user_email(request)
+    print("USER:", user_email)
     mode = request.GET.get("mode", "Pending").strip() or "Pending"
     approvals = get_approval_inbox(user_email, mode)
 

@@ -1,125 +1,163 @@
-﻿{% extends 'base.html' %}
+﻿{% extends "base.html" %}
+{% load app_extras %}
 
 {% block content %}
 <div class="card">
     {% if not_found %}
-        <h1>Request Not Found</h1>
-        <p>No request details were found for {{ request_number }}.</p>
-        <p><a href="/requests/my-requests/">Back to My Requests</a></p>
+        <div class="page-title">Request Not Found</div>
+        <div class="muted">No request details were found for {{ request_number }}.</div>
+        <div style="margin-top:12px;">
+            <a href="/requests/my-requests/" class="btn btn-secondary">Back to My Requests</a>
+        </div>
     {% else %}
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+
+        <!-- HEADER -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
             <div>
-                <h1 style="margin:0;">Request Details</h1>
+                <div class="page-title">Request Details</div>
                 <div class="muted">{{ header.RequestNumber }}</div>
             </div>
-            <div>
-                <a href="/requests/my-requests/">Back to My Requests</a>
-            </div>
+            <a href="/requests/my-requests/" class="btn btn-secondary">Back</a>
         </div>
 
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px;">
-            <div class="card" style="margin-bottom:0;">
+        <!-- SUMMARY CARDS -->
+        <div class="grid-3">
+            <div class="card">
+                <div class="section-title">Request Info</div>
                 <div><strong>Request Number:</strong> {{ header.RequestNumber }}</div>
                 <div><strong>Request Date:</strong> {{ header.RequestDate|date:"d-m-Y H:i" }}</div>
                 <div><strong>Required Date:</strong> {{ header.RequiredDate|date:"d-m-Y" }}</div>
-                <div><strong>Status:</strong> {{ header.StatusName }}</div>
+                <div>
+                    <strong>Status:</strong>
+                    <span class="{{ header.StatusName|status_badge_class }}">
+                        {{ header.StatusName }}
+                    </span>
+                </div>
             </div>
 
-            <div class="card" style="margin-bottom:0;">
-                <div><strong>Farmer:</strong> {{ header.FarmerName }}</div>
-                <div><strong>Grower Number:</strong> {{ header.GrowerNumber }}</div>
+            <div class="card">
+                <div class="section-title">Farmer</div>
+                <div><strong>Name:</strong> {{ header.FarmerName }}</div>
+                <div><strong>Grower:</strong> {{ header.GrowerNumber }}</div>
                 <div><strong>Department:</strong> {{ header.DepartmentCode }}</div>
                 <div><strong>Requested By:</strong> {{ header.RequestorEmail }}</div>
             </div>
 
-            <div class="card" style="margin-bottom:0;">
+            <div class="card">
+                <div class="section-title">Collection</div>
                 <div><strong>Collector:</strong> {{ header.CollectorName }}</div>
-                <div><strong>Collector ID:</strong> {{ header.CollectorNationalID }}</div>
+                <div><strong>ID:</strong> {{ header.CollectorNationalID }}</div>
                 <div><strong>Truck:</strong> {{ header.TruckRegistration }}</div>
                 <div><strong>Trailer:</strong> {{ header.TrailerRegistration|default:"-" }}</div>
             </div>
         </div>
 
+        <!-- JUSTIFICATION -->
         <div class="card">
-            <h3>Justification</h3>
-            <div>{{ header.Justification|default:"-" }}</div>
+            <div class="section-title">Justification</div>
+            <div class="muted">{{ header.Justification|default:"-" }}</div>
+
             <div style="margin-top:10px;">
                 <strong>Authorization Required:</strong>
-                {% if header.AuthorizationRequired %}Yes{% else %}No{% endif %}
+                {% if header.AuthorizationRequired %}
+                    <span class="badge badge-warning">Yes</span>
+                {% else %}
+                    <span class="badge badge-success">No</span>
+                {% endif %}
             </div>
         </div>
 
+        <!-- ITEMS -->
         <div class="card">
-            <h3>Requested Items</h3>
-            <table style="width:100%;border-collapse:collapse;background:white;">
-                <thead>
-                    <tr>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Line</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Item Code</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Item Name</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Requested</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Issued</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Reserved</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">UOM</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Stock Status</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Line Status</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for line in lines %}
-                    <tr>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.LineNumber }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.ItemCode }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.ItemName }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityRequested|floatformat:0 }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityIssued|floatformat:0 }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.QuantityReserved|floatformat:0 }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.UOMCode }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.StockStatus }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ line.LineStatus }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="9" style="padding:12px;">No line items found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="section-title">Requested Items</div>
+
+            {% if lines %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Line</th>
+                            <th>Item</th>
+                            <th class="numeric">Requested</th>
+                            <th class="numeric">Issued</th>
+                            <th class="numeric">Reserved</th>
+                            <th>UOM</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for line in lines %}
+                        <tr>
+                            <td>{{ line.LineNumber }}</td>
+                            <td>
+                                <strong>{{ line.ItemName }}</strong><br>
+                                <span class="muted">{{ line.ItemCode }}</span>
+                            </td>
+                            <td class="numeric">{{ line.QuantityRequested|number }}</td>
+                            <td class="numeric">{{ line.QuantityIssued|number }}</td>
+                            <td class="numeric">{{ line.QuantityReserved|number }}</td>
+                            <td>{{ line.UOMCode }}</td>
+                            <td>
+                                <span class="{{ line.StockStatus|status_badge_class }}">
+                                    {{ line.StockStatus }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <div class="muted">No line items found.</div>
+            {% endif %}
         </div>
 
+        <!-- APPROVALS -->
         <div class="card">
-            <h3>Approvals</h3>
-            <table style="width:100%;border-collapse:collapse;background:white;">
-                <thead>
-                    <tr>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Level</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Approver</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Role</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Status</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Current</th>
-                        <th style="text-align:left;padding:12px;border-bottom:1px solid #e5e7eb;">Created</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for approval in approvals %}
-                    <tr>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApprovalLevel }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApproverEmail }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApprovalRole }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.ApprovalStatusName }}</td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">
-                            {% if approval.IsCurrent %}Yes{% else %}No{% endif %}
-                        </td>
-                        <td style="padding:12px;border-bottom:1px solid #f1f5f9;">{{ approval.CreatedDate|date:"d-m-Y H:i" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" style="padding:12px;">No approvals found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="section-title">Approvals</div>
+
+            {% if approvals %}
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Level</th>
+                            <th>Approver</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Current</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for approval in approvals %}
+                        <tr {% if approval.IsCurrent %}class="row-highlight"{% endif %}>
+                            <td>{{ approval.ApprovalLevel }}</td>
+                            <td>{{ approval.ApproverEmail }}</td>
+                            <td>{{ approval.ApprovalRole }}</td>
+                            <td>
+                                <span class="{{ approval.ApprovalStatusName|status_badge_class }}">
+                                    {{ approval.ApprovalStatusName }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if approval.IsCurrent %}
+                                    <span class="badge badge-danger">Active</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Done</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ approval.CreatedDate|date:"d-m-Y H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <div class="muted">No approvals found.</div>
+            {% endif %}
         </div>
+
     {% endif %}
 </div>
 {% endblock %}

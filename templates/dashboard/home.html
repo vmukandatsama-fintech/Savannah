@@ -1,25 +1,43 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Dashboard</h1>
-<p class="muted">Welcome to Savannah Stores.</p>
 
-<div class="stats">
-    <div class="stat-box">
-        <div class="muted">Open Requests</div>
-        <h2>0</h2>
+<div class="page-header">
+    <h1>Dashboard</h1>
+    <p class="muted">Welcome to Savannah Stores.</p>
+</div>
+
+<div class="dashboard-grid">
+    <div class="dashboard-card">
+        <div class="card-icon">📄</div>
+        <div class="card-content">
+            <div class="card-title">Open Requests</div>
+            <div class="card-value">{{ open_requests|default:"0" }}</div>
+        </div>
     </div>
-    <div class="stat-box">
-        <div class="muted">Pending Approvals</div>
-        <h2>0</h2>
+
+    <div class="dashboard-card">
+        <div class="card-icon">✅</div>
+        <div class="card-content">
+            <div class="card-title">Pending Approvals</div>
+            <div class="card-value">{{ pending_approvals|default:"0" }}</div>
+        </div>
     </div>
-    <div class="stat-box">
-        <div class="muted">Pending Collections</div>
-        <h2>0</h2>
+
+    <div class="dashboard-card">
+        <div class="card-icon">📦</div>
+        <div class="card-content">
+            <div class="card-title">Pending Collections</div>
+            <div class="card-value">{{ pending_collections|default:"0" }}</div>
+        </div>
     </div>
-    <div class="stat-box">
-        <div class="muted">Low Stock Items</div>
-        <h2>0</h2>
+
+    <div class="dashboard-card danger">
+        <div class="card-icon">⚠️</div>
+        <div class="card-content">
+            <div class="card-title">Low Stock Items</div>
+            <div class="card-value">{{ low_stock_items|default:"0" }}</div>
+        </div>
     </div>
 </div>
 
@@ -27,4 +45,5 @@
     <h3>Next Build Target</h3>
     <p>Request cart page.</p>
 </div>
+
 {% endblock %}

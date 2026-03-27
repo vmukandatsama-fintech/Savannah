@@ -1,69 +1,94 @@
 ﻿{% extends "base.html" %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Approval Inbox</h2>
+<div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
         <div>
-            <span class="badge bg-danger">Pending: {{ pending_count }}</span>
+            <div class="page-title">Approval Inbox</div>
+            <div class="page-subtitle">Review and action approval requests</div>
+        </div>
+        <div>
+            <span class="badge badge-danger">Pending: {{ pending_count }}</span>
         </div>
     </div>
+</div>
 
-    <form method="get" class="mb-3">
-        <div class="row g-2">
-            <div class="col-md-3">
-                <select name="mode" class="form-select" onchange="this.form.submit()">
-                    <option value="Pending" {% if mode == "Pending" %}selected{% endif %}>Pending</option>
-                    <option value="Processed" {% if mode == "Processed" %}selected{% endif %}>Processed</option>
-                    <option value="All" {% if mode == "All" %}selected{% endif %}>All</option>
-                </select>
-            </div>
+<div class="card">
+    <form method="get" style="display:flex; gap:12px; align-items:end; flex-wrap:wrap; margin:0;">
+        <div style="min-width:220px;">
+            <label for="mode">View</label>
+            <select name="mode" id="mode" onchange="this.form.submit()">
+                <option value="Pending" {% if mode == "Pending" %}selected{% endif %}>Pending</option>
+                <option value="Processed" {% if mode == "Processed" %}selected{% endif %}>Processed</option>
+                <option value="All" {% if mode == "All" %}selected{% endif %}>All</option>
+            </select>
         </div>
     </form>
+</div>
 
-    <div class="card">
-        <div class="card-body">
-            {% if approvals %}
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Request Number</th>
-                            <th>Request Date</th>
-                            <th>Requestor</th>
-                            <th>Department</th>
-                            <th>Farmer</th>
-                            <th>Approval Level</th>
-                            <th>Status</th>
-                            <th>Current</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for row in approvals %}
-                        <tr>
-                            <td>{{ row.RequestNumber }}</td>
-                            <td>{{ row.RequestDate|date:"d-m-Y H:i" }}</td>
-                            <td>{{ row.RequestorEmail }}</td>
-                            <td>{{ row.DepartmentCode }}</td>
-                            <td>{{ row.FarmerName|default:"-" }}</td>
-                            <td>{{ row.ApprovalLevel }}</td>
-                            <td>{{ row.ApprovalStatusName }}</td>
-                            <td>{% if row.IsCurrent %}Yes{% else %}No{% endif %}</td>
-                            <td>
-                                <a href="{% url 'approval_detail' row.RequestNumber %}" class="btn btn-sm btn-primary">
-                                    Open
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            {% else %}
-            <p class="mb-0">No approval items found.</p>
-            {% endif %}
-        </div>
+<div class="card">
+    <div class="section-title">Approval Queue</div>
+
+    {% if approvals %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Request Number</th>
+                    <th>Request Date</th>
+                    <th>Requestor</th>
+                    <th>Department</th>
+                    <th>Farmer</th>
+                    <th>Level</th>
+                    <th>Status</th>
+                    <th>Current</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in approvals %}
+                <tr>
+                    <td>
+                        <strong>{{ row.RequestNumber }}</strong>
+                    </td>
+                    <td>{{ row.RequestDate|date:"d-m-Y H:i" }}</td>
+                    <td>{{ row.RequestorEmail }}</td>
+                    <td>{{ row.DepartmentName|default:row.DepartmentCode }}</td>
+                    <td>{{ row.FarmerName|default:"-" }}</td>
+                    <td>{{ row.ApprovalLevel }}</td>
+
+                    <td>
+                        {% if row.ApprovalStatusName == "Approved" %}
+                            <span class="badge badge-success">Approved</span>
+                        {% elif row.ApprovalStatusName == "Rejected" %}
+                            <span class="badge badge-danger">Rejected</span>
+                        {% elif row.ApprovalStatusName == "Skipped" %}
+                            <span class="badge badge-secondary">Skipped</span>
+                        {% elif row.ApprovalStatusName in "Pending,Pending Approval,Pending Authorization" %}
+                            <span class="badge badge-pending">{{ row.ApprovalStatusName }}</span>
+                        {% else %}
+                            <span class="badge badge-info">{{ row.ApprovalStatusName }}</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if row.IsCurrent %}
+                            <span class="badge badge-info">Current</span>
+                        {% else %}
+                            <span class="muted">No</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <a href="{% url 'approval_detail' row.RequestNumber %}" class="btn btn-primary">Open</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <div class="muted">No approval items found.</div>
+    {% endif %}
 </div>
 {% endblock %}

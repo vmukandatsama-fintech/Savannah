@@ -1,3 +1,4 @@
+MOVE FILE TO archive/views.py.bak_20260321_234754
 import json
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
