@@ -15,22 +15,24 @@ def _fetch_first_resultset_as_dicts(cursor) -> list[dict[str, Any]]:
     return []
 
 
-def get_approval_inbox(approver_email: str, mode: str = "Pending") -> list[dict[str, Any]]:
-    print("GET_APPROVAL_INBOX EMAIL:", repr(approver_email))
-    print("GET_APPROVAL_INBOX MODE:", repr(mode))
+def get_approval_inbox(
+    approver_email: str | None = None,
+    mode: str = "Pending",
+    show_all: bool = False,
+) -> list[dict[str, Any]]:
+    mode = (mode or "Pending").strip()
 
     with connection.cursor() as cursor:
         cursor.execute(
-            "EXEC dbo.sp_GetApprovalInbox @ApproverEmail=%s, @Mode=%s",
-            [approver_email, mode],
+            """
+            EXEC dbo.sp_GetApprovalInbox
+                @ApproverEmail=%s,
+                @Mode=%s,
+                @ShowAll=%s
+            """,
+            [approver_email, mode, 1 if show_all else 0],
         )
-        rows = _fetch_first_resultset_as_dicts(cursor)
-
-    print("GET_APPROVAL_INBOX ROW COUNT:", len(rows))
-    if rows:
-        print("GET_APPROVAL_INBOX FIRST ROW:", rows[0])
-
-    return rows
+        return _fetch_first_resultset_as_dicts(cursor)
 
 
 def get_approval_history(request_number: str) -> list[dict[str, Any]]:
@@ -42,7 +44,12 @@ def get_approval_history(request_number: str) -> list[dict[str, Any]]:
         return _fetch_first_resultset_as_dicts(cursor)
 
 
-def process_approval(request_number: str, approver_email: str, decision: str, comments: str = ""):
+def process_approval(
+    request_number: str,
+    approver_email: str,
+    decision: str,
+    comments: str = "",
+) -> None:
     with connection.cursor() as cursor:
         cursor.execute(
             """

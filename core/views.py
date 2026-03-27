@@ -4,7 +4,12 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 
 from services.auth_service import login_sql_user
-from services.dashboard_service import get_dashboard_cards, get_dashboard_metrics
+from services.dashboard_service import (
+    get_dashboard_alerts,
+    get_dashboard_cards,
+    get_dashboard_metrics,
+    get_recent_activity,
+)
 from core.decorators import feature_required
 from core.session_auth import sql_login_required
 
@@ -12,14 +17,18 @@ from core.session_auth import sql_login_required
 @sql_login_required
 @feature_required("dashboard")
 def dashboard_view(request):
-    user_email = request.session.get("user_email")
-    role_name = request.session.get("role_name")
+    user_email = request.session.get("user_email", "")
+    role_name = request.session.get("role_name", "")
 
     metrics = get_dashboard_metrics(
         user_email=user_email,
         role_name=role_name,
     )
     cards = get_dashboard_cards(role_name)
+    recent_activity = get_recent_activity(user_email, role_name)
+    alerts = get_dashboard_alerts(user_email, role_name)
+
+    print("DASHBOARD DEBUG:", user_email, role_name, len(recent_activity), len(alerts))
 
     return render(
         request,
@@ -28,6 +37,8 @@ def dashboard_view(request):
             "metrics": metrics,
             "cards": cards,
             "role_name": role_name,
+            "recent_activity": recent_activity,
+            "alerts": alerts,
         },
     )
 
@@ -87,4 +98,4 @@ def sql_test(request):
 
 
 def root_redirect_view(request):
-    return redirect('sql_login')
+    return redirect("sql_login")

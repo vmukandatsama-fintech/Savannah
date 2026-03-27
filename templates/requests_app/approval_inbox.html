@@ -5,7 +5,13 @@
     <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
         <div>
             <div class="page-title">Approval Inbox</div>
-            <div class="page-subtitle">Review and action approval requests</div>
+            <div class="page-subtitle">
+                {% if approval_view_all %}
+                    Track all approvals across the system
+                {% else %}
+                    Review and action approval requests
+                {% endif %}
+            </div>
         </div>
         <div>
             <span class="badge badge-danger">Pending: {{ pending_count }}</span>
@@ -27,7 +33,9 @@
 </div>
 
 <div class="card">
-    <div class="section-title">Approval Queue</div>
+    <div class="section-title">
+        {% if approval_view_all %}Approval Tracker{% else %}Approval Queue{% endif %}
+    </div>
 
     {% if approvals %}
     <div class="table-wrap">
@@ -52,10 +60,10 @@
                         <strong>{{ row.RequestNumber }}</strong>
                     </td>
                     <td>{{ row.RequestDate|date:"d-m-Y H:i" }}</td>
-                    <td>{{ row.RequestorEmail }}</td>
-                    <td>{{ row.DepartmentName|default:row.DepartmentCode }}</td>
+                    <td>{{ row.RequestorEmail|default:"-" }}</td>
+                    <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
                     <td>{{ row.FarmerName|default:"-" }}</td>
-                    <td>{{ row.ApprovalLevel }}</td>
+                    <td>{{ row.ApprovalLevel|default:"-" }}</td>
 
                     <td>
                         {% if row.ApprovalStatusName == "Approved" %}
@@ -64,10 +72,10 @@
                             <span class="badge badge-danger">Rejected</span>
                         {% elif row.ApprovalStatusName == "Skipped" %}
                             <span class="badge badge-secondary">Skipped</span>
-                        {% elif row.ApprovalStatusName in "Pending,Pending Approval,Pending Authorization" %}
+                        {% elif row.ApprovalStatusName == "Pending" or row.ApprovalStatusName == "Pending Approval" or row.ApprovalStatusName == "Pending Authorization" %}
                             <span class="badge badge-pending">{{ row.ApprovalStatusName }}</span>
                         {% else %}
-                            <span class="badge badge-info">{{ row.ApprovalStatusName }}</span>
+                            <span class="badge badge-info">{{ row.ApprovalStatusName|default:"-" }}</span>
                         {% endif %}
                     </td>
 
@@ -80,7 +88,9 @@
                     </td>
 
                     <td>
-                        <a href="{% url 'approval_detail' row.RequestNumber %}" class="btn btn-primary">Open</a>
+                        <a href="{% url 'approval_detail' row.RequestNumber %}" class="btn btn-primary">
+                            {% if approval_view_all %}View{% else %}Open{% endif %}
+                        </a>
                     </td>
                 </tr>
                 {% endfor %}

@@ -3,23 +3,40 @@
 {% block content %}
 <style>
     .page-header {
-        margin-bottom: 20px;
+        margin-bottom: 18px;
+    }
+
+    .page-header h1 {
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text);
     }
 
     .request-header-card,
     .catalog-card,
     .cart-card {
-        background: white;
-        border-radius: 10px;
-        padding: 14px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-        margin-bottom: 14px;
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        margin-bottom: 18px;
+    }
+
+    .request-header-card h3,
+    .catalog-card h3,
+    .cart-card h3 {
+        margin: 0 0 14px 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text);
     }
 
     .request-grid {
         display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 10px;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
     }
 
     .request-grid .full-width {
@@ -28,35 +45,47 @@
 
     .field label {
         display: block;
-        font-size: 14px;
+        font-size: 13px;
+        font-weight: 600;
         margin-bottom: 6px;
-        color: #374151;
+        color: var(--text);
     }
 
     .field input,
     .field select,
     .field textarea {
         width: 100%;
-        padding: 8px;
-        border: 1px solid #d1d5db;
-        border-radius: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: #fff;
+        color: var(--text);
+        font-size: 14px;
         box-sizing: border-box;
+        outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus,
+    .field textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
     }
 
     .field textarea {
-        min-height: 64px;
+        min-height: 84px;
         resize: vertical;
     }
 
     .cart-layout {
         display: grid;
-        grid-template-columns: 1.5fr 1fr;
-        gap: 14px;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 18px;
         align-items: start;
     }
 
     .catalog-header {
-        margin-bottom: 10px;
+        margin-bottom: 12px;
     }
 
     .catalog-title-row {
@@ -64,7 +93,8 @@
         justify-content: space-between;
         align-items: baseline;
         gap: 10px;
-        margin-bottom: 6px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
     }
 
     .catalog-title-row h3 {
@@ -74,7 +104,7 @@
     .catalog-filter-grid {
         display: grid;
         grid-template-columns: 2fr 1fr 1fr 1fr;
-        gap: 6px;
+        gap: 8px;
         align-items: end;
     }
 
@@ -84,44 +114,51 @@
 
     .catalog-filter-grid .field label {
         font-size: 12px;
-        margin-bottom: 3px;
+        margin-bottom: 4px;
     }
 
     .catalog-filter-grid .field input,
     .catalog-filter-grid .field select {
-        min-height: 32px;
-        padding: 6px;
+        min-height: 36px;
+        padding: 7px 9px;
         font-size: 12px;
-        border-radius: 6px;
+        border-radius: 8px;
     }
 
     .catalog-filter-actions {
         display: flex;
-        gap: 6px;
-        margin-top: 6px;
+        gap: 8px;
+        margin-top: 8px;
     }
 
     .catalog-filter-actions .btn {
-        padding: 6px 10px;
+        padding: 7px 10px;
         font-size: 12px;
     }
 
     .catalog-list {
         display: grid;
-        gap: 8px;
+        gap: 10px;
         max-height: 520px;
         overflow-y: auto;
         padding-right: 4px;
     }
 
     .item-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 10px;
-        padding: 10px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
         display: grid;
         grid-template-columns: minmax(0, 1fr) 72px 82px 88px;
-        gap: 8px;
+        gap: 10px;
         align-items: center;
+        background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+    }
+
+    .item-card:hover {
+        border-color: #d7deea;
+        box-shadow: 0 4px 12px rgba(15,23,42,0.06);
     }
 
     .item-uom,
@@ -133,21 +170,30 @@
     }
 
     .item-name {
-        font-weight: bold;
+        font-weight: 700;
+        color: var(--text);
     }
 
     .item-meta {
-        color: #6b7280;
+        color: var(--muted);
         font-size: 13px;
         margin-top: 4px;
+        line-height: 1.4;
     }
 
     .qty-box input {
         width: 100%;
         padding: 8px;
-        border: 1px solid #d1d5db;
+        border: 1px solid var(--border);
         border-radius: 8px;
         box-sizing: border-box;
+        text-align: center;
+    }
+
+    .qty-box input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+        outline: none;
     }
 
     .btn {
@@ -155,28 +201,40 @@
         color: white;
         border: none;
         padding: 10px 14px;
-        border-radius: 8px;
+        border-radius: 10px;
         cursor: pointer;
         text-decoration: none;
         display: inline-block;
+        font-size: 14px;
+        font-weight: 600;
+        line-height: 1.2;
+        transition: .15s ease-in-out;
     }
 
     .btn:hover {
         background: #111827;
+        text-decoration: none;
+        transform: translateY(-1px);
     }
 
     .btn-light {
-        background: #e5e7eb;
-        color: #111827;
+        background: #fff;
+        color: var(--text);
+        border: 1px solid var(--border);
     }
 
     .btn-light:hover {
-        background: #d1d5db;
+        background: #f9fafb;
     }
 
     .btn-disabled {
         background: #9ca3af;
         cursor: not-allowed;
+    }
+
+    .btn-disabled:hover {
+        background: #9ca3af;
+        transform: none;
     }
 
     .cart-table {
@@ -190,22 +248,35 @@
         border-bottom: 1px solid #e5e7eb;
         text-align: left;
         font-size: 14px;
+        vertical-align: middle;
+    }
+
+    .cart-table th {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        color: var(--muted);
+        background: #f9fafb;
+        white-space: nowrap;
     }
 
     .cart-summary {
         margin-top: 16px;
-        padding-top: 16px;
-        border-top: 1px solid #e5e7eb;
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+        display: grid;
+        gap: 6px;
     }
 
     .actions-row {
         display: flex;
         gap: 10px;
-        margin-top: 10px;
+        margin-top: 14px;
+        flex-wrap: wrap;
     }
 
     .muted-small {
-        color: #6b7280;
+        color: var(--muted);
         font-size: 13px;
     }
 
@@ -214,14 +285,20 @@
         cursor: pointer;
         text-decoration: none;
         font-size: 13px;
+        font-weight: 600;
+    }
+
+    .danger-link:hover {
+        text-decoration: underline;
     }
 
     .error-box {
         background: #fee2e2;
         color: #991b1b;
-        padding: 12px;
-        border-radius: 8px;
+        padding: 12px 14px;
+        border-radius: 10px;
         margin-bottom: 16px;
+        border: 1px solid #fecaca;
     }
 
     .stock-green {
@@ -244,6 +321,52 @@
         justify-content: space-between;
         align-items: center;
         margin-top: 16px;
+    }
+
+    @media (max-width: 1100px) {
+        .request-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .request-grid .full-width {
+            grid-column: span 2;
+        }
+
+        .cart-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .catalog-filter-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .item-card {
+            grid-template-columns: 1fr;
+            text-align: left;
+        }
+
+        .item-uom,
+        .qty-box,
+        .item-action {
+            justify-self: stretch;
+            text-align: left;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .request-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .request-grid .full-width {
+            grid-column: span 1;
+        }
+
+        .catalog-filter-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 

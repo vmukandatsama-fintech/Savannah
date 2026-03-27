@@ -1,3 +1,6 @@
+$target = ".\templates\requests_app\collection_history_detail.html"
+
+$content = @'
 {% extends "base.html" %}
 
 {% block content %}
@@ -21,7 +24,7 @@
         <div class="info-item"><span>Department</span><strong>{{ header.DepartmentName }}</strong></div>
         <div class="info-item"><span>Disbursed By</span><strong>{{ header.DisbursedByName|default:header.DisbursedBy }}</strong></div>
 
-        <div class="info-item"><span>Farmer</span><strong>{{ header.FarmerName|default:"-" }}</strong></div>
+        <div class="info-item"><span>Farmer</span><strong>{{ header.FarmerName|default:header.Farmer|default:"-" }}</strong></div>
         <div class="info-item"><span>Collector</span><strong>{{ header.CollectorName|default:"-" }}</strong></div>
 
         <div class="info-item"><span>National ID</span><strong>{{ header.CollectorNationalID|default:"-" }}</strong></div>
@@ -31,30 +34,66 @@
     </div>
 </div>
 
-<!-- Voucher -->
+<!-- Voucher Actions -->
 <div class="card">
-    <h3 class="section-title">Voucher</h3>
+    <h3 class="section-title">Voucher Actions</h3>
 
-    <div class="voucher-grid">
-        <div><span>Status</span><strong>{{ header.VoucherStatus|default:"-" }}</strong></div>
-        <div><span>Path</span><strong>{{ header.VoucherPath|default:"-" }}</strong></div>
-        <div><span>Error</span><strong>{{ header.VoucherError|default:"-" }}</strong></div>
-    </div>
+    <div class="voucher-sections">
 
-    <div class="voucher-actions">
-        {% if header.VoucherPath %}
-        <a href="{% url 'open_collection_voucher' header.CollectionNumber %}" target="_blank" class="btn btn-primary">
-            Open Voucher
-        </a>
+        <!-- SSRS Voucher -->
+        <div class="voucher-panel">
+            <h4 class="voucher-subtitle">SSRS Voucher</h4>
 
-        <a href="{% url 'download_collection_voucher' header.CollectionNumber %}" class="btn btn-light">
-            Download
-        </a>
-        {% endif %}
+            <div class="voucher-grid">
+                <div><span>Status</span><strong>{{ header.VoucherStatus|default:"-" }}</strong></div>
+                <div><span>Path</span><strong>{{ header.VoucherPath|default:"-" }}</strong></div>
+                <div><span>Error</span><strong>{{ header.VoucherError|default:"-" }}</strong></div>
+            </div>
 
-        <a href="{% url 'regenerate_collection_voucher' header.CollectionNumber %}" onclick="return prepareVoucherWindow();" class="btn btn-secondary">
-            Regenerate
-        </a>
+            <div class="voucher-actions">
+                {% if header.VoucherPath %}
+                <a href="{% url 'open_collection_voucher' header.CollectionNumber %}" target="_blank" class="btn btn-primary">
+                    Open SSRS Voucher
+                </a>
+
+                <a href="{% url 'download_collection_voucher' header.CollectionNumber %}" class="btn btn-light">
+                    Download SSRS Voucher
+                </a>
+                {% endif %}
+
+                <a href="{% url 'regenerate_collection_voucher' header.CollectionNumber %}" onclick="return prepareVoucherWindow();" class="btn btn-secondary">
+                    Regenerate SSRS Voucher
+                </a>
+            </div>
+        </div>
+
+        <!-- Django Voucher -->
+        <div class="voucher-panel">
+            <h4 class="voucher-subtitle">Django Voucher</h4>
+
+            <div class="voucher-grid">
+                <div><span>Status</span><strong>{{ header.DjangoVoucherStatus|default:"-" }}</strong></div>
+                <div><span>Path</span><strong>{{ header.DjangoVoucherPath|default:"-" }}</strong></div>
+                <div><span>Error</span><strong>{{ header.DjangoVoucherError|default:"-" }}</strong></div>
+            </div>
+
+            <div class="voucher-actions">
+                {% if header.DjangoVoucherPath %}
+                <a href="{% url 'open_collection_voucher_django' header.CollectionNumber %}" target="_blank" class="btn btn-primary">
+                    Open Django Voucher
+                </a>
+
+                <a href="{% url 'download_collection_voucher_django' header.CollectionNumber %}" class="btn btn-light">
+                    Download Django Voucher
+                </a>
+                {% endif %}
+
+                <a href="{% url 'regenerate_collection_voucher_django' header.CollectionNumber %}" class="btn btn-secondary">
+                    Regenerate Django Voucher
+                </a>
+            </div>
+        </div>
+
     </div>
 </div>
 
@@ -162,9 +201,27 @@ window.addEventListener("load", function () {
         font-size: 14px;
     }
 
+    .voucher-sections {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+    }
+
+    .voucher-panel {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fff;
+    }
+
+    .voucher-subtitle {
+        margin: 0 0 12px 0;
+        font-size: 15px;
+    }
+
     .voucher-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        grid-template-columns: 1fr;
         gap: 12px;
         margin-bottom: 16px;
     }
@@ -173,6 +230,11 @@ window.addEventListener("load", function () {
         display: block;
         font-size: 12px;
         color: #6b7280;
+    }
+
+    .voucher-grid strong {
+        display: block;
+        word-break: break-word;
     }
 
     .voucher-actions {
@@ -217,3 +279,18 @@ window.addEventListener("load", function () {
 </style>
 
 {% endblock %}
+'@
+
+if (-not (Test-Path ".\templates\requests_app")) {
+    throw "templates\requests_app folder not found. Run this from the Savannah project root."
+}
+
+if (Test-Path $target) {
+    Copy-Item $target "$target.bak" -Force
+    Write-Host "Backup created: $target.bak"
+}
+
+Set-Content -Path $target -Value $content -Encoding UTF8
+
+Write-Host "Updated: $target"
+Write-Host "Refresh the collection history detail page and test both SSRS and Django voucher buttons."

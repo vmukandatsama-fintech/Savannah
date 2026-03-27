@@ -18,10 +18,6 @@ def _fetch_one(cursor) -> dict[str, Any] | None:
 
 
 def _fetch_first_resultset_as_dicts(cursor) -> list[dict[str, Any]]:
-    """
-    Reads the first resultset returned by a stored procedure, even if
-    earlier messages / empty resultsets are emitted first.
-    """
     while True:
         if cursor.description is not None:
             columns = [col[0] for col in cursor.description]
@@ -308,14 +304,19 @@ def get_collection_history_detail(collection_number: str) -> dict[str, Any] | No
                 c.VoucherPath,
                 c.VoucherStatus,
                 c.VoucherError,
+                c.DjangoVoucherPath,
+                c.DjangoVoucherStatus,
+                c.DjangoVoucherError,
                 u.Name AS DisbursedByName,
                 r.DepartmentCode,
                 d.Name AS DepartmentName,
                 f.Name AS FarmerName,
                 r.CollectorName,
                 r.CollectorNationalID,
-                r.TruckRegistration,
-                r.TrailerRegistration,
+                c.DriverName,
+                c.DriverID,
+                c.TruckRegistration,
+                c.TrailerRegistration,
                 r.StatusName
             FROM dbo.Collections c
             LEFT JOIN dbo.Requests r

@@ -39,6 +39,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "config.urls"
+COLLECTION_VOUCHER_ROOT = r"C:\Savannah\CollectionVouchers"
 
 TEMPLATES = [
     {

@@ -2,55 +2,56 @@
 {% load humanize %}
 {% block content %}
 
+<!-- Header -->
 <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div class="header-row">
         <div>
-            <h2 style="margin:0;">Collection Detail</h2>
-            <div class="muted" style="margin-top:6px;">Review request information and issue stock</div>
+            <h2>Collection Detail</h2>
+            <div class="muted">Review request information and issue stock</div>
         </div>
-        <div>
-            <a href="{% url 'collection_inbox' %}" class="btn btn-light">← Back to Pending Collections</a>
-        </div>
+        <a href="{% url 'collection_inbox' %}" class="btn btn-light">← Back</a>
     </div>
 </div>
 
+<!-- Request Info -->
 <div class="card">
     {% if header %}
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:14px;">
-        <div><strong>Request Number:</strong><br>{{ header.RequestNumber|default:"-" }}</div>
-        <div><strong>Status:</strong><br>{{ header.StatusName|default:"-" }}</div>
+    <div class="info-grid">
 
-        <div><strong>Request Date:</strong><br>{{ header.RequestDate|date:"d-m-Y H:i"|default:"-" }}</div>
-        <div><strong>Required Date:</strong><br>{{ header.RequiredDate|date:"d-m-Y"|default:"-" }}</div>
+        <div class="info-item"><span>Request Number</span><strong>{{ header.RequestNumber|default:"-" }}</strong></div>
+        <div class="info-item"><span>Status</span><strong>{{ header.StatusName|default:"-" }}</strong></div>
 
-        <div><strong>Requestor:</strong><br>{{ header.RequestorName|default:"-" }}</div>
-        <div><strong>Department:</strong><br>{{ header.DepartmentName|default:"-" }}</div>
+        <div class="info-item"><span>Request Date</span><strong>{{ header.RequestDate|date:"d-m-Y H:i"|default:"-" }}</strong></div>
+        <div class="info-item"><span>Required Date</span><strong>{{ header.RequiredDate|date:"d-m-Y"|default:"-" }}</strong></div>
 
-        <div><strong>Grower:</strong><br>{{ header.GrowerNumber|default:"-" }}</div>
-        <div><strong>Collector:</strong><br>{{ header.CollectorName|default:"-" }}</div>
+        <div class="info-item"><span>Requestor</span><strong>{{ header.RequestorName|default:"-" }}</strong></div>
+        <div class="info-item"><span>Department</span><strong>{{ header.DepartmentName|default:"-" }}</strong></div>
 
-        <div><strong>National ID:</strong><br>{{ header.CollectorNationalID|default:"-" }}</div>
-        <div><strong>Truck:</strong><br>{{ header.TruckRegistration|default:"-" }}</div>
+        <div class="info-item"><span>Grower</span><strong>{{ header.GrowerNumber|default:"-" }}</strong></div>
+        <div class="info-item"><span>Collector</span><strong>{{ header.CollectorName|default:"-" }}</strong></div>
 
-        <div><strong>Trailer:</strong><br>{{ header.TrailerRegistration|default:"-" }}</div>
+        <div class="info-item"><span>National ID</span><strong>{{ header.CollectorNationalID|default:"-" }}</strong></div>
+        <div class="info-item"><span>Truck</span><strong>{{ header.TruckRegistration|default:"-" }}</strong></div>
+
+        <div class="info-item"><span>Trailer</span><strong>{{ header.TrailerRegistration|default:"-" }}</strong></div>
+
     </div>
 
-    <div style="margin-top:18px;">
+    <div class="justification-box">
         <label>Justification</label>
-        <div style="padding:12px 14px; background:#f9fafb; border:1px solid #dfe3e8; border-radius:10px;">
-            {{ header.Justification|default:"-" }}
-        </div>
+        <div>{{ header.Justification|default:"-" }}</div>
     </div>
     {% else %}
         <div class="muted">No header information available.</div>
     {% endif %}
 </div>
 
+<!-- Items -->
 <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
+    <div class="section-header">
         <div>
-            <h3 style="margin:0;">Items to Issue</h3>
-            <div class="muted" style="margin-top:6px;">Enter the quantities to disburse for each line</div>
+            <h3>Items to Issue</h3>
+            <div class="muted">Enter quantities to disburse</div>
         </div>
     </div>
 
@@ -58,38 +59,38 @@
     <form method="post" action="{% url 'disburse_request' header.RequestNumber %}">
         {% csrf_token %}
 
-        <div style="overflow-x:auto;">
-            <table>
+        <div class="table-wrap">
+            <table class="data-table">
                 <thead>
                     <tr>
                         <th>Line</th>
                         <th>Item Code</th>
                         <th>Item Name</th>
-                        <th class="numeric">Requested</th>
-                        <th class="numeric">Reserved</th>
-                        <th class="numeric">Issued</th>
-                        <th class="numeric">Available</th>
+                        <th class="num">Requested</th>
+                        <th class="num">Reserved</th>
+                        <th class="num">Issued</th>
+                        <th class="num">Available</th>
                         <th>UOM</th>
                         <th>Status</th>
-                        <th class="numeric">Issue Now</th>
+                        <th class="num">Issue Now</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for line in lines %}
                     <tr>
-                        <td>{{ line.LineNumber|default:"-" }}</td>
-                        <td>{{ line.ItemCode|default:"-" }}</td>
-                        <td>{{ line.ItemName|default:"-" }}</td>
+                        <td>{{ line.LineNumber }}</td>
+                        <td>{{ line.ItemCode }}</td>
+                        <td>{{ line.ItemName }}</td>
 
-                        <td class="numeric">{{ line.QuantityRequested|floatformat:0|intcomma }}</td>
-                        <td class="numeric">{{ line.QuantityReserved|floatformat:0|intcomma }}</td>
-                        <td class="numeric">{{ line.QuantityIssued|floatformat:0|intcomma }}</td>
-                        <td class="numeric">{{ line.AvailableStock|floatformat:0|intcomma }}</td>
+                        <td class="num">{{ line.QuantityRequested|floatformat:0|intcomma }}</td>
+                        <td class="num">{{ line.QuantityReserved|floatformat:0|intcomma }}</td>
+                        <td class="num">{{ line.QuantityIssued|floatformat:0|intcomma }}</td>
+                        <td class="num">{{ line.AvailableStock|floatformat:0|intcomma }}</td>
 
-                        <td>{{ line.UOMName|default:line.UOMCode|default:"-" }}</td>
-                        <td>{{ line.StockStatus|default:line.LineStatus|default:"-" }}</td>
+                        <td>{{ line.UOMName|default:line.UOMCode }}</td>
+                        <td><span class="status-pill">{{ line.StockStatus|default:line.LineStatus }}</span></td>
 
-                        <td class="numeric" style="min-width:110px;">
+                        <td class="num">
                             {% if line.QuantityReserved and line.QuantityReserved > 0 %}
                             <input
                                 type="number"
@@ -98,8 +99,7 @@
                                 max="{{ line.QuantityReserved|floatformat:0 }}"
                                 name="issue_qty_{{ line.LineNumber }}"
                                 value="{{ line.QuantityReserved|floatformat:0 }}"
-                                class="numeric"
-                                style="max-width:100px;"
+                                class="input-qty"
                             >
                             {% else %}
                                 <span class="muted">-</span>
@@ -111,13 +111,135 @@
             </table>
         </div>
 
-        <div style="margin-top:20px; display:flex; justify-content:flex-end;">
-            <button type="submit" class="btn">Disburse Stock</button>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Disburse Stock</button>
         </div>
     </form>
     {% else %}
-        <div class="muted">No items to issue for this request.</div>
+        <div class="empty-state">No items to issue for this request.</div>
     {% endif %}
 </div>
+
+<style>
+    .header-row {
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        gap:12px;
+        flex-wrap:wrap;
+    }
+
+    .info-grid {
+        display:grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap:14px;
+    }
+
+    .info-item span {
+        display:block;
+        font-size:12px;
+        color:#6b7280;
+        margin-bottom:4px;
+    }
+
+    .info-item strong {
+        font-size:14px;
+    }
+
+    .justification-box {
+        margin-top:18px;
+    }
+
+    .justification-box div {
+        margin-top:6px;
+        padding:12px;
+        background:#f9fafb;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+    }
+
+    .section-header h3 {
+        margin:0;
+    }
+
+    .table-wrap {
+        overflow-x:auto;
+        border:1px solid #e5e7eb;
+        border-radius:12px;
+    }
+
+    .data-table {
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    .data-table th {
+        background:#f8fafc;
+        padding:12px;
+        font-size:12px;
+        text-transform:uppercase;
+    }
+
+    .data-table td {
+        padding:12px;
+        border-top:1px solid #f1f5f9;
+    }
+
+    .data-table tr:hover {
+        background:#fafafa;
+    }
+
+    .num {
+        text-align:right;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .input-qty {
+        width:90px;
+        padding:6px;
+        border:1px solid #d1d5db;
+        border-radius:8px;
+        text-align:right;
+    }
+
+    .form-actions {
+        margin-top:20px;
+        display:flex;
+        justify-content:flex-end;
+    }
+
+    .btn {
+        padding:10px 14px;
+        border-radius:10px;
+        border:1px solid #d1d5db;
+        text-decoration:none;
+        font-weight:600;
+        cursor:pointer;
+    }
+
+    .btn-primary {
+        background:#1f2937;
+        color:white;
+        border-color:#1f2937;
+    }
+
+    .btn-light {
+        background:white;
+    }
+
+    .status-pill {
+        background:#eef2ff;
+        padding:4px 10px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:600;
+    }
+
+    .empty-state {
+        text-align:center;
+        padding:20px;
+        color:#6b7280;
+    }
+</style>
 
 {% endblock %}

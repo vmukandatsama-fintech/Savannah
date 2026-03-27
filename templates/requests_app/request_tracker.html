@@ -1,30 +1,32 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+<div class="card tracker-hero-card">
+    <div class="tracker-hero">
         <div>
-            <h2 style="margin-top:0;">Request Tracker</h2>
-            <div class="muted">Track request lifecycle, balance, and ageing.</div>
+            <h2 class="tracker-title">Request Tracker</h2>
+            <div class="muted tracker-subtitle">Track request lifecycle, balance, and ageing.</div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <a href="{% url 'request_tracker_export_excel' %}?request_number={{ filters.request_number|urlencode }}&status_name={{ filters.status_name|urlencode }}&department_code={{ filters.department_code|urlencode }}&grower_number={{ filters.grower_number|urlencode }}&date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" style="text-decoration:none;">
-                <button type="button">Export Excel</button>
+
+        <div class="tracker-actions">
+            <a class="action-link" href="{% url 'request_tracker_export_excel' %}?request_number={{ filters.request_number|urlencode }}&status_name={{ filters.status_name|urlencode }}&department_code={{ filters.department_code|urlencode }}&grower_number={{ filters.grower_number|urlencode }}&date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}">
+                <button type="button" class="btn btn-secondary">Export Excel</button>
             </a>
-            <a href="{% url 'request_tracker_export_pdf' %}?request_number={{ filters.request_number|urlencode }}&status_name={{ filters.status_name|urlencode }}&department_code={{ filters.department_code|urlencode }}&grower_number={{ filters.grower_number|urlencode }}&date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" target="_blank" style="text-decoration:none;">
-                <button type="button">Export PDF</button>
+            <a class="action-link" href="{% url 'request_tracker_export_pdf' %}?request_number={{ filters.request_number|urlencode }}&status_name={{ filters.status_name|urlencode }}&department_code={{ filters.department_code|urlencode }}&grower_number={{ filters.grower_number|urlencode }}&date_from={{ filters.date_from|urlencode }}&date_to={{ filters.date_to|urlencode }}" target="_blank">
+                <button type="button" class="btn btn-primary">Export PDF</button>
             </a>
         </div>
     </div>
 
-    <form method="get" style="display:grid; grid-template-columns: repeat(6, 1fr); gap:12px; align-items:end; margin-top:16px;">
-        <div>
+    <form method="get" class="tracker-filter-form">
+        <div class="form-field">
             <label>Request Number</label>
-            <input type="text" name="request_number" value="{{ filters.request_number }}" style="width:100%; padding:8px;">
+            <input type="text" name="request_number" value="{{ filters.request_number }}">
         </div>
-        <div>
+
+        <div class="form-field">
             <label>Status</label>
-            <select name="status_name" style="width:100%; padding:8px;">
+            <select name="status_name">
                 <option value="">All</option>
                 {% for s in statuses %}
                     <option value="{{ s.StatusName }}" {% if filters.status_name == s.StatusName %}selected{% endif %}>
@@ -33,9 +35,10 @@
                 {% endfor %}
             </select>
         </div>
-        <div>
+
+        <div class="form-field">
             <label>Department</label>
-            <select name="department_code" style="width:100%; padding:8px;">
+            <select name="department_code">
                 <option value="">All</option>
                 {% for d in departments %}
                     <option value="{{ d.DepartmentCode }}" {% if filters.department_code == d.DepartmentCode %}selected{% endif %}>
@@ -44,73 +47,369 @@
                 {% endfor %}
             </select>
         </div>
-        <div>
+
+        <div class="form-field">
             <label>Grower Number</label>
-            <input type="text" name="grower_number" value="{{ filters.grower_number }}" style="width:100%; padding:8px;">
+            <input type="text" name="grower_number" value="{{ filters.grower_number }}">
         </div>
-        <div>
+
+        <div class="form-field">
             <label>Date From</label>
-            <input type="date" name="date_from" value="{{ filters.date_from }}" style="width:100%; padding:8px;">
+            <input type="date" name="date_from" value="{{ filters.date_from }}">
         </div>
-        <div>
+
+        <div class="form-field">
             <label>Date To</label>
-            <input type="date" name="date_to" value="{{ filters.date_to }}" style="width:100%; padding:8px;">
+            <input type="date" name="date_to" value="{{ filters.date_to }}">
         </div>
-        <div style="grid-column: 1 / -1; display:flex; gap:10px; justify-content:flex-end;">
-            <a href="{% url 'request_tracker' %}" style="padding:8px 14px; border:1px solid #ccc; text-decoration:none;">Reset</a>
-            <button type="submit">Filter</button>
+
+        <div class="tracker-filter-actions">
+            <a href="{% url 'request_tracker' %}" class="btn btn-light">Reset</a>
+            <button type="submit" class="btn btn-primary">Filter</button>
         </div>
     </form>
 </div>
 
-<div class="card">
-    <h3 style="margin-top:0;">Results</h3>
+<div class="card tracker-results-card">
+    <div class="results-header">
+        <h3>Results</h3>
+        {% if rows %}
+            <span class="results-badge">{{ rows|length }} record{{ rows|length|pluralize }}</span>
+        {% endif %}
+    </div>
 
     {% if rows %}
-    <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse:collapse;">
+    <div class="table-wrap">
+        <table class="tracker-table">
             <thead>
-                <tr style="border-bottom:1px solid #ddd;">
-                    <th style="padding:10px;">Request No</th>
-                    <th style="padding:10px;">Request Date</th>
-                    <th style="padding:10px;">Required Date</th>
-                    <th style="padding:10px;">Requested By</th>
-                    <th style="padding:10px;">Department</th>
-                    <th style="padding:10px;">Grower</th>
-                    <th style="padding:10px;">Farmer</th>
-                    <th style="padding:10px;">Status</th>
-                    <th style="padding:10px; text-align:right;">Requested</th>
-                    <th style="padding:10px; text-align:right;">Issued</th>
-                    <th style="padding:10px; text-align:right;">Reserved</th>
-                    <th style="padding:10px; text-align:right;">Balance</th>
-                    <th style="padding:10px; text-align:right;">Age Days</th>
+                <tr>
+                    <th>Request No</th>
+                    <th>Request Date</th>
+                    <th>Required Date</th>
+                    <th>Requested By</th>
+                    <th>Department</th>
+                    <th>Grower</th>
+                    <th>Farmer</th>
+                    <th>Status</th>
+                    <th class="num">Requested</th>
+                    <th class="num">Issued</th>
+                    <th class="num">Reserved</th>
+                    <th class="num">Balance</th>
+                    <th class="num">Age Days</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in rows %}
-                <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:10px;">
+                <tr>
+                    <td class="request-no">
                         <a href="{% url 'request_details' row.RequestNumber %}">{{ row.RequestNumber }}</a>
                     </td>
-                    <td style="padding:10px;">{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
-                    <td style="padding:10px;">{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
-                    <td style="padding:10px;">{{ row.RequestedBy|default:"-" }}</td>
-                    <td style="padding:10px;">{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
-                    <td style="padding:10px;">{{ row.GrowerNumber|default:"-" }}</td>
-                    <td style="padding:10px;">{{ row.FarmerName|default:"-" }}</td>
-                    <td style="padding:10px;">{{ row.StatusName|default:"-" }}</td>
-                    <td style="padding:10px; text-align:right;">{{ row.TotalRequested|floatformat:0|default:"0" }}</td>
-                    <td style="padding:10px; text-align:right;">{{ row.TotalIssued|floatformat:0|default:"0" }}</td>
-                    <td style="padding:10px; text-align:right;">{{ row.TotalReserved|floatformat:0|default:"0" }}</td>
-                    <td style="padding:10px; text-align:right;">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
-                    <td style="padding:10px; text-align:right;">{{ row.AgeDays|default:"0" }}</td>
+                    <td>{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td>{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
+                    <td>{{ row.RequestedBy|default:"-" }}</td>
+                    <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
+                    <td>{{ row.GrowerNumber|default:"-" }}</td>
+                    <td>{{ row.FarmerName|default:"-" }}</td>
+                    <td>
+                        <span class="status-pill">{{ row.StatusName|default:"-" }}</span>
+                    </td>
+                    <td class="num">{{ row.TotalRequested|floatformat:0|default:"0" }}</td>
+                    <td class="num">{{ row.TotalIssued|floatformat:0|default:"0" }}</td>
+                    <td class="num">{{ row.TotalReserved|floatformat:0|default:"0" }}</td>
+                    <td class="num">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
+                    <td class="num">{{ row.AgeDays|default:"0" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
     {% else %}
-        <div class="muted">No request records found.</div>
+        <div class="empty-state">
+            <div class="empty-title">No request records found</div>
+            <div class="muted">Try adjusting your filters or clearing them to view more results.</div>
+        </div>
     {% endif %}
 </div>
+
+<style>
+    .tracker-hero-card,
+    .tracker-results-card {
+        border-radius: 14px;
+    }
+
+    .tracker-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .tracker-title {
+        margin: 0 0 4px 0;
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    .tracker-subtitle {
+        font-size: 14px;
+    }
+
+    .tracker-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    .action-link {
+        text-decoration: none;
+    }
+
+    .tracker-filter-form {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+        align-items: end;
+        margin-top: 4px;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-field input,
+    .form-field select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: #fff;
+        color: #111827;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        box-sizing: border-box;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .tracker-filter-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 4px;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+        background: #1f2937;
+        color: #fff;
+        border-color: #1f2937;
+    }
+
+    .btn-primary:hover {
+        background: #111827;
+        border-color: #111827;
+    }
+
+    .btn-secondary {
+        background: #fff;
+        color: #1f2937;
+        border-color: #d1d5db;
+    }
+
+    .btn-secondary:hover {
+        background: #f9fafb;
+    }
+
+    .btn-light {
+        background: #fff;
+        color: #374151;
+        border-color: #d1d5db;
+    }
+
+    .btn-light:hover {
+        background: #f9fafb;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+    }
+
+    .results-header h3 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .results-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .tracker-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 1280px;
+    }
+
+    .tracker-table thead th {
+        background: #f8fafc;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 12px 14px;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .tracker-table tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: #111827;
+    }
+
+    .tracker-table tbody tr:hover {
+        background: #fafafa;
+    }
+
+    .tracker-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .tracker-table .num {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .tracker-table .request-no a {
+        color: #1d4ed8;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    .tracker-table .request-no a:hover {
+        text-decoration: underline;
+    }
+
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        color: #3730a3;
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1;
+        white-space: nowrap;
+    }
+
+    .empty-state {
+        padding: 28px 16px;
+        text-align: center;
+        border: 1px dashed #d1d5db;
+        border-radius: 12px;
+        background: #fafafa;
+    }
+
+    .empty-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 6px;
+    }
+
+    @media (max-width: 1200px) {
+        .tracker-filter-form {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tracker-title {
+            font-size: 24px;
+        }
+
+        .tracker-filter-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .tracker-filter-actions {
+            justify-content: stretch;
+        }
+
+        .tracker-filter-actions .btn,
+        .tracker-filter-actions button {
+            flex: 1 1 auto;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .tracker-filter-form {
+            grid-template-columns: 1fr;
+        }
+
+        .tracker-actions {
+            width: 100%;
+        }
+
+        .tracker-actions .action-link,
+        .tracker-actions .btn,
+        .tracker-actions button {
+            width: 100%;
+        }
+    }
+</style>
 {% endblock %}

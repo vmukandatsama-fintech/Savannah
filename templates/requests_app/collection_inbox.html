@@ -1,125 +1,255 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+<!-- Header -->
 <div class="card">
-    <h2 style="margin-top: 0;">Pending Collections</h2>
-    <div class="muted">Requests approved and ready for stock issue</div>
+    <div class="page-header">
+        <div>
+            <h2>Pending Collections</h2>
+            <div class="muted">Requests approved and ready for stock issue</div>
+        </div>
+    </div>
 </div>
 
+<!-- Filters -->
 <div class="card">
-    <form method="get" style="display:flex; gap:10px; margin-bottom:20px;">
-        <input
-            type="text"
-            name="search"
-            value="{{ search }}"
-            placeholder="Search request number, grower, collector, requestor"
-            style="flex:1; padding:10px; border:1px solid #ccc; border-radius:8px;"
-        >
-        <button type="submit">Search</button>
+    <form method="get" class="filter-form">
+
+        <div class="form-field">
+            <label>Search</label>
+            <input type="text" name="search" value="{{ search }}"
+                   placeholder="Grower, collector, requestor">
+        </div>
+
+        <div class="form-field">
+            <label>Request Number</label>
+            <input type="text" name="request_number" value="{{ request_number }}"
+                   placeholder="REQ-...">
+        </div>
+
+        <div class="form-field">
+            <label>Department</label>
+            <select name="department">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.DepartmentCode }}" {% if department == dept.DepartmentCode %}selected{% endif %}>
+                    {{ dept.DepartmentName }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label>Date From</label>
+            <input type="date" name="date_from" value="{{ date_from }}">
+        </div>
+
+        <div class="form-field">
+            <label>Date To</label>
+            <input type="date" name="date_to" value="{{ date_to }}">
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{% url 'collection_inbox' %}" class="btn btn-light">Clear</a>
+        </div>
+
     </form>
-                <form method="get" style="display:grid; grid-template-columns: 2fr 1.5fr 1.5fr 1fr 1fr auto auto; gap:10px; margin-bottom:20px; align-items:end;">
-    <div style="overflow-x:auto;">
-        <table style="width:100%; border-collapse: collapse;">
+</div>
+
+<!-- Results -->
+<div class="card">
+    <div class="results-header">
+        <h3>Results</h3>
+        {% if rows %}
+            <span class="badge">{{ rows|length }} record{{ rows|length|pluralize }}</span>
+        {% endif %}
+    </div>
+
+    {% if rows %}
+    <div class="table-wrap">
+        <table class="data-table">
             <thead>
-                <tr style="text-align:left; border-bottom:1px solid #ddd;">
-                    <th style="padding:10px;">Request No</th>
-                    <th style="padding:10px;">Date</th>
-                    <th style="padding:10px;">Department</th>
-                    <div>
-                        <label><strong>Search</strong></label>
-                        <input
-                            type="text"
-                            name="search"
-                            value="{{ search }}"
-                            placeholder="Grower, collector, requestor"
-                            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-                        >
-                    </div>
-
-                    <div>
-                        <label><strong>Request Number</strong></label>
-                        <input
-                            type="text"
-                            name="request_number"
-                            value="{{ request_number }}"
-                            placeholder="REQ-..."
-                            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-                        >
-                    </div>
-
-                    <div>
-                        <label><strong>Department</strong></label>
-                        <select
-                            name="department"
-                            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-                        >
-                            <option value="">All Departments</option>
-                            {% for dept in departments %}
-                            <option value="{{ dept.DepartmentCode }}" {% if department == dept.DepartmentCode %}selected{% endif %}>
-                                {{ dept.DepartmentName }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label><strong>Date From</strong></label>
-                        <input
-                            type="date"
-                            name="date_from"
-                            value="{{ date_from }}"
-                            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-                        >
-                    </div>
-
-                    <div>
-                        <label><strong>Date To</strong></label>
-                        <input
-                            type="date"
-                            name="date_to"
-                            value="{{ date_to }}"
-                            style="width:100%; padding:10px; border:1px solid #ccc; border-radius:8px;"
-                        >
-                    </div>
-
-                    <div>
-                        <button type="submit">Search</button>
-                    </div>
-
-                    <div>
-                        <a href="{% url 'collection_inbox' %}" style="text-decoration:none;">
-                            <button type="button">Clear</button>
-                        </a>
-                    </div>
-                    <th style="padding:10px;">Grower</th>
-                    <th style="padding:10px;">Collector</th>
-                    <th style="padding:10px;">Status</th>
-                    <th style="padding:10px;"></th>
+                <tr>
+                    <th>Request No</th>
+                    <th>Date</th>
+                    <th>Department</th>
+                    <th>Requestor</th>
+                    <th>Grower</th>
+                    <th>Collector</th>
+                    <th>Status</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in rows %}
-                <tr style="border-bottom:1px solid #eee;">
-                    <td style="padding:10px;">{{ row.RequestNumber }}</td>
-                    <td style="padding:10px;">{{ row.RequestDate|date:"d-m-Y H:i" }}</td>
-                    <td style="padding:10px;">{{ row.DepartmentName }}</td>
-                    <td style="padding:10px;">{{ row.RequestorName }}</td>
-                    <td style="padding:10px;">{{ row.GrowerNumber }}</td>
-                    <td style="padding:10px;">{{ row.CollectorName }}</td>
-                    <td style="padding:10px;">{{ row.StatusName }}</td>
-                    <td style="padding:10px;">
-                        <a href="{% url 'collection_detail' row.RequestNumber %}">Open</a>
-                    </td>
-                </tr>
-                {% empty %}
                 <tr>
-                    <td colspan="8" style="padding:20px; text-align:center;" class="muted">
-                        No pending collections found.
+                    <td class="link-cell">
+                        <a href="{% url 'collection_detail' row.RequestNumber %}">
+                            {{ row.RequestNumber }}
+                        </a>
+                    </td>
+                    <td>{{ row.RequestDate|date:"d-m-Y H:i" }}</td>
+                    <td>{{ row.DepartmentName }}</td>
+                    <td>{{ row.RequestorName }}</td>
+                    <td>{{ row.GrowerNumber }}</td>
+                    <td>{{ row.CollectorName }}</td>
+                    <td>
+                        <span class="status-pill">{{ row.StatusName }}</span>
+                    </td>
+                    <td>
+                        <a href="{% url 'collection_detail' row.RequestNumber %}" class="btn btn-sm">
+                            Open
+                        </a>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-title">No pending collections</div>
+            <div class="muted">All requests have been processed or filters returned no results.</div>
+        </div>
+    {% endif %}
 </div>
+
+<style>
+    .page-header h2 {
+        margin: 0 0 4px 0;
+    }
+
+    .filter-form {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+        align-items: end;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-field input,
+    .form-field select {
+        padding: 10px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        font-size: 14px;
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .btn {
+        padding: 10px 14px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+        text-decoration: none;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .btn-primary {
+        background: #1f2937;
+        color: white;
+        border-color: #1f2937;
+    }
+
+    .btn-light {
+        background: white;
+    }
+
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .badge {
+        background: #f3f4f6;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        background: #f8fafc;
+        padding: 12px;
+        text-align: left;
+        font-size: 12px;
+        text-transform: uppercase;
+        color: #374151;
+    }
+
+    .data-table td {
+        padding: 12px;
+        border-top: 1px solid #f1f5f9;
+    }
+
+    .data-table tr:hover {
+        background: #fafafa;
+    }
+
+    .link-cell a {
+        font-weight: 600;
+        color: #1d4ed8;
+        text-decoration: none;
+    }
+
+    .status-pill {
+        background: #eef2ff;
+        color: #3730a3;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 24px;
+        border: 1px dashed #d1d5db;
+        border-radius: 12px;
+        background: #fafafa;
+    }
+
+    @media (max-width: 900px) {
+        .filter-form {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+
 {% endblock %}

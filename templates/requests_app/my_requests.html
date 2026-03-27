@@ -2,18 +2,27 @@
 {% load app_extras %}
 
 {% block content %}
+
 <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+    <div class="section-head-inline">
         <div>
             <div class="page-title">My Requests</div>
             <div class="page-subtitle">Track your submitted requests and their progress</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="/requests/create/" class="btn btn-primary">New Request</a>
         </div>
     </div>
 </div>
 
 <div class="card">
-    <form id="myRequestsFilterForm" method="get" style="display:flex; gap:12px; flex-wrap:wrap; align-items:end; margin:0;">
-        <div style="min-width:220px;">
+    <div class="section-head-inline" style="margin-bottom:14px;">
+        <div class="section-title mb-0">Filters</div>
+        <div class="muted">Refine your request history</div>
+    </div>
+
+    <form id="myRequestsFilterForm" method="get" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; align-items:end; margin:0;">
+        <div>
             <label for="search">Search</label>
             <input
                 type="text"
@@ -25,7 +34,7 @@
             >
         </div>
 
-        <div style="min-width:220px;">
+        <div>
             <label for="status">Status</label>
             <select name="status" id="status" onchange="this.form.submit()">
                 <option value="">All Statuses</option>
@@ -38,7 +47,7 @@
             </select>
         </div>
 
-        <div style="min-width:120px;">
+        <div style="max-width:160px;">
             <label for="page_size">Page Size</label>
             <select name="page_size" id="page_size" onchange="this.form.submit()">
                 <option value="10" {% if filters.page_size == 10 %}selected{% endif %}>10</option>
@@ -50,7 +59,12 @@
 </div>
 
 <div class="card">
-    <div class="section-title">Request History</div>
+    <div class="section-head-inline" style="margin-bottom:14px;">
+        <div class="section-title mb-0">Request History</div>
+        <div class="muted">
+            Showing {{ request_history.rows|length }} of {{ request_history.total_count|number }}
+        </div>
+    </div>
 
     {% if request_history.rows %}
     <div class="table-wrap">
@@ -63,6 +77,7 @@
                     <th>Department</th>
                     <th>Status</th>
                     <th class="numeric">Total Lines</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -75,13 +90,16 @@
                     </td>
                     <td>{{ row.request_date|date:"d-m-Y H:i" }}</td>
                     <td>{{ row.farmer_name|default:"-" }}</td>
-                    <td>{{ row.department_name|default:row.department_code }}</td>
+                    <td>{{ row.department_name|default:row.department_code|default:"-" }}</td>
                     <td>
                         <span class="{{ row.status_name|status_badge_class }}">
                             {{ row.status_name }}
                         </span>
                     </td>
                     <td class="numeric">{{ row.total_lines|number }}</td>
+                    <td style="white-space:nowrap;">
+                        <a href="{% url 'request_details' row.request_number %}" class="btn btn-secondary">View</a>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -93,18 +111,20 @@
 </div>
 
 <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap;">
+    <div class="section-head-inline">
         <div class="muted">
-            Showing {{ request_history.rows|length }} of {{ request_history.total_count|number }}
+            Page {{ request_history.page|default:1 }}
         </div>
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
             {% if request_history.has_previous %}
                 <a href="?search={{ filters.search }}&status={{ filters.status }}&page_size={{ filters.page_size }}&page={{ request_history.previous_page }}" class="btn btn-secondary">Previous</a>
             {% endif %}
+
             {% if request_history.has_next %}
                 <a href="?search={{ filters.search }}&status={{ filters.status }}&page_size={{ filters.page_size }}&page={{ request_history.next_page }}" class="btn btn-secondary">Next</a>
             {% endif %}
         </div>
     </div>
 </div>
+
 {% endblock %}

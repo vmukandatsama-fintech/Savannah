@@ -1,14 +1,35 @@
-﻿from core.decorators import sql_login_required, feature_required
-from services.return_service import (
-    get_returnable_collections,
-    get_collection_return_detail,
-    post_return_stock,
-    cancel_remaining_balance,
-)
-from services.reversal_report_service import get_reversal_reports
-from django.views.decorators.http import require_http_methods
+﻿import json
+import os
+import time
+from io import BytesIO
+
+import requests
 from django.contrib import messages
-from django.shortcuts import redirect
+from django.db import connection
+from django.http import FileResponse, Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect, render
+from django.views.decorators.http import require_http_methods
+from openpyxl import Workbook
+
+from core.decorators import feature_required, sql_login_required
+from core.session_auth import get_session_user_email
+from services.approval_service import get_approval_history, get_approval_inbox, process_approval
+from services.collection_service import disburse_request as disburse_request_service, get_collection_departments, get_collection_detail, get_collection_history, get_collection_history_detail, get_pending_collections
+from services.collection_voucher_service import build_collection_voucher_pdf
+from services.department_report_service import get_department_consumption_detail, get_department_consumption_summary, get_department_list, get_department_summary_card, get_department_trends
+from services.farmer_report_service import get_farmer_account_statement, get_farmer_collection_statement, get_farmer_departments, get_farmer_reports, get_farmer_summary
+from services.farmer_service import get_active_farmers
+from services.item_service import get_requestable_items
+from services.request_details_service import get_request_details
+from services.request_history_service import get_my_requests
+from services.request_report_service import get_request_departments, get_request_exception_summary, get_request_exceptions, get_request_statuses, get_request_tracker
+from services.request_service import create_request_from_cart
+from services.return_service import cancel_remaining_balance, get_collection_return_detail, get_returnable_collections, post_return_stock
+from services.reversal_report_service import get_reversal_reports
+from services.stock_report_service import get_low_stock_report, get_stock_balance_report, get_stock_card, get_stock_categories, get_stock_item_summary
+from services.user_service import get_user_context
+from services.voucher_service import regenerate_collection_voucher
+
 # =============================
 # RETURNS AND REVERSALS MODULE
 # =============================
@@ -20,6 +41,8 @@ def _apply_return_filters_from_request(request):
         "date_from": (request.GET.get("date_from") or "").strip(),
         "date_to": (request.GET.get("date_to") or "").strip(),
     }
+
+
 
 def _build_reversal_workbook(rows):
     from openpyxl import Workbook
@@ -53,6 +76,8 @@ def _build_reversal_workbook(rows):
         ])
     return wb
 
+
+
 @sql_login_required
 @feature_required("collections")
 def returns_list_view(request):
@@ -65,6 +90,8 @@ def returns_list_view(request):
         date_to=filters["date_to"] or None,
     )
     return render(request, "requests_app/returns_list.html", {"rows": rows, "filters": filters})
+
+
 
 @sql_login_required
 @feature_required("collections")
@@ -105,6 +132,8 @@ def return_detail_view(request, collection_number):
             return redirect("return_detail", collection_number=collection_number)
     return render(request, "requests_app/return_detail.html", {"header": detail["header"], "lines": detail["lines"]})
 
+
+
 @sql_login_required
 @feature_required("collections")
 @require_http_methods(["POST"])
@@ -124,6 +153,8 @@ def cancel_remaining_balance_view(request, request_number):
         messages.error(request, f"Cancel remaining balance failed: {ex}")
     return redirect("request_details", request_number=request_number)
 
+
+
 @sql_login_required
 @feature_required("reports")
 def reversal_reports_view(request):
@@ -140,6 +171,8 @@ def reversal_reports_view(request):
         date_to=filters["date_to"] or None,
     )
     return render(request, "requests_app/reversal_reports.html", {"rows": rows, "filters": filters})
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -168,6 +201,8 @@ def reversal_reports_export_excel_view(request):
     response["Content-Disposition"] = 'attachment; filename="reversal_reports.xlsx"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def reversal_reports_export_pdf_view(request):
@@ -184,7 +219,8 @@ def reversal_reports_export_pdf_view(request):
         date_to=filters["date_to"] or None,
     )
     return render(request, "requests_app/reversal_reports_print.html", {"rows": rows, "filters": filters})
-from core.decorators import sql_login_required, feature_required
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -203,7 +239,8 @@ def department_trends_export_pdf_view(request):
         "filters": filters,
         "print_export": True,
     })
-from core.decorators import sql_login_required, feature_required
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -228,14 +265,8 @@ def department_report_detail_export_pdf_view(request, department_code):
         "print_export": True,
     })
 
-from core.decorators import sql_login_required, feature_required
-from services.department_report_service import (
-    get_department_list,
-    get_department_consumption_summary,
-    get_department_consumption_detail,
-    get_department_summary_card,
-    get_department_trends,
-)
+
+
 
 def _apply_department_filters_from_request(request):
     return {
@@ -244,7 +275,7 @@ def _apply_department_filters_from_request(request):
         "date_to": (request.GET.get("date_to") or "").strip(),
     }
 
-from openpyxl import Workbook
+
 
 def _build_department_summary_workbook(rows):
     wb = Workbook()
@@ -260,6 +291,8 @@ def _build_department_summary_workbook(rows):
         ])
     return wb
 
+
+
 def _build_department_detail_workbook(rows):
     wb = Workbook()
     ws = wb.active
@@ -274,6 +307,8 @@ def _build_department_detail_workbook(rows):
         ])
     return wb
 
+
+
 def _build_department_trends_workbook(rows):
     wb = Workbook()
     ws = wb.active
@@ -287,6 +322,8 @@ def _build_department_trends_workbook(rows):
             row.get("PeriodMonth"), row.get("DepartmentCode"), row.get("DepartmentName"), row.get("CollectionCount"), row.get("RequestCount"), row.get("TotalIssuedQty")
         ])
     return wb
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -308,6 +345,8 @@ def department_reports_view(request):
         },
     )
 
+
+
 @sql_login_required
 @feature_required("reports")
 def department_reports_export_excel_view(request):
@@ -328,6 +367,8 @@ def department_reports_export_excel_view(request):
     )
     response["Content-Disposition"] = 'attachment; filename="department_reports_summary.xlsx"'
     return response
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -353,6 +394,8 @@ def department_report_detail_view(request, department_code):
         },
     )
 
+
+
 @sql_login_required
 @feature_required("reports")
 def department_report_detail_export_excel_view(request, department_code):
@@ -375,6 +418,8 @@ def department_report_detail_export_excel_view(request, department_code):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def department_trends_view(request):
@@ -394,6 +439,8 @@ def department_trends_view(request):
             "filters": filters,
         },
     )
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -416,19 +463,8 @@ def department_trends_export_excel_view(request):
     response["Content-Disposition"] = 'attachment; filename="department_trends.xlsx"'
     return response
 
-from core.decorators import sql_login_required, feature_required
 
-# ============================================================
-# REQUEST TRACKER REPORTS
-# ============================================================
 
-from services.request_report_service import (
-    get_request_tracker,
-    get_request_statuses,
-    get_request_departments,
-    get_request_exception_summary,
-    get_request_exceptions,
-)
 
 def _apply_request_report_filters_from_request(request):
     return {
@@ -440,6 +476,8 @@ def _apply_request_report_filters_from_request(request):
         "date_to": (request.GET.get("date_to") or "").strip(),
         "age_days": (request.GET.get("age_days") or "3").strip(),
     }
+
+
 
 def _build_request_tracker_workbook(rows):
     from openpyxl import Workbook
@@ -481,6 +519,8 @@ def _build_request_tracker_workbook(rows):
         ])
     return wb
 
+
+
 def _build_exception_workbook(rows):
     from openpyxl import Workbook
     wb = Workbook()
@@ -519,6 +559,8 @@ def _build_exception_workbook(rows):
         ])
     return wb
 
+
+
 @sql_login_required
 @feature_required("reports")
 def request_tracker_view(request):
@@ -544,6 +586,8 @@ def request_tracker_view(request):
         },
     )
 
+
+
 @sql_login_required
 @feature_required("reports")
 def request_tracker_export_excel_view(request):
@@ -568,6 +612,8 @@ def request_tracker_export_excel_view(request):
     response["Content-Disposition"] = 'attachment; filename="request_tracker.xlsx"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def request_tracker_export_pdf_view(request):
@@ -586,6 +632,8 @@ def request_tracker_export_pdf_view(request):
         "filters": filters,
         "print_export": True,
     })
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -606,6 +654,8 @@ def exception_reports_view(request):
             "filters": filters,
         },
     )
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -628,6 +678,8 @@ def exception_reports_export_excel_view(request):
     response["Content-Disposition"] = 'attachment; filename="request_exceptions.xlsx"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def exception_reports_export_pdf_view(request):
@@ -645,55 +697,8 @@ def exception_reports_export_pdf_view(request):
         "filters": filters,
         "print_export": True,
     })
-# ============================================================
-# END REQUEST TRACKER REPORTS
-# All imports moved to top for decorator visibility
-import os
-import json
-import requests
-import time
-from django.contrib import messages
-from django.http import FileResponse, Http404, HttpResponseRedirect, HttpResponse
-from django.shortcuts import redirect, render
-from django.views.decorators.http import require_http_methods
-from core.decorators import sql_login_required, feature_required
-from core.session_auth import get_session_user_email
-from services.approval_service import (
-    get_approval_history,
-    get_approval_inbox,
-    process_approval,
-)
-from services.collection_service import (
-    get_pending_collections,
-    get_collection_detail,
-    get_collection_departments,
-    get_collection_history,
-    get_collection_history_detail,
-    disburse_request as disburse_request_service,
-)
-from services.farmer_service import get_active_farmers
-from services.item_service import get_requestable_items
-from services.request_details_service import get_request_details
-from services.request_history_service import get_my_requests
-from services.request_service import create_request_from_cart
-from services.user_service import get_user_context
-from services.voucher_service import regenerate_collection_voucher
-# Farmer Reports imports
-from services.farmer_report_service import (
-    get_farmer_reports,
-    get_farmer_account_statement,
-    get_farmer_collection_statement,
-    get_farmer_summary,
-    get_farmer_departments,
-)
-# Stock Reports imports
-from services.stock_report_service import (
-    get_stock_balance_report,
-    get_low_stock_report,
-    get_stock_card,
-    get_stock_item_summary,
-    get_stock_categories,
-)
+
+
 
 # ============================================================
 # FARMER REPORTS
@@ -711,6 +716,8 @@ def _apply_stock_filters_from_request(request):
         "date_to": (request.GET.get("date_to") or "").strip(),
         "low_stock_only": (request.GET.get("low_stock_only") or "").strip(),
     }
+
+
 
 def _build_stock_balance_workbook(rows, title="Stock Balance"):
     from openpyxl import Workbook
@@ -747,6 +754,8 @@ def _build_stock_balance_workbook(rows, title="Stock Balance"):
             "Yes" if row.get("IsLowStock") else "No",
         ])
     return wb
+
+
 
 def _build_stock_card_workbook(summary, rows):
     from openpyxl import Workbook
@@ -787,7 +796,7 @@ def _build_stock_card_workbook(summary, rows):
         ])
     return wb
 
-from django.http import HttpResponse
+
 @sql_login_required
 @feature_required("reports")
 def stock_reports_view(request):
@@ -808,6 +817,8 @@ def stock_reports_view(request):
             "filters": filters,
         },
     )
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -831,6 +842,8 @@ def stock_reports_export_excel_view(request):
     response["Content-Disposition"] = 'attachment; filename="stock_balance_report.xlsx"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def low_stock_report_view(request):
@@ -853,6 +866,8 @@ def low_stock_report_view(request):
         },
     )
 
+
+
 @sql_login_required
 @feature_required("reports")
 def low_stock_report_export_excel_view(request):
@@ -874,6 +889,8 @@ def low_stock_report_export_excel_view(request):
     response["Content-Disposition"] = 'attachment; filename="low_stock_report.xlsx"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def stock_card_view(request, item_code):
@@ -893,6 +910,8 @@ def stock_card_view(request, item_code):
             "filters": filters,
         },
     )
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -916,6 +935,8 @@ def stock_card_export_excel_view(request, item_code):
     response["Content-Disposition"] = f'attachment; filename="stock_card_{item_code}.xlsx"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def stock_card_export_pdf_view(request, item_code):
@@ -933,16 +954,13 @@ def stock_card_export_pdf_view(request, item_code):
         "filters": filters,
         "print_export": True,
     })
-# ============================================================
-# END STOCK REPORTS
 
 
-
-from io import BytesIO
-from openpyxl import Workbook
 
 def _safe_filename(value):
     return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in str(value or "").strip())
+
+
 
 def _apply_farmer_filters_from_request(request):
     return {
@@ -952,6 +970,8 @@ def _apply_farmer_filters_from_request(request):
         "date_from": (request.GET.get("date_from") or "").strip(),
         "date_to": (request.GET.get("date_to") or "").strip(),
     }
+
+
 
 def _build_farmer_summary_workbook(rows):
     wb = Workbook()
@@ -967,6 +987,8 @@ def _build_farmer_summary_workbook(rows):
         ])
     return wb
 
+
+
 def _build_farmer_detail_workbook(summary, account_rows, collection_rows):
     wb = Workbook()
     ws1 = wb.active
@@ -974,7 +996,6 @@ def _build_farmer_detail_workbook(summary, account_rows, collection_rows):
     # ============================================================
     # FARMER REPORTS
     # ============================================================
-
 
     # ============================================================
     # STOCK REPORTS
@@ -1009,6 +1030,8 @@ def _build_farmer_detail_workbook(summary, account_rows, collection_rows):
         ])
     return wb
 
+
+
 @sql_login_required
 @feature_required("reports")
 def farmer_reports_view(request):
@@ -1031,6 +1054,8 @@ def farmer_reports_view(request):
         },
     )
 
+
+
 @sql_login_required
 @feature_required("reports")
 def farmer_reports_export_excel_view(request):
@@ -1052,6 +1077,8 @@ def farmer_reports_export_excel_view(request):
     )
     response["Content-Disposition"] = 'attachment; filename="farmer_reports_summary.xlsx"'
     return response
+
+
 
 @sql_login_required
 @feature_required("reports")
@@ -1087,6 +1114,8 @@ def farmer_report_detail_view(request, grower_number):
         },
     )
 
+
+
 @sql_login_required
 @feature_required("reports")
 def farmer_report_detail_export_excel_view(request, grower_number):
@@ -1119,6 +1148,8 @@ def farmer_report_detail_export_excel_view(request, grower_number):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
 
+
+
 @sql_login_required
 @feature_required("reports")
 def farmer_report_detail_export_pdf_view(request, grower_number):
@@ -1147,31 +1178,8 @@ def farmer_report_detail_export_pdf_view(request, grower_number):
         "filters": {"date_from": date_from, "date_to": date_to},
         "print_export": True,
     })
-from django.views.decorators.http import require_http_methods
 
-from core.decorators import sql_login_required, feature_required
-from core.session_auth import get_session_user_email
 
-from services.approval_service import (
-    get_approval_history,
-    get_approval_inbox,
-    process_approval,
-)
-from services.collection_service import (
-    get_pending_collections,
-    get_collection_detail,
-    get_collection_departments,
-    get_collection_history,
-    get_collection_history_detail,
-    disburse_request as disburse_request_service,
-)
-from services.farmer_service import get_active_farmers
-from services.item_service import get_requestable_items
-from services.request_details_service import get_request_details
-from services.request_history_service import get_my_requests
-from services.request_service import create_request_from_cart
-from services.user_service import get_user_context
-from services.voucher_service import regenerate_collection_voucher
 
 
 # ============================================================
@@ -1210,6 +1218,8 @@ def _wait_for_voucher_path(collection_number, timeout_seconds=12, interval_secon
         }
 
     return None
+
+
 # ============================================================
 
 @sql_login_required
@@ -1293,6 +1303,7 @@ def request_cart(request):
     )
 
 
+
 @sql_login_required
 @feature_required("my_requests")
 def my_requests(request):
@@ -1324,6 +1335,7 @@ def my_requests(request):
     )
 
 
+
 @sql_login_required
 @feature_required("my_requests")
 def request_details(request, request_number):
@@ -1351,17 +1363,30 @@ def request_details(request, request_number):
         },
     )
 
+
+
 # ============================================================
 # APPROVALS
 # ============================================================
 
 @sql_login_required
-@feature_required("approvals")
 def approval_inbox(request):
+    role_name = (request.session.get("role_name") or request.session.get("session_role_name") or "").strip()
     user_email = get_session_user_email(request)
-    print("USER:", user_email)
-    mode = request.GET.get("mode", "Pending").strip() or "Pending"
-    approvals = get_approval_inbox(user_email, mode)
+    mode = (request.GET.get("mode") or "Pending").strip() or "Pending"
+
+    can_view = role_name in ["Approver", "Authorizer", "Stores Controller"]
+    if not can_view:
+        messages.error(request, "You do not have access to the approval inbox.")
+        return redirect("dashboard")
+
+    show_all = role_name == "Stores Controller"
+
+    approvals = get_approval_inbox(
+        approver_email=user_email,
+        mode=mode,
+        show_all=show_all,
+    )
 
     pending_count = len(
         [
@@ -1378,15 +1403,24 @@ def approval_inbox(request):
             "approvals": approvals,
             "mode": mode,
             "pending_count": pending_count,
+            "approval_view_all": show_all,
         },
     )
 
 
+
 @sql_login_required
-@feature_required("approvals")
 def approval_detail(request, request_number):
+    role_name = (request.session.get("role_name") or request.session.get("session_role_name") or "").strip()
     user_email = get_session_user_email(request)
-    details = get_request_details(request_number, user_email)
+
+    can_view = role_name in ["Approver", "Authorizer", "Stores Controller"]
+    if not can_view:
+        messages.error(request, "You do not have access to approval details.")
+        return redirect("dashboard")
+
+    detail_email = None if role_name == "Stores Controller" else user_email
+    details = get_request_details(request_number, detail_email)
 
     if not details:
         return render(
@@ -1401,11 +1435,18 @@ def approval_detail(request, request_number):
     approval_history = get_approval_history(request_number)
 
     can_act = any(
-        (row.get("ApproverEmail") or "").strip().lower() == user_email.lower()
+        (row.get("ApproverEmail") or "").strip().lower() == (user_email or "").lower()
         and (row.get("ApprovalStatusName") or "").strip() == "Pending"
         and row.get("IsCurrent") in (1, True, "1", "True", "true")
         for row in approval_history
     )
+
+    if role_name == "Stores Controller":
+        can_act = False
+
+    total_requested = sum(float(line.get("QuantityRequested") or 0) for line in details["lines"])
+    total_issued = sum(float(line.get("QuantityIssued") or 0) for line in details["lines"])
+    total_reserved = sum(float(line.get("QuantityReserved") or 0) for line in details["lines"])
 
     return render(
         request,
@@ -1417,17 +1458,31 @@ def approval_detail(request, request_number):
             "approvals": details["approvals"],
             "approval_history": approval_history,
             "can_act": can_act,
+            "approval_view_all": role_name == "Stores Controller",
+            "total_requested": total_requested,
+            "total_issued": total_issued,
+            "total_reserved": total_reserved,
         },
     )
 
 
+
 @sql_login_required
-@feature_required("approvals")
 @require_http_methods(["POST"])
 def approval_action(request, request_number):
+    role_name = (request.session.get("role_name") or request.session.get("session_role_name") or "").strip()
     user_email = get_session_user_email(request)
-    decision = request.POST.get("decision")
-    comments = request.POST.get("comments")
+
+    if role_name not in ["Approver", "Authorizer"]:
+        messages.error(request, "You are not allowed to process approvals.")
+        return redirect("approval_detail", request_number=request_number)
+
+    decision = (request.POST.get("decision") or "").strip()
+    comments = (request.POST.get("comments") or "").strip()
+
+    if decision not in ["Approved", "Rejected"]:
+        messages.error(request, "Invalid approval decision.")
+        return redirect("approval_detail", request_number=request_number)
 
     try:
         process_approval(
@@ -1441,6 +1496,7 @@ def approval_action(request, request_number):
         messages.error(request, str(ex))
 
     return redirect("approval_detail", request_number=request_number)
+
 
 
 # ============================================================
@@ -1480,6 +1536,7 @@ def collection_inbox(request):
             "departments": departments,
         },
     )
+
 
 
 @sql_login_required
@@ -1536,15 +1593,15 @@ def disburse_request_view(request, request_number):
         return redirect("collection_detail", request_number=request_number)
 
     try:
+        # STEP 1: DISBURSE
         result = disburse_request_service(
             request_number=request_number,
             disbursed_by=get_session_user_email(request),
             issue_lines=issue_lines,
         )
 
-
         collection_number = (result or {}).get("CollectionNumber")
-        print("DISBURSE RESULT:", result)  # temporary debug
+        print("DISBURSE RESULT:", result)
 
         if not collection_number:
             messages.error(
@@ -1553,20 +1610,66 @@ def disburse_request_view(request, request_number):
             )
             return redirect("collection_history")
 
-        messages.success(
-            request,
-            f"Disbursement successful. Collection Number: {collection_number}."
-        )
-
-        return redirect(f"/requests/collections/history/{collection_number}/")
-
+        # STEP 2: SSRS VOUCHER (existing)
         try:
             regenerate_collection_voucher(collection_number)
         except Exception as voucher_ex:
             messages.warning(
                 request,
-                f"Disbursement succeeded, but voucher generation failed: {voucher_ex}"
+                f"SSRS voucher generation failed: {voucher_ex}"
             )
+
+        # STEP 3: DJANGO VOUCHER (NEW 🔥)
+        try:
+            build_collection_voucher_pdf(collection_number)
+        except Exception as django_ex:
+            messages.warning(
+                request,
+                f"Django voucher generation failed: {django_ex}"
+            )
+
+        # STEP 4: WAIT FOR SSRS PATH (existing logic)
+        voucher_info = _wait_for_voucher_path(
+            collection_number,
+            timeout_seconds=12,
+            interval_seconds=1
+        )
+
+        voucher_path = (voucher_info or {}).get("VoucherPath")
+        voucher_status = (voucher_info or {}).get("VoucherStatus")
+        voucher_error = (voucher_info or {}).get("VoucherError")
+
+        # STEP 5: FINAL UX
+        if voucher_path:
+            messages.success(
+                request,
+                f"Disbursement successful. Collection: {collection_number}. Voucher ready."
+            )
+            return redirect(f"/requests/collections/history/{collection_number}/?auto_open=1&auto_open_django=1")
+
+        if voucher_status and voucher_status.lower() == "generated":
+            messages.success(
+                request,
+                f"Disbursement successful. Collection: {collection_number}. Voucher ready."
+            )
+            return redirect(f"/requests/collections/history/{collection_number}/?auto_open=1&auto_open_django=1")
+
+        if voucher_error:
+            messages.warning(
+                request,
+                f"Disbursement successful. Collection: {collection_number}. Voucher error: {voucher_error}"
+            )
+        else:
+            messages.warning(
+                request,
+                f"Disbursement successful. Collection: {collection_number}. Voucher still processing."
+            )
+
+        return redirect("collection_history_detail", collection_number=collection_number)
+
+    except Exception as ex:
+        messages.error(request, f"Error: {ex}")
+        return redirect("collection_detail", request_number=request_number)
 
         voucher_info = _wait_for_voucher_path(collection_number, timeout_seconds=12, interval_seconds=1)
         voucher_path = (voucher_info or {}).get("VoucherPath")
@@ -1605,71 +1708,6 @@ def disburse_request_view(request, request_number):
         return redirect("collection_detail", request_number=request_number)
 
 
-# ============================================================
-# COLLECTION HISTORY
-# ============================================================
-
-@sql_login_required
-@feature_required("collections")
-def collection_history(request):
-    search = request.GET.get("search", "").strip()
-    collection_number = request.GET.get("collection_number", "").strip()
-    request_number = request.GET.get("request_number", "").strip()
-    department = request.GET.get("department", "").strip()
-    date_from = request.GET.get("date_from", "").strip()
-    date_to = request.GET.get("date_to", "").strip()
-
-    rows = get_collection_history(
-        search=search,
-        collection_number=collection_number,
-        request_number=request_number,
-        department_code_filter=department,
-        date_from=date_from,
-        date_to=date_to,
-    )
-    departments = get_collection_departments()
-
-    return render(
-        request,
-        "requests_app/collection_history.html",
-        {
-            "rows": rows,
-            "search": search,
-            "collection_number": collection_number,
-            "request_number": request_number,
-            "department": department,
-            "date_from": date_from,
-            "date_to": date_to,
-            "departments": departments,
-        },
-    )
-
-
-@sql_login_required
-@feature_required("collections")
-def collection_history_detail(request, collection_number):
-    detail = get_collection_history_detail(collection_number)
-
-    if not detail:
-        messages.error(request, "Collection not found.")
-        return redirect("collection_history")
-
-    return render(
-        request,
-        "requests_app/collection_history_detail.html",
-        {
-            "header": detail["header"],
-            "lines": detail["lines"],
-        },
-    )
-
-
-# ============================================================
-# VOUCHER ACTIONS
-# ============================================================
-
-
-
 
 # ============================================================
 # COLLECTION HISTORY
@@ -1711,6 +1749,7 @@ def collection_history(request):
     )
 
 
+
 @sql_login_required
 @feature_required("collections")
 def collection_history_detail(request, collection_number):
@@ -1728,6 +1767,61 @@ def collection_history_detail(request, collection_number):
             "lines": detail["lines"],
         },
     )
+
+
+
+# ============================================================
+# VOUCHER ACTIONS LIKE DJANGO PRINTING
+# ============================================================
+
+def _get_django_voucher_path(collection_number: str) -> str | None:
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT DjangoVoucherPath
+            FROM Collections
+            WHERE CollectionNumber = %s
+        """, [collection_number])
+        row = cursor.fetchone()
+    return row[0] if row and row[0] else None
+
+
+
+@sql_login_required
+@feature_required("collections")
+def regenerate_collection_voucher_django_view(request, collection_number):
+    try:
+        build_collection_voucher_pdf(collection_number)
+        messages.success(request, f"Django voucher generated successfully for {collection_number}.")
+        return redirect(f"/requests/collections/history/{collection_number}/?auto_open_django=1")
+    except Exception as ex:
+        messages.error(request, f"Django voucher generation failed: {ex}")
+        return redirect("collection_history_detail", collection_number=collection_number)
+
+
+
+@sql_login_required
+@feature_required("collections")
+def open_collection_voucher_django_view(request, collection_number):
+    file_path = _get_django_voucher_path(collection_number)
+    if not file_path or not os.path.exists(file_path):
+        raise Http404("Django voucher file not found.")
+
+    return FileResponse(open(file_path, "rb"), content_type="application/pdf")
+
+
+
+@sql_login_required
+@feature_required("collections")
+def download_collection_voucher_django_view(request, collection_number):
+    file_path = _get_django_voucher_path(collection_number)
+    if not file_path or not os.path.exists(file_path):
+        raise Http404("Django voucher file not found.")
+
+    response = FileResponse(open(file_path, "rb"), content_type="application/pdf")
+    response["Content-Disposition"] = f'attachment; filename="{os.path.basename(file_path)}"'
+    return response
+
+
 
 @sql_login_required
 @feature_required("collections")
@@ -1754,6 +1848,7 @@ def regenerate_collection_voucher_view(request, collection_number):
     return redirect("collection_history_detail", collection_number=collection_number)
 
 
+
 @sql_login_required
 @feature_required("collections")
 def open_collection_voucher_view(request, collection_number):
@@ -1772,6 +1867,7 @@ def open_collection_voucher_view(request, collection_number):
         raise Http404("Voucher file not found.")
 
     return FileResponse(open(voucher_path, "rb"), content_type="application/pdf")
+
 
 
 @sql_login_required

@@ -4,63 +4,204 @@
     <meta charset="utf-8">
     <title>Request Tracker</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { border: 1px solid #ddd; padding: 6px; vertical-align: top; }
-        th { background: #f3f4f6; text-align: left; }
-        .right { text-align: right; }
+        :root {
+            --border: #d1d5db;
+            --border-soft: #e5e7eb;
+            --header-bg: #f8fafc;
+            --text: #111827;
+            --muted: #6b7280;
+            --panel: #ffffff;
+            --accent: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+            color: var(--text);
+            background: #ffffff;
+        }
+
+        .toolbar {
+            margin-bottom: 18px;
+        }
+
+        .print-btn {
+            display: inline-block;
+            padding: 10px 14px;
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            background: var(--accent);
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .report-header {
+            margin-bottom: 18px;
+            border-bottom: 2px solid var(--border-soft);
+            padding-bottom: 12px;
+        }
+
+        .report-title {
+            margin: 0 0 4px 0;
+            font-size: 28px;
+            line-height: 1.2;
+            color: var(--text);
+        }
+
+        .report-subtitle {
+            margin: 0;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .table-wrap {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: var(--panel);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead th {
+            background: var(--header-bg);
+            color: #374151;
+            text-align: left;
+            font-weight: 700;
+            padding: 9px 8px;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 8px;
+            border-top: 1px solid var(--border-soft);
+            vertical-align: top;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fcfcfd;
+        }
+
+        .right {
+            text-align: right;
+            white-space: nowrap;
+        }
+
+        .empty-row td {
+            text-align: center;
+            color: var(--muted);
+            padding: 18px 10px;
+        }
+
         @media print {
-            .no-print { display: none; }
-            body { margin: 10mm; }
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                margin: 10mm;
+                font-size: 11px;
+            }
+
+            .report-header {
+                margin-bottom: 12px;
+                padding-bottom: 8px;
+            }
+
+            .report-title {
+                font-size: 22px;
+            }
+
+            .report-subtitle {
+                font-size: 11px;
+            }
+
+            .table-wrap {
+                border: 1px solid #cfcfcf;
+                border-radius: 0;
+                overflow: visible;
+            }
+
+            table {
+                font-size: 11px;
+            }
+
+            thead th {
+                background: #f3f4f6 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+
+            tr, td, th {
+                page-break-inside: avoid;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="no-print" style="margin-bottom:16px;">
-        <button onclick="window.print()">Print / Save as PDF</button>
+    <div class="toolbar no-print">
+        <button class="print-btn" onclick="window.print()">Print / Save as PDF</button>
     </div>
 
-    <h1>Request Tracker</h1>
+    <div class="report-header">
+        <h1 class="report-title">Request Tracker</h1>
+        <p class="report-subtitle">Operational request tracking report</p>
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Request No</th>
-                <th>Request Date</th>
-                <th>Required Date</th>
-                <th>Requested By</th>
-                <th>Department</th>
-                <th>Grower</th>
-                <th>Farmer</th>
-                <th>Status</th>
-                <th>Requested</th>
-                <th>Issued</th>
-                <th>Reserved</th>
-                <th>Balance</th>
-                <th>Age Days</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in rows %}
-            <tr>
-                <td>{{ row.RequestNumber|default:"-" }}</td>
-                <td>{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
-                <td>{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
-                <td>{{ row.RequestedBy|default:"-" }}</td>
-                <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
-                <td>{{ row.GrowerNumber|default:"-" }}</td>
-                <td>{{ row.FarmerName|default:"-" }}</td>
-                <td>{{ row.StatusName|default:"-" }}</td>
-                <td class="right">{{ row.TotalRequested|floatformat:0|default:"0" }}</td>
-                <td class="right">{{ row.TotalIssued|floatformat:0|default:"0" }}</td>
-                <td class="right">{{ row.TotalReserved|floatformat:0|default:"0" }}</td>
-                <td class="right">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
-                <td class="right">{{ row.AgeDays|default:"0" }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="13">No request records found.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Request No</th>
+                    <th>Request Date</th>
+                    <th>Required Date</th>
+                    <th>Requested By</th>
+                    <th>Department</th>
+                    <th>Grower</th>
+                    <th>Farmer</th>
+                    <th>Status</th>
+                    <th class="right">Requested</th>
+                    <th class="right">Issued</th>
+                    <th class="right">Reserved</th>
+                    <th class="right">Balance</th>
+                    <th class="right">Age Days</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    <td>{{ row.RequestNumber|default:"-" }}</td>
+                    <td>{{ row.RequestDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td>{{ row.RequiredDate|date:"d-m-Y"|default:"-" }}</td>
+                    <td>{{ row.RequestedBy|default:"-" }}</td>
+                    <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
+                    <td>{{ row.GrowerNumber|default:"-" }}</td>
+                    <td>{{ row.FarmerName|default:"-" }}</td>
+                    <td>{{ row.StatusName|default:"-" }}</td>
+                    <td class="right">{{ row.TotalRequested|floatformat:0|default:"0" }}</td>
+                    <td class="right">{{ row.TotalIssued|floatformat:0|default:"0" }}</td>
+                    <td class="right">{{ row.TotalReserved|floatformat:0|default:"0" }}</td>
+                    <td class="right">{{ row.BalanceRemaining|floatformat:0|default:"0" }}</td>
+                    <td class="right">{{ row.AgeDays|default:"0" }}</td>
+                </tr>
+                {% empty %}
+                <tr class="empty-row">
+                    <td colspan="13">No request records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </body>
 </html>

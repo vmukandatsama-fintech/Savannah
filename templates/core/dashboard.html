@@ -2,128 +2,272 @@
 
 {% block content %}
 
-<div class="card">
-    <div class="dashboard-header">
-        <div>
-            <h2 style="margin: 0;">Dashboard</h2>
-            <div class="muted" style="margin-top: 6px;">Role: {{ role_name }}</div>
-        </div>
-    </div>
-</div>
-
-<div class="stats-grid">
+<div class="kpi-grid">
     {% if "my_open_requests" in cards %}
-    <div class="stat-card">
-        <div class="stat-top">
-            <div class="stat-label">My Open Requests</div>
-            <div class="stat-icon">📄</div>
+    <div class="kpi-card kpi-blue">
+        <div class="kpi-icon">📄</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.MyOpenRequests|default:0 }}</div>
+            <div class="kpi-label">My Open Requests</div>
+            <div class="kpi-note">Requests still in progress</div>
         </div>
-        <div class="stat-value">{{ metrics.MyOpenRequests|default:0 }}</div>
+        <div class="kpi-actions">
+            <a href="/requests/my-requests/" class="kpi-action-link">View Requests</a>
+            {% if session_features.create_request %}
+            <a href="/requests/create/" class="kpi-action-link">New Request</a>
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 
     {% if "my_pending_approvals" in cards %}
-    <div class="stat-card">
-        <div class="stat-top">
-            <div class="stat-label">My Pending Approvals</div>
-            <div class="stat-icon">✅</div>
+    <div class="kpi-card kpi-green">
+        <div class="kpi-icon">✅</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.MyPendingApprovals|default:0 }}</div>
+            <div class="kpi-label">Pending Approvals</div>
+            <div class="kpi-note">Waiting for your action</div>
         </div>
-        <div class="stat-value">{{ metrics.MyPendingApprovals|default:0 }}</div>
+        <div class="kpi-actions">
+            <a href="/requests/approvals/" class="kpi-action-link">Open Approvals</a>
+        </div>
     </div>
     {% endif %}
 
     {% if "pending_collections" in cards %}
-    <div class="stat-card">
-        <div class="stat-top">
-            <div class="stat-label">Pending Collections</div>
-            <div class="stat-icon">📦</div>
+    <div class="kpi-card kpi-yellow">
+        <div class="kpi-icon">📦</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.PendingCollections|default:0 }}</div>
+            <div class="kpi-label">Pending Collections</div>
+            <div class="kpi-note">Approved and ready to issue</div>
         </div>
-        <div class="stat-value">{{ metrics.PendingCollections|default:0 }}</div>
+        <div class="kpi-actions">
+            <a href="{% url 'collection_inbox' %}" class="kpi-action-link">Open Inbox</a>
+            <a href="{% url 'collection_history' %}" class="kpi-action-link">History</a>
+        </div>
     </div>
     {% endif %}
 
     {% if "low_stock_items" in cards %}
-    <div class="stat-card stat-card-danger">
-        <div class="stat-top">
-            <div class="stat-label">Low Stock Items</div>
-            <div class="stat-icon">⚠️</div>
+    <div class="kpi-card kpi-red">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.LowStockItems|default:0 }}</div>
+            <div class="kpi-label">Low Stock Items</div>
+            <div class="kpi-note">Below reorder threshold</div>
         </div>
-        <div class="stat-value">{{ metrics.LowStockItems|default:0 }}</div>
+        <div class="kpi-actions">
+            <a href="{% url 'stock_reports' %}" class="kpi-action-link">Stock Reports</a>
+            {% if role_name == "Stores Controller" %}
+            <a href="{% url 'inventory_list' %}" class="kpi-action-link">Inventory</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="kpi-card kpi-purple">
+        <div class="kpi-icon">🚚</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.PartiallyIssued|default:0 }}</div>
+            <div class="kpi-label">Partially Issued</div>
+            <div class="kpi-note">
+                {% if role_name == "Requestor" %}
+                Your partially issued requests
+                {% else %}
+                Requests not yet fully completed
+                {% endif %}
+            </div>
+        </div>
+        <div class="kpi-actions">
+            <a href="/requests/my-requests/" class="kpi-action-link">View Requests</a>
+            {% if role_name == "Stores Controller" %}
+            <a href="{% url 'collection_inbox' %}" class="kpi-action-link">Collections</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-gray">
+        <div class="kpi-icon">✔️</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.FullyIssuedToday|default:0 }}</div>
+            <div class="kpi-label">Fully Issued Today</div>
+            <div class="kpi-note">Completed issues for today</div>
+        </div>
+        <div class="kpi-actions">
+            <a href="{% url 'request_tracker' %}" class="kpi-action-link">Request Tracker</a>
+        </div>
+    </div>
+
+    <div class="kpi-card kpi-red">
+        <div class="kpi-icon">⛔</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.RejectedRequests|default:0 }}</div>
+            <div class="kpi-label">Rejected Requests</div>
+            <div class="kpi-note">Rejected or cancelled items</div>
+        </div>
+        <div class="kpi-actions">
+            <a href="{% url 'exception_reports' %}" class="kpi-action-link">Exceptions</a>
+            <a href="{% url 'reversal_reports' %}" class="kpi-action-link">Reversals</a>
+        </div>
+    </div>
+
+    {% if role_name == "Stores Controller" %}
+    <div class="kpi-card kpi-blue">
+        <div class="kpi-icon">🧾</div>
+        <div class="kpi-card-body">
+            <div class="kpi-value">{{ metrics.ActiveInventoryItems|default:0 }}</div>
+            <div class="kpi-label">Active Inventory Items</div>
+            <div class="kpi-note">Items currently active in inventory</div>
+        </div>
+        <div class="kpi-actions">
+            <a href="{% url 'inventory_list' %}" class="kpi-action-link">Inventory</a>
+            <a href="{% url 'delivery_list' %}" class="kpi-action-link">Deliveries</a>
+        </div>
     </div>
     {% endif %}
 </div>
 
-<div class="card" style="margin-top: 20px;">
-    <h3 style="margin-top: 0;">Quick Actions</h3>
+<div class="card" style="margin-top: 18px;">
+    <div class="section-head-inline">
+        <h3 style="margin: 0;">Alerts</h3>
+        <span class="muted">Items that need attention now</span>
+    </div>
 
-    <div class="quick-actions">
+    <div class="alerts-grid" style="margin-top: 14px;">
+        {% for alert in alerts %}
+        <div class="alert-tile
+            {% if alert.level == 'success' %}alert-tile-success
+            {% elif alert.level == 'warning' %}alert-tile-warning
+            {% elif alert.level == 'error' %}alert-tile-error
+            {% else %}alert-tile-info{% endif %}">
+            <div class="alert-tile-title">{{ alert.title }}</div>
+            <div class="alert-tile-text">{{ alert.message }}</div>
+            {% if alert.url %}
+            <a href="{{ alert.url }}" class="alert-tile-link">{{ alert.url_text }}</a>
+            {% endif %}
+        </div>
+        {% empty %}
+        <div class="alert-tile alert-tile-info">
+            <div class="alert-tile-title">No active alerts</div>
+            <div class="alert-tile-text">Everything looks normal right now.</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% if request.session.role_name != "Requestor" %}
+
+<div class="card quick-actions-section">
+    <div class="section-head-inline">
+        <h3 style="margin: 0;">Quick Actions</h3>
+        <span class="muted">Fast access to common tasks</span>
+    </div>
+
+    <div class="quick-actions-grid" style="margin-top: 14px;">
+
         {% if session_features.create_request %}
-        <a href="/requests/create/" class="quick-link">
-            <button type="button" class="btn-primary">Create Request</button>
+        <a href="/requests/create/" class="quick-action-card qa-blue">
+            <div class="quick-action-top">
+                <div class="quick-action-icon-wrap">📝</div>
+                <div class="quick-action-arrow">→</div>
+            </div>
+            <h4 class="quick-action-title">Create Request</h4>
+            <p class="quick-action-desc">Start a new request</p>
+            <div class="quick-action-meta">Open form</div>
         </a>
         {% endif %}
 
         {% if session_features.my_requests %}
-        <a href="/requests/my-requests/" class="quick-link">
-            <button type="button" class="btn-secondary">My Requests</button>
+        <a href="/requests/my-requests/" class="quick-action-card qa-gray">
+            <div class="quick-action-top">
+                <div class="quick-action-icon-wrap">📄</div>
+                <div class="quick-action-arrow">→</div>
+            </div>
+            <h4 class="quick-action-title">My Requests</h4>
+            <p class="quick-action-desc">Track your requests</p>
+            <div class="quick-action-meta">View list</div>
         </a>
         {% endif %}
 
         {% if session_features.approvals %}
-        <a href="/requests/approvals/" class="quick-link">
-            <button type="button" class="btn-secondary">Approvals</button>
+        <a href="/requests/approvals/" class="quick-action-card qa-orange">
+            <div class="quick-action-top">
+                <div class="quick-action-icon-wrap">✅</div>
+                <div class="quick-action-arrow">→</div>
+            </div>
+            <h4 class="quick-action-title">Approvals</h4>
+            <p class="quick-action-desc">Pending decisions</p>
+            <div class="quick-action-meta">Open inbox</div>
         </a>
         {% endif %}
 
         {% if session_features.collections or request.session.role_name == "Stores Controller" %}
-        <a href="{% url 'returns_list' %}" class="quick-link">
-            <button type="button" class="btn-secondary">Returns</button>
+        <a href="{% url 'returns_list' %}" class="quick-action-card qa-green">
+            <div class="quick-action-top">
+                <div class="quick-action-icon-wrap">↩️</div>
+                <div class="quick-action-arrow">→</div>
+            </div>
+            <h4 class="quick-action-title">Returns</h4>
+            <p class="quick-action-desc">Manage returned stock</p>
+            <div class="quick-action-meta">Open returns</div>
         </a>
         {% endif %}
 
-        {% if session_features.reports or request.session.role_name == "Stores Controller" or request.session.role_name == "Approver" or request.session.role_name == "Authorizer" %}
-        <a href="{% url 'stock_reports' %}" class="quick-link">
-            <button type="button" class="btn-secondary">Stock Reports</button>
+        {% if session_features.reports or request.session.role_name == "Stores Controller" %}
+        <a href="{% url 'stock_reports' %}" class="quick-action-card qa-cyan">
+            <div class="quick-action-top">
+                <div class="quick-action-icon-wrap">📊</div>
+                <div class="quick-action-arrow">→</div>
+            </div>
+            <h4 class="quick-action-title">Stock Reports</h4>
+            <p class="quick-action-desc">View stock analytics</p>
+            <div class="quick-action-meta">Open reports</div>
         </a>
-        <a href="{% url 'farmer_reports' %}" class="quick-link">
-            <button type="button" class="btn-secondary">Farmer Reports</button>
+
+        <a href="{% url 'request_tracker' %}" class="quick-action-card qa-blue">
+            <div class="quick-action-top">
+                <div class="quick-action-icon-wrap">🔎</div>
+                <div class="quick-action-arrow">→</div>
+            </div>
+            <h4 class="quick-action-title">Request Tracker</h4>
+            <p class="quick-action-desc">Track request flow</p>
+            <div class="quick-action-meta">Track</div>
         </a>
-        <a href="{% url 'request_tracker' %}" class="quick-link">
-            <button type="button" class="btn-secondary">Request Tracker</button>
-        </a>
-        <a href="{% url 'exception_reports' %}" class="quick-link">
-            <button type="button" class="btn-secondary">Exception Reports</button>
-        </a>
-        <a href="{% url 'department_reports' %}" class="quick-link">
-            <button type="button" class="btn-secondary">Department Reports</button>
-        </a>
-        <a href="{% url 'reversal_reports' %}" class="quick-link">
-            <button type="button" class="btn-secondary">Reversal Reports</button>
+
+        <a href="{% url 'exception_reports' %}" class="quick-action-card qa-red">
+            <div class="quick-action-top">
+                <div class="quick-action-icon-wrap">⚠️</div>
+                <div class="quick-action-arrow">→</div>
+            </div>
+            <h4 class="quick-action-title">Exceptions</h4>
+            <p class="quick-action-desc">Review issues</p>
+            <div class="quick-action-meta">View</div>
         </a>
         {% endif %}
+
     </div>
 </div>
 
-<div class="card" style="margin-top: 20px;">
-    <div class="section-header">
-        <div>
-            <h3 style="margin: 0;">Recent Activity</h3>
-            <div class="muted" style="margin-top: 6px;">Latest requests relevant to your role</div>
-        </div>
+{% endif %}
+<div class="card" style="margin-top: 18px;">
+    <div class="section-head-inline">
+        <h3 style="margin: 0;">Recent Activity</h3>
+        <span class="muted">Latest requests relevant to your role</span>
     </div>
 
     {% if recent_activity %}
-    <div class="table-wrap" style="margin-top: 16px;">
-        <table class="data-table">
+    <div class="table-wrap" style="margin-top: 14px;">
+        <table>
             <thead>
                 <tr>
                     <th>Request Number</th>
                     <th>Request Date</th>
                     <th>Department</th>
                     <th>Requested By</th>
+                    <th>Farmer</th>
                     <th>Status</th>
-                    <th style="text-align: right;">Items</th>
-                    <th style="text-align: center;">Action</th>
+                    <th class="numeric">Items</th>
                 </tr>
             </thead>
             <tbody>
@@ -133,36 +277,28 @@
                     <td>{{ row.RequestDate|date:"d-m-Y H:i" }}</td>
                     <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
                     <td>{{ row.RequestorName|default:row.RequestorEmail|default:"-" }}</td>
+                    <td>{{ row.FarmerName|default:"-" }}</td>
                     <td>
-                        <span class="status-badge
-                            {% if row.StatusName == 'Pending Approval' or row.StatusName == 'Pending Authorization' %}
-                                status-warning
-                            {% elif row.StatusName == 'Pending Collection' or row.StatusName == 'Partially Issued' %}
-                                status-info
-                            {% elif row.StatusName == 'Fully Issued' or row.StatusName == 'Approved' %}
-                                status-success
-                            {% elif row.StatusName == 'Rejected' or row.StatusName == 'Cancelled' %}
-                                status-danger
-                            {% else %}
-                                status-neutral
-                            {% endif %}
-                        ">
-                            {{ row.StatusName|default:"-" }}
-                        </span>
+                        {% if row.StatusName == "Pending Approval" or row.StatusName == "Pending Authorization" %}
+                            <span class="badge badge-pending">{{ row.StatusName }}</span>
+                        {% elif row.StatusName == "Pending Collection" or row.StatusName == "Partially Issued" %}
+                            <span class="badge badge-info">{{ row.StatusName }}</span>
+                        {% elif row.StatusName == "Fully Issued" or row.StatusName == "Approved" or row.StatusName == "Collected" %}
+                            <span class="badge badge-success">{{ row.StatusName }}</span>
+                        {% elif row.StatusName == "Rejected" or row.StatusName == "Cancelled" %}
+                            <span class="badge badge-danger">{{ row.StatusName }}</span>
+                        {% else %}
+                            <span class="badge badge-secondary">{{ row.StatusName|default:"-" }}</span>
+                        {% endif %}
                     </td>
-                    <td style="text-align: right;">{{ row.ItemCount|default:0 }}</td>
-                    <td style="text-align: center;">
-                        <a href="/requests/my-requests/{{ row.RequestNumber }}/" class="table-action-link">View</a>
-                    </td>
+                    <td class="numeric">{{ row.ItemCount|default:0 }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
     {% else %}
-    <div class="empty-state" style="margin-top: 16px;">
-        No recent activity found.
-    </div>
+    <div class="muted" style="margin-top: 12px;">No recent activity found.</div>
     {% endif %}
 </div>
 

@@ -1,96 +1,92 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+<div class="card history-hero-card">
+    <div class="history-hero">
         <div>
-            <h2 style="margin:0;">Collection History</h2>
-            <div class="muted" style="margin-top:6px;">View all issued collections</div>
+            <h2 class="history-title">Collection History</h2>
+            <div class="muted history-subtitle">View all issued collections</div>
         </div>
     </div>
 </div>
 
-<div class="card">
-    <form method="get">
-        <div class="form-row">
-            <div>
-                <label>Search</label>
-                <input
-                    type="text"
-                    name="search"
-                    value="{{ search }}"
-                    placeholder="Collection, request, grower, collector, user"
-                >
-            </div>
-
-            <div>
-                <label>Collection Number</label>
-                <input
-                    type="text"
-                    name="collection_number"
-                    value="{{ collection_number }}"
-                    placeholder="COL-..."
-                >
-            </div>
-
-            <div>
-                <label>Request Number</label>
-                <input
-                    type="text"
-                    name="request_number"
-                    value="{{ request_number }}"
-                    placeholder="REQ-..."
-                >
-            </div>
-
-            <div>
-                <label>Department</label>
-                <select name="department">
-                    <option value="">All Departments</option>
-                    {% for dept in departments %}
-                    <option value="{{ dept.DepartmentCode }}" {% if department == dept.DepartmentCode %}selected{% endif %}>
-                        {{ dept.DepartmentName }}
-                    </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div>
-                <label>Date From</label>
-                <input
-                    type="date"
-                    name="date_from"
-                    value="{{ date_from }}"
-                >
-            </div>
-
-            <div>
-                <label>Date To</label>
-                <input
-                    type="date"
-                    name="date_to"
-                    value="{{ date_to }}"
-                >
-            </div>
+<div class="card history-filter-card">
+    <form method="get" class="history-filter-form">
+        <div class="form-field">
+            <label>Search</label>
+            <input
+                type="text"
+                name="search"
+                value="{{ search }}"
+                placeholder="Collection, request, grower, collector, user"
+            >
         </div>
 
-        <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
-            <button type="submit" class="btn">Search</button>
-            <a href="{% url 'collection_history' %}">
-                <button type="button" class="btn btn-light">Clear</button>
-            </a>
+        <div class="form-field">
+            <label>Collection Number</label>
+            <input
+                type="text"
+                name="collection_number"
+                value="{{ collection_number }}"
+                placeholder="COL-..."
+            >
+        </div>
+
+        <div class="form-field">
+            <label>Request Number</label>
+            <input
+                type="text"
+                name="request_number"
+                value="{{ request_number }}"
+                placeholder="REQ-..."
+            >
+        </div>
+
+        <div class="form-field">
+            <label>Department</label>
+            <select name="department">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.DepartmentCode }}" {% if department == dept.DepartmentCode %}selected{% endif %}>
+                    {{ dept.DepartmentName }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label>Date From</label>
+            <input
+                type="date"
+                name="date_from"
+                value="{{ date_from }}"
+            >
+        </div>
+
+        <div class="form-field">
+            <label>Date To</label>
+            <input
+                type="date"
+                name="date_to"
+                value="{{ date_to }}"
+            >
+        </div>
+
+        <div class="history-filter-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a href="{% url 'collection_history' %}" class="btn btn-light">Clear</a>
         </div>
     </form>
 </div>
 
-<div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:12px; flex-wrap:wrap;">
-        <h3 style="margin:0;">Results</h3>
-        <div class="muted">{{ rows|length }} record{{ rows|length|pluralize }}</div>
+<div class="card history-results-card">
+    <div class="results-header">
+        <h3>Results</h3>
+        <div class="results-badge">{{ rows|length }} record{{ rows|length|pluralize }}</div>
     </div>
 
-    <div style="overflow-x:auto;">
-        <table>
+    <div class="table-wrap">
+        <table class="history-table">
             <thead>
                 <tr>
                     <th>Collection No</th>
@@ -100,13 +96,15 @@
                     <th>Farmer</th>
                     <th>Collector</th>
                     <th>Disbursed By</th>
-                    <th style="width:100px;">Action</th>
+                    <th class="action-col">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for row in rows %}
                 <tr>
-                    <td><strong>{{ row.CollectionNumber }}</strong></td>
+                    <td class="collection-no">
+                        <strong>{{ row.CollectionNumber }}</strong>
+                    </td>
                     <td>{{ row.CollectionDate|date:"d-m-Y H:i" }}</td>
                     <td>{{ row.RequestNumber }}</td>
                     <td>{{ row.DepartmentName }}</td>
@@ -114,15 +112,18 @@
                     <td>{{ row.CollectorName }}</td>
                     <td>{{ row.DisbursedByName|default:row.DisbursedBy }}</td>
                     <td>
-                        <a href="{% url 'collection_history_detail' row.CollectionNumber %}" class="btn btn-light" style="padding:8px 12px;">
+                        <a href="{% url 'collection_history_detail' row.CollectionNumber %}" class="btn btn-light btn-sm">
                             Open
                         </a>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="8" class="muted" style="text-align:center; padding:24px;">
-                        No collections found.
+                    <td colspan="8">
+                        <div class="empty-state">
+                            <div class="empty-title">No collections found</div>
+                            <div class="muted">Try adjusting your filters or clearing them.</div>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -130,4 +131,237 @@
         </table>
     </div>
 </div>
+
+<style>
+    .history-hero-card,
+    .history-filter-card,
+    .history-results-card {
+        border-radius: 14px;
+    }
+
+    .history-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .history-title {
+        margin: 0 0 4px 0;
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    .history-subtitle {
+        font-size: 14px;
+    }
+
+    .history-filter-form {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 14px;
+        align-items: end;
+    }
+
+    .form-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .form-field label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+    }
+
+    .form-field input,
+    .form-field select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 10px;
+        background: #fff;
+        color: #111827;
+        font-size: 14px;
+        outline: none;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        box-sizing: border-box;
+    }
+
+    .form-field input:focus,
+    .form-field select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .history-filter-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        margin-top: 4px;
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+    }
+
+    .btn-primary {
+        background: #1f2937;
+        color: #fff;
+        border-color: #1f2937;
+    }
+
+    .btn-primary:hover {
+        background: #111827;
+        border-color: #111827;
+    }
+
+    .btn-light {
+        background: #fff;
+        color: #374151;
+        border-color: #d1d5db;
+    }
+
+    .btn-light:hover {
+        background: #f9fafb;
+    }
+
+    .btn-sm {
+        min-height: 34px;
+        padding: 8px 12px;
+        font-size: 13px;
+    }
+
+    .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+    }
+
+    .results-header h3 {
+        margin: 0;
+        font-size: 20px;
+    }
+
+    .results-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #f3f4f6;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        background: #fff;
+    }
+
+    .history-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 980px;
+    }
+
+    .history-table thead th {
+        background: #f8fafc;
+        color: #374151;
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 12px 14px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .history-table tbody td {
+        padding: 12px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: #111827;
+    }
+
+    .history-table tbody tr:hover {
+        background: #fafafa;
+    }
+
+    .history-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .collection-no strong {
+        color: #111827;
+    }
+
+    .action-col {
+        width: 110px;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 28px 16px;
+    }
+
+    .empty-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 6px;
+    }
+
+    @media (max-width: 1200px) {
+        .history-filter-form {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .history-title {
+            font-size: 24px;
+        }
+
+        .history-filter-form {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 520px) {
+        .history-filter-form {
+            grid-template-columns: 1fr;
+        }
+
+        .history-filter-actions {
+            justify-content: stretch;
+        }
+
+        .history-filter-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
 {% endblock %}
