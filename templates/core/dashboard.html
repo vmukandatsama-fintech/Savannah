@@ -1,37 +1,54 @@
 {% extends "base.html" %}
 
 {% block content %}
+
 <div class="card">
-    <h2 style="margin-top: 0;">Dashboard</h2>
-    <div class="muted">Role: {{ role_name }}</div>
+    <div class="dashboard-header">
+        <div>
+            <h2 style="margin: 0;">Dashboard</h2>
+            <div class="muted" style="margin-top: 6px;">Role: {{ role_name }}</div>
+        </div>
+    </div>
 </div>
 
-<div class="stats">
+<div class="stats-grid">
     {% if "my_open_requests" in cards %}
-    <div class="stat-box">
-        <div class="muted">My Open Requests</div>
-        <div style="font-size: 30px; font-weight: 700;">{{ metrics.MyOpenRequests|default:0 }}</div>
+    <div class="stat-card">
+        <div class="stat-top">
+            <div class="stat-label">My Open Requests</div>
+            <div class="stat-icon">📄</div>
+        </div>
+        <div class="stat-value">{{ metrics.MyOpenRequests|default:0 }}</div>
     </div>
     {% endif %}
 
     {% if "my_pending_approvals" in cards %}
-    <div class="stat-box">
-        <div class="muted">My Pending Approvals</div>
-        <div style="font-size: 30px; font-weight: 700;">{{ metrics.MyPendingApprovals|default:0 }}</div>
+    <div class="stat-card">
+        <div class="stat-top">
+            <div class="stat-label">My Pending Approvals</div>
+            <div class="stat-icon">✅</div>
+        </div>
+        <div class="stat-value">{{ metrics.MyPendingApprovals|default:0 }}</div>
     </div>
     {% endif %}
 
     {% if "pending_collections" in cards %}
-    <div class="stat-box">
-        <div class="muted">Pending Collections</div>
-        <div style="font-size: 30px; font-weight: 700;">{{ metrics.PendingCollections|default:0 }}</div>
+    <div class="stat-card">
+        <div class="stat-top">
+            <div class="stat-label">Pending Collections</div>
+            <div class="stat-icon">📦</div>
+        </div>
+        <div class="stat-value">{{ metrics.PendingCollections|default:0 }}</div>
     </div>
     {% endif %}
 
     {% if "low_stock_items" in cards %}
-    <div class="stat-box">
-        <div class="muted">Low Stock Items</div>
-        <div style="font-size: 30px; font-weight: 700;">{{ metrics.LowStockItems|default:0 }}</div>
+    <div class="stat-card stat-card-danger">
+        <div class="stat-top">
+            <div class="stat-label">Low Stock Items</div>
+            <div class="stat-icon">⚠️</div>
+        </div>
+        <div class="stat-value">{{ metrics.LowStockItems|default:0 }}</div>
     </div>
     {% endif %}
 </div>
@@ -39,51 +56,114 @@
 <div class="card" style="margin-top: 20px;">
     <h3 style="margin-top: 0;">Quick Actions</h3>
 
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <div class="quick-actions">
         {% if session_features.create_request %}
-        <a href="/requests/create/" style="text-decoration:none;">
-            <button type="button">Create Request</button>
+        <a href="/requests/create/" class="quick-link">
+            <button type="button" class="btn-primary">Create Request</button>
         </a>
         {% endif %}
 
         {% if session_features.my_requests %}
-        <a href="/requests/my-requests/" style="text-decoration:none;">
-            <button type="button">My Requests</button>
+        <a href="/requests/my-requests/" class="quick-link">
+            <button type="button" class="btn-secondary">My Requests</button>
         </a>
         {% endif %}
 
         {% if session_features.approvals %}
-        <a href="/requests/approvals/" style="text-decoration:none;">
-            <button type="button">Approvals</button>
+        <a href="/requests/approvals/" class="quick-link">
+            <button type="button" class="btn-secondary">Approvals</button>
         </a>
         {% endif %}
 
         {% if session_features.collections or request.session.role_name == "Stores Controller" %}
-        <a href="{% url 'returns_list' %}" style="text-decoration:none;">
-            <button type="button">Returns</button>
+        <a href="{% url 'returns_list' %}" class="quick-link">
+            <button type="button" class="btn-secondary">Returns</button>
         </a>
         {% endif %}
 
         {% if session_features.reports or request.session.role_name == "Stores Controller" or request.session.role_name == "Approver" or request.session.role_name == "Authorizer" %}
-        <a href="{% url 'stock_reports' %}" style="text-decoration:none;">
-            <button type="button">Stock Reports</button>
+        <a href="{% url 'stock_reports' %}" class="quick-link">
+            <button type="button" class="btn-secondary">Stock Reports</button>
         </a>
-        <a href="{% url 'farmer_reports' %}" style="text-decoration:none;">
-            <button type="button">Farmer Reports</button>
+        <a href="{% url 'farmer_reports' %}" class="quick-link">
+            <button type="button" class="btn-secondary">Farmer Reports</button>
         </a>
-        <a href="{% url 'request_tracker' %}" style="text-decoration:none;">
-            <button type="button">Request Tracker</button>
+        <a href="{% url 'request_tracker' %}" class="quick-link">
+            <button type="button" class="btn-secondary">Request Tracker</button>
         </a>
-        <a href="{% url 'exception_reports' %}" style="text-decoration:none;">
-            <button type="button">Exception Reports</button>
+        <a href="{% url 'exception_reports' %}" class="quick-link">
+            <button type="button" class="btn-secondary">Exception Reports</button>
         </a>
-        <a href="{% url 'department_reports' %}" style="text-decoration:none;">
-            <button type="button">Department Reports</button>
+        <a href="{% url 'department_reports' %}" class="quick-link">
+            <button type="button" class="btn-secondary">Department Reports</button>
         </a>
-        <a href="{% url 'reversal_reports' %}" style="text-decoration:none;">
-            <button type="button">Reversal Reports</button>
+        <a href="{% url 'reversal_reports' %}" class="quick-link">
+            <button type="button" class="btn-secondary">Reversal Reports</button>
         </a>
         {% endif %}
     </div>
 </div>
+
+<div class="card" style="margin-top: 20px;">
+    <div class="section-header">
+        <div>
+            <h3 style="margin: 0;">Recent Activity</h3>
+            <div class="muted" style="margin-top: 6px;">Latest requests relevant to your role</div>
+        </div>
+    </div>
+
+    {% if recent_activity %}
+    <div class="table-wrap" style="margin-top: 16px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Request Number</th>
+                    <th>Request Date</th>
+                    <th>Department</th>
+                    <th>Requested By</th>
+                    <th>Status</th>
+                    <th style="text-align: right;">Items</th>
+                    <th style="text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in recent_activity %}
+                <tr>
+                    <td>{{ row.RequestNumber }}</td>
+                    <td>{{ row.RequestDate|date:"d-m-Y H:i" }}</td>
+                    <td>{{ row.DepartmentName|default:row.DepartmentCode|default:"-" }}</td>
+                    <td>{{ row.RequestorName|default:row.RequestorEmail|default:"-" }}</td>
+                    <td>
+                        <span class="status-badge
+                            {% if row.StatusName == 'Pending Approval' or row.StatusName == 'Pending Authorization' %}
+                                status-warning
+                            {% elif row.StatusName == 'Pending Collection' or row.StatusName == 'Partially Issued' %}
+                                status-info
+                            {% elif row.StatusName == 'Fully Issued' or row.StatusName == 'Approved' %}
+                                status-success
+                            {% elif row.StatusName == 'Rejected' or row.StatusName == 'Cancelled' %}
+                                status-danger
+                            {% else %}
+                                status-neutral
+                            {% endif %}
+                        ">
+                            {{ row.StatusName|default:"-" }}
+                        </span>
+                    </td>
+                    <td style="text-align: right;">{{ row.ItemCount|default:0 }}</td>
+                    <td style="text-align: center;">
+                        <a href="/requests/my-requests/{{ row.RequestNumber }}/" class="table-action-link">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state" style="margin-top: 16px;">
+        No recent activity found.
+    </div>
+    {% endif %}
+</div>
+
 {% endblock %}
