@@ -15,78 +15,102 @@
         {% endfor %}
     {% endif %}
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
-            <form method="post" id="delivery-form">
-                {% csrf_token %}
+    <form method="post" id="delivery-form">
+        {% csrf_token %}
 
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">Delivery Date</label>
-                        <input
-                            type="datetime-local"
-                            class="form-control"
-                            name="delivery_date"
-                            value="{{ draft.delivery_date|default:'' }}"
-                            required
-                        >
+        <!-- HEADER CARD -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
+                <h5 class="mb-3">Delivery Header</h5>
+
+                <div class="row g-4">
+
+                    <div class="col-lg-6">
+                        <div class="row align-items-center mb-3">
+                            <div class="col-3 text-muted small">Date</div>
+                            <div class="col-9">
+                                <input
+                                    type="datetime-local"
+                                    class="form-control"
+                                    name="delivery_date"
+                                    value="{{ draft.delivery_date|default:'' }}"
+                                    required
+                                >
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center mb-3">
+                            <div class="col-3 text-muted small">Vehicle</div>
+                            <div class="col-9">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="vehicle_registration"
+                                    value="{{ draft.vehicle_registration|default:'' }}"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center mb-0">
+                            <div class="col-3 text-muted small">Waybill</div>
+                            <div class="col-9">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="waybill_number"
+                                    value="{{ draft.waybill_number|default:'' }}"
+                                >
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label">Supplier</label>
-                        <select class="form-select" name="supplier_code" required>
-                            <option value="">Select supplier</option>
-                            {% for s in suppliers %}
-                                <option value="{{ s.SupplierCode }}" {% if draft.supplier_code == s.SupplierCode %}selected{% endif %}>
-                                    {{ s.Name }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                    <div class="col-lg-6">
+                        <div class="row align-items-center mb-3">
+                            <div class="col-3 text-muted small">Supplier</div>
+                            <div class="col-9">
+                                <select class="form-select" name="supplier_code" required>
+                                    <option value="">Select supplier</option>
+                                    {% for s in suppliers %}
+                                        <option value="{{ s.SupplierCode }}" {% if draft.supplier_code == s.SupplierCode %}selected{% endif %}>
+                                            {{ s.Name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center mb-3">
+                            <div class="col-3 text-muted small">Driver</div>
+                            <div class="col-9">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="driver_name"
+                                    value="{{ draft.driver_name|default:'' }}"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="row align-items-center mb-0">
+                            <div class="col-3 text-muted small">Remarks</div>
+                            <div class="col-9">
+                                <input
+                                    type="text"
+                                    class="form-control"
+                                    name="remarks"
+                                    value="{{ draft.remarks|default:'' }}"
+                                >
+                            </div>
+                        </div>
                     </div>
 
-                    <div class="col-md-3">
-                        <label class="form-label">Vehicle Registration</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            name="vehicle_registration"
-                            value="{{ draft.vehicle_registration|default:'' }}"
-                        >
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Driver Name</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            name="driver_name"
-                            value="{{ draft.driver_name|default:'' }}"
-                        >
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Waybill Number</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            name="waybill_number"
-                            value="{{ draft.waybill_number|default:'' }}"
-                        >
-                    </div>
-
-                    <div class="col-md-9">
-                        <label class="form-label">Remarks</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            name="remarks"
-                            value="{{ draft.remarks|default:'' }}"
-                        >
-                    </div>
                 </div>
+            </div>
+        </div>
 
-                <hr class="my-4">
-
+        <!-- ITEMS CARD -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0">Delivery Lines</h5>
                     <button type="button" class="btn btn-sm btn-primary" id="btn-add-line">
@@ -94,26 +118,23 @@
                     </button>
                 </div>
 
-                <div class="table-responsive">
-                    <table class="table table-bordered align-middle" id="delivery-lines-table">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 60px;">#</th>
-                                <th>Item</th>
-                                <th style="width: 120px;">UOM</th>
-                                <th style="width: 120px;">Physical</th>
-                                <th style="width: 140px;">Quantity</th>
-                                <th style="width: 120px;">Expected</th>
-                                <th style="width: 150px;">Batch</th>
-                                <th style="width: 180px;">Expiry</th>
-                                <th style="width: 160px;">Condition</th>
-                                <th>Remarks</th>
-                                <th style="width: 90px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="delivery-lines-body"></tbody>
-                    </table>
-                </div>
+                <table class="table table-bordered align-middle" id="delivery-lines-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 60px;">#</th>
+                            <th style="width: 260px;">Item</th>
+                            <th style="width: 120px;">UOM</th>
+                            <th style="width: 120px;">Physical</th>
+                            <th style="width: 140px;">Quantity</th>
+                            <th style="width: 120px;">Expected</th>
+                            <th style="width: 150px;">Batch</th>
+                            <th style="width: 120px;">Expiry</th>
+                            <th style="width: 160px;">Condition</th>
+                            <th style="width: 90px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="delivery-lines-body"></tbody>
+                </table>
 
                 <div class="mt-2 text-end">
                     <strong>Total Quantity: <span id="total-qty">0.00</span></strong>
@@ -134,9 +155,9 @@
                         Cancel
                     </a>
                 </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 
 {{ inventory_items|json_script:"inventory-items-data" }}
@@ -151,6 +172,7 @@
         document.getElementById("draft-line-items-data").textContent || "[]"
     );
 
+    const deliveryForm = document.getElementById("delivery-form");
     const linesBody = document.getElementById("delivery-lines-body");
     const hiddenJsonInput = document.getElementById("line_items_json");
     const addLineButton = document.getElementById("btn-add-line");
@@ -264,7 +286,6 @@
             const batchNumber = row.querySelector(".batch-number").value.trim();
             const expiryDate = row.querySelector(".expiry-date").value;
             const condition = row.querySelector(".condition").value;
-            const remarks = row.querySelector(".line-remarks").value.trim();
 
             if (itemCode && quantityValue) {
                 items.push({
@@ -275,7 +296,6 @@
                     BatchNumber: batchNumber || null,
                     ExpiryDate: expiryDate || null,
                     ConditionOnArrival: condition || "Good",
-                    Remarks: remarks || null
                 });
             }
         });
@@ -344,11 +364,10 @@
 
     function addLine(line = null) {
         const tr = document.createElement("tr");
-
         tr.innerHTML = `
             <td class="line-number"></td>
             <td>
-                <select class="form-select item-code">
+                <select class="form-select item-code" style="min-width:220px;width:100%;">
                     ${itemOptions(line?.ItemCode || "")}
                 </select>
             </td>
@@ -379,9 +398,10 @@
                 >
             </td>
             <td>
+                <button type="button" class="btn btn-outline-secondary btn-sm expiry-popup-btn" tabindex="-1">Pick</button>
                 <input
                     type="datetime-local"
-                    class="form-control expiry-date"
+                    class="form-control expiry-date d-none"
                     value="${escapeHtml(formatDateForInput(line?.ExpiryDate))}"
                 >
             </td>
@@ -391,13 +411,6 @@
                     <option value="Damaged" ${line?.ConditionOnArrival === "Damaged" ? "selected" : ""}>Damaged</option>
                     <option value="Partial Damage" ${line?.ConditionOnArrival === "Partial Damage" ? "selected" : ""}>Partial Damage</option>
                 </select>
-            </td>
-            <td>
-                <input
-                    type="text"
-                    class="form-control line-remarks"
-                    value="${escapeHtml(line?.Remarks || "")}"
-                >
             </td>
             <td>
                 <button type="button" class="btn btn-sm btn-outline-danger btn-remove-line">
@@ -410,6 +423,8 @@
 
         const itemSelect = tr.querySelector(".item-code");
         const removeButton = tr.querySelector(".btn-remove-line");
+        const expiryBtn = tr.querySelector('.expiry-popup-btn');
+        const expiryInput = tr.querySelector('.expiry-date');
 
         itemSelect.addEventListener("change", function () {
             syncUom(this);
@@ -423,11 +438,21 @@
         tr.querySelector(".batch-number").addEventListener("input", buildLineItemsJson);
         tr.querySelector(".expiry-date").addEventListener("change", buildLineItemsJson);
         tr.querySelector(".condition").addEventListener("change", buildLineItemsJson);
-        tr.querySelector(".line-remarks").addEventListener("input", buildLineItemsJson);
 
         removeButton.addEventListener("click", function () {
             removeLine(this);
         });
+
+        // Expiry popup logic (now outside template string)
+        if (expiryBtn && expiryInput) {
+            expiryBtn.addEventListener('click', function() {
+                expiryInput.classList.remove('d-none');
+                expiryInput.focus();
+            });
+            expiryInput.addEventListener('blur', function() {
+                expiryInput.classList.add('d-none');
+            });
+        }
 
         if (itemSelect.value) {
             syncUom(itemSelect);
@@ -445,7 +470,7 @@
         addLine();
     });
 
-    submitButton.addEventListener("click", function (e) {
+    deliveryForm.addEventListener("submit", function (e) {
         buildLineItemsJson();
 
         if (!validateBeforeSubmit()) {

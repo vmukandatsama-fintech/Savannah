@@ -4,92 +4,107 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
-    <div class="mb-3">
-        <h2 class="mb-0">{{ page_title }}</h2>
-        <small class="text-muted">
+<div class="container-fluid py-4">
+
+    <!-- PAGE HEADER -->
+    <div class="mb-4">
+        <h3 class="mb-1">{{ page_title }}</h3>
+        <div class="text-muted small">
             {% if mode == "edit" %}
                 Update category details
             {% else %}
                 Create a new category
             {% endif %}
-        </small>
+        </div>
     </div>
 
+    <!-- ALERTS -->
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} py-2 px-3 mb-2 small">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
+    <!-- FORM CARD -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
             <form method="post">
                 {% csrf_token %}
 
-                {% if mode == "edit" %}
-                    <div class="mb-3">
-                        <label class="form-label">Category ID</label>
+                <div class="row g-4">
+
+                    {% if mode == "edit" %}
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small mb-1">Category ID</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="{{ category.CategoryID }}"
+                                readonly
+                            >
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small mb-1">Category Code</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="{{ category.CategoryCode }}"
+                                readonly
+                            >
+                        </div>
+                    {% else %}
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small mb-1">Category Code</label>
+                            <input
+                                type="text"
+                                class="form-control"
+                                value="Auto-generated on save"
+                                readonly
+                            >
+                        </div>
+                    {% endif %}
+
+                    <div class="col-12">
+                        <label for="name" class="form-label text-muted small mb-1">Category Name</label>
                         <input
                             type="text"
                             class="form-control"
-                            value="{{ category.CategoryID }}"
-                            readonly
+                            id="name"
+                            name="name"
+                            maxlength="255"
+                            value="{{ category.Name|default:'' }}"
+                            required
                         >
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Category Code</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            value="{{ category.CategoryCode }}"
-                            readonly
-                        >
+                    <div class="col-12">
+                        <div class="card border bg-light-subtle">
+                            <div class="card-body py-3 px-3">
+                                <div class="form-check form-switch m-0">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        id="is_active"
+                                        name="is_active"
+                                        {% if category.IsActive %}checked{% endif %}
+                                    >
+                                    <label class="form-check-label" for="is_active">
+                                        Active
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                {% else %}
-                    <div class="mb-3">
-                        <label class="form-label">Category Code</label>
-                        <input
-                            type="text"
-                            class="form-control"
-                            value="Auto-generated on save"
-                            readonly
-                        >
-                    </div>
-                {% endif %}
 
-                <div class="mb-3">
-                    <label for="name" class="form-label">Category Name</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        id="name"
-                        name="name"
-                        maxlength="255"
-                        value="{{ category.Name|default:'' }}"
-                        required
-                    >
                 </div>
 
-                <div class="form-check form-switch mb-4">
-                    <input
-                        class="form-check-input"
-                        type="checkbox"
-                        id="is_active"
-                        name="is_active"
-                        {% if category.IsActive %}checked{% endif %}
-                    >
-                    <label class="form-check-label" for="is_active">
-                        Active
-                    </label>
-                </div>
-
-                <div class="d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary px-4">
                         {% if mode == "edit" %}
                             Save Changes
                         {% else %}
@@ -97,12 +112,13 @@
                         {% endif %}
                     </button>
 
-                    <a href="{% url 'category_list' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'category_list' %}" class="btn btn-light border px-4">
                         Cancel
                     </a>
                 </div>
             </form>
         </div>
     </div>
+
 </div>
 {% endblock %}

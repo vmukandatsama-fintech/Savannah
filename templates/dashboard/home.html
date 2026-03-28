@@ -1,24 +1,240 @@
-{% extends "base.html" %} {% block content %} <h1>Dashboard</h1>
-<p class="muted">Welcome to Savannah Stores.</p>
-<div class="stats">
-    <div class="stat-box">
-        <div class="muted">Open Requests</div>
-        <h2>0</h2>
-    </div>
-    <div class="stat-box">
-        <div class="muted">Pending Approvals</div>
-        <h2>0</h2>
-    </div>
-    <div class="stat-box">
-        <div class="muted">Pending Collections</div>
-        <h2>0</h2>
-    </div>
-    <div class="stat-box">
-        <div class="muted">Low Stock Items</div>
-        <h2>0</h2>
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1 style="margin-bottom:6px;">Dashboard</h1>
+        <p class="muted" style="margin:0;">Welcome to Savannah Stores.</p>
     </div>
 </div>
-<div class="card" style="margin-top:20px;">
-    <h3>Next Build Target</h3>
-    <p>Request cart page.</p>
-</div> {% endblock %}
+
+<div class="dashboard-grid" style="margin-top:20px;">
+    <div class="stat-card">
+        <div class="stat-label">Open Requests</div>
+        <div class="stat-value">0</div>
+        <div class="stat-foot muted">Requests awaiting completion</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Pending Approvals</div>
+        <div class="stat-value">0</div>
+        <div class="stat-foot muted">Items requiring action</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Pending Collections</div>
+        <div class="stat-value">0</div>
+        <div class="stat-foot muted">Ready for stores processing</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-label">Low Stock Items</div>
+        <div class="stat-value">0</div>
+        <div class="stat-foot muted">Items below expected level</div>
+    </div>
+</div>
+
+<div class="dashboard-panels" style="margin-top:20px;">
+    <div class="card">
+        <div class="section-head">
+            <div>
+                <h3 style="margin:0;">Quick Actions</h3>
+                <p class="muted" style="margin:6px 0 0 0;">Common tasks from one place.</p>
+            </div>
+        </div>
+
+        <div class="quick-actions-grid" style="margin-top:18px;">
+            <a href="{% url 'request_cart' %}" class="action-tile">
+                <div class="action-title">Create Request</div>
+                <div class="action-text muted">Start a new stores request.</div>
+            </a>
+
+            <a href="{% url 'my_requests' %}" class="action-tile">
+                <div class="action-title">My Requests</div>
+                <div class="action-text muted">Track submitted requests.</div>
+            </a>
+
+            <a href="{% url 'approval_inbox' %}" class="action-tile">
+                <div class="action-title">Approval Inbox</div>
+                <div class="action-text muted">Review pending approvals.</div>
+            </a>
+
+            <a href="{% url 'collection_inbox' %}" class="action-tile">
+                <div class="action-title">Pending Collections</div>
+                <div class="action-text muted">Process approved requests.</div>
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="section-head">
+            <div>
+                <h3 style="margin:0;">System Overview</h3>
+                <p class="muted" style="margin:6px 0 0 0;">Current implementation progress.</p>
+            </div>
+        </div>
+
+        <div style="margin-top:18px;">
+            <div class="info-row">
+                <span class="info-label">Current Focus</span>
+                <span class="info-value">UI Retheming and Final Polish</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Voucher Engine</span>
+                <span class="info-value">Django PDF + SSRS Dual Support</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Backend</span>
+                <span class="info-value">SQL Server Source of Truth</span>
+            </div>
+            <div class="info-row" style="border-bottom:none; padding-bottom:0;">
+                <span class="info-label">Next Build Target</span>
+                <span class="info-value">Complete remaining page theming</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        margin-bottom: 4px;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .stat-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 14px;
+        padding: 18px 18px 16px 18px;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    .stat-label {
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+
+    .stat-value {
+        font-size: 30px;
+        line-height: 1;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 10px;
+    }
+
+    .stat-foot {
+        font-size: 12px;
+    }
+
+    .dashboard-panels {
+        display: grid;
+        grid-template-columns: 1.4fr 1fr;
+        gap: 16px;
+    }
+
+    .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+    }
+
+    .action-tile {
+        display: block;
+        text-decoration: none;
+        background: #f9fafb;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        transition: all 0.18s ease;
+        color: inherit;
+    }
+
+    .action-tile:hover {
+        background: #ffffff;
+        border-color: #d1d5db;
+        box-shadow: 0 2px 8px rgba(16, 24, 40, 0.06);
+        transform: translateY(-1px);
+    }
+
+    .action-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 6px;
+    }
+
+    .action-text {
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 12px 0;
+        border-bottom: 1px solid #eef2f7;
+    }
+
+    .info-label {
+        font-size: 13px;
+        color: #6b7280;
+        font-weight: 600;
+        min-width: 140px;
+    }
+
+    .info-value {
+        font-size: 14px;
+        color: #111827;
+        text-align: right;
+        font-weight: 600;
+    }
+
+    @media (max-width: 1100px) {
+        .dashboard-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .dashboard-panels {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .dashboard-grid,
+        .quick-actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .info-row {
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .info-value {
+            text-align: left;
+        }
+    }
+</style>
+{% endblock %}

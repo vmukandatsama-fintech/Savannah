@@ -4,116 +4,156 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
+<div class="container-fluid py-4">
+
+    <!-- HEADER -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h2 class="mb-0">{{ page_title }}</h2>
-            <small class="text-muted">Manage category master data</small>
+            <h3 class="mb-1">{{ page_title }}</h3>
+            <div class="text-muted small">Manage category master data</div>
         </div>
-        <a href="{% url 'category_create' %}" class="btn btn-primary">
-            <i class="fas fa-plus me-1"></i> New Category
+        <a href="{% url 'category_create' %}" class="btn btn-primary px-3">
+            + New Category
         </a>
     </div>
 
+    <!-- ALERTS -->
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
+        <div class="mb-3">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} py-2 px-3 mb-2 small">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
 
-    <div class="card shadow-sm border-0 mb-3">
+    <!-- FILTER CARD -->
+    <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
-            <form method="get" class="row g-2">
+
+            <form method="get" class="row g-3 align-items-end">
+
                 <div class="col-md-6">
-                    <label for="search" class="form-label">Search</label>
+                    <label class="form-label text-muted small mb-1">Search</label>
                     <input
                         type="text"
-                        class="form-control"
-                        id="search"
                         name="search"
                         value="{{ search }}"
-                        placeholder="Search by category code or name"
+                        class="form-control"
+                        placeholder="Search category code or name"
                     >
                 </div>
 
                 <div class="col-md-3">
-                    <label for="status" class="form-label">Status</label>
-                    <select class="form-select" id="status" name="status">
+                    <label class="form-label text-muted small mb-1">Status</label>
+                    <select name="status" class="form-select">
                         <option value="" {% if not status %}selected{% endif %}>All</option>
                         <option value="active" {% if status == "active" %}selected{% endif %}>Active</option>
                         <option value="inactive" {% if status == "inactive" %}selected{% endif %}>Inactive</option>
                     </select>
                 </div>
 
-                <div class="col-md-3 d-flex align-items-end gap-2">
-                    <button type="submit" class="btn btn-outline-primary w-100">Filter</button>
-                    <a href="{% url 'category_list' %}" class="btn btn-outline-secondary w-100">Clear</a>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        Filter
+                    </button>
+                    <a href="{% url 'category_list' %}" class="btn btn-outline-secondary w-100">
+                        Clear
+                    </a>
                 </div>
+
             </form>
+
         </div>
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
+    <!-- TABLE CARD -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th style="width: 120px;">ID</th>
-                            <th style="width: 180px;">Category Code</th>
+                <table class="table align-middle mb-0">
+
+                    <thead class="border-bottom bg-light">
+                        <tr class="text-muted small">
+                            <th class="ps-3">ID</th>
+                            <th>Category Code</th>
                             <th>Name</th>
-                            <th style="width: 140px;">Status</th>
-                            <th style="width: 220px;">Actions</th>
+                            <th>Status</th>
+                            <th class="text-end pe-3">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        {% for row in categories %}
-                            <tr>
-                                <td>{{ row.CategoryID }}</td>
-                                <td>{{ row.CategoryCode }}</td>
-                                <td>{{ row.Name }}</td>
-                                <td>
-                                    {% if row.IsActive %}
-                                        <span class="badge bg-success">Active</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">Inactive</span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="{% url 'category_edit' row.CategoryID %}" class="btn btn-sm btn-outline-primary">
-                                            Edit
-                                        </a>
 
-                                        <form method="post" action="{% url 'category_toggle' row.CategoryID %}" class="d-inline">
-                                            {% csrf_token %}
-                                            {% if row.IsActive %}
-                                                <button type="submit" class="btn btn-sm btn-outline-warning">
-                                                    Deactivate
-                                                </button>
-                                            {% else %}
-                                                <button type="submit" class="btn btn-sm btn-outline-success">
-                                                    Activate
-                                                </button>
-                                            {% endif %}
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
+                    <tbody>
+
+                        {% for row in categories %}
+                        <tr>
+
+                            <td class="ps-3">{{ row.CategoryID }}</td>
+
+                            <td>
+                                <span class="fw-medium">{{ row.CategoryCode }}</span>
+                            </td>
+
+                            <td>{{ row.Name }}</td>
+
+                            <td>
+                                {% if row.IsActive %}
+                                    <span class="badge bg-success-subtle text-success">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <td class="text-end pe-3">
+                                <div class="d-inline-flex gap-2">
+
+                                    <a href="{% url 'category_edit' row.CategoryID %}"
+                                       class="btn btn-sm btn-light border">
+                                        Edit
+                                    </a>
+
+                                    <form method="post"
+                                          action="{% url 'category_toggle' row.CategoryID %}">
+                                        {% csrf_token %}
+
+                                        {% if row.IsActive %}
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-light border text-warning">
+                                                Deactivate
+                                            </button>
+                                        {% else %}
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-light border text-success">
+                                                Activate
+                                            </button>
+                                        {% endif %}
+                                    </form>
+
+                                </div>
+                            </td>
+
+                        </tr>
                         {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    No categories found.
-                                </td>
-                            </tr>
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                No categories found
+                            </td>
+                        </tr>
                         {% endfor %}
+
                     </tbody>
+
                 </table>
             </div>
+
         </div>
     </div>
+
 </div>
 {% endblock %}
