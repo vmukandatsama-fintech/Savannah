@@ -3,38 +3,185 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<style>
+    .page-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .page-title h3 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .page-subtitle {
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .sav-btn-primary {
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: #2563eb;
+        color: #fff;
+        border: none;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .sav-btn-primary:hover {
+        background: #1d4ed8;
+        color: #fff;
+    }
+
+    .sav-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+    }
+
+    .sav-card-body {
+        padding: 20px;
+    }
+
+    .filter-grid {
+        display: grid;
+        grid-template-columns: 2fr 1.5fr 1fr 1fr auto;
+        gap: 12px;
+        align-items: end;
+    }
+
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #6b7280;
+    }
+
+    .form-control,
+    .form-select {
+        border-radius: 10px;
+        border: 1px solid #d0d5dd;
+        padding: 8px 10px;
+    }
+
+    .sav-btn-outline {
+        border-radius: 10px;
+        border: 1px solid #d0d5dd;
+        background: white;
+        padding: 8px 12px;
+        font-weight: 600;
+    }
+
+    .sav-btn-outline:hover {
+        background: #f9fafb;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    .sav-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .sav-table thead th {
+        background: #f9fafb;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        color: #6b7280;
+        padding: 12px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .sav-table tbody td {
+        padding: 12px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .sav-table tbody tr:hover {
+        background: #fcfcfd;
+    }
+
+    .code {
+        font-weight: 600;
+    }
+
+    .actions {
+        text-align: right;
+    }
+
+    .sav-btn-light {
+        border: 1px solid #d0d5dd;
+        background: white;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .sav-btn-light:hover {
+        background: #f9fafb;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 30px;
+        color: #6b7280;
+    }
+
+    @media (max-width: 900px) {
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .sav-btn-primary {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="page-shell">
 
     <!-- HEADER -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="mb-1">{{ page_title }}</h3>
-            <div class="text-muted small">Stock intake and received deliveries</div>
+    <div class="page-header">
+        <div class="page-title">
+            <h3>{{ page_title }}</h3>
+            <div class="page-subtitle">Stock intake and received deliveries</div>
         </div>
-        <a href="{% url 'delivery_create' %}" class="btn btn-primary px-3">
+
+        <a href="{% url 'delivery_create' %}" class="sav-btn-primary">
             + New Delivery
         </a>
     </div>
 
-    <!-- FILTER CARD -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body">
+    <!-- FILTER -->
+    <div class="sav-card">
+        <div class="sav-card-body">
 
-            <form method="get" class="row g-3 align-items-end">
+            <form method="get" class="filter-grid">
 
-                <div class="col-md-4">
-                    <label class="form-label text-muted small mb-1">Search</label>
-                    <input
-                        type="text"
-                        class="form-control"
-                        name="search"
-                        value="{{ search }}"
-                        placeholder="Delivery no, supplier, driver..."
-                    >
+                <div>
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" name="search"
+                           value="{{ search }}"
+                           placeholder="Delivery no, supplier, driver...">
                 </div>
 
-                <div class="col-md-3">
-                    <label class="form-label text-muted small mb-1">Supplier</label>
+                <div>
+                    <label class="form-label">Supplier</label>
                     <select class="form-select" name="supplier_code">
                         <option value="">All Suppliers</option>
                         {% for s in suppliers %}
@@ -45,20 +192,18 @@
                     </select>
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label text-muted small mb-1">From</label>
+                <div>
+                    <label class="form-label">From</label>
                     <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
                 </div>
 
-                <div class="col-md-2">
-                    <label class="form-label text-muted small mb-1">To</label>
+                <div>
+                    <label class="form-label">To</label>
                     <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
                 </div>
 
-                <div class="col-md-1 d-flex">
-                    <button type="submit" class="btn btn-outline-primary w-100">
-                        Go
-                    </button>
+                <div>
+                    <button type="submit" class="sav-btn-outline">Go</button>
                 </div>
 
             </form>
@@ -66,51 +211,41 @@
         </div>
     </div>
 
-    <!-- TABLE CARD -->
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-0">
+    <!-- TABLE -->
+    <div class="sav-card">
+        <div class="sav-card-body" style="padding:0;">
 
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-
-                    <thead class="border-bottom bg-light">
-                        <tr class="text-muted small">
-                            <th class="ps-3">Delivery No</th>
+            <div class="table-wrap">
+                <table class="sav-table">
+                    <thead>
+                        <tr>
+                            <th>Delivery No</th>
                             <th>Date</th>
                             <th>Supplier</th>
                             <th>Vehicle</th>
                             <th>Driver</th>
                             <th>Waybill</th>
                             <th>Received By</th>
-                            <th class="text-end pe-3"></th>
+                            <th></th>
                         </tr>
                     </thead>
 
                     <tbody>
-
                         {% for row in deliveries %}
                         <tr>
 
-                            <td class="ps-3">
-                                <span class="fw-medium">{{ row.DeliveryNumber }}</span>
-                            </td>
-
+                            <td class="code">{{ row.DeliveryNumber }}</td>
                             <td>{{ row.DeliveryDate }}</td>
-
                             <td>{{ row.SupplierName|default:row.SupplierCode }}</td>
-
                             <td>{{ row.VehicleRegistration|default:"-" }}</td>
-
                             <td>{{ row.DriverName|default:"-" }}</td>
-
                             <td>{{ row.WaybillNumber|default:"-" }}</td>
-
                             <td>{{ row.ReceivedByEmail }}</td>
 
-                            <td class="text-end pe-3">
+                            <td class="actions">
                                 {% if row.DeliveryNumber %}
                                     <a href="{% url 'delivery_detail' row.DeliveryNumber %}"
-                                       class="btn btn-sm btn-light border">
+                                       class="sav-btn-light">
                                         View
                                     </a>
                                 {% else %}
@@ -121,12 +256,11 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-5">
+                            <td colspan="8" class="empty-state">
                                 No deliveries found
                             </td>
                         </tr>
                         {% endfor %}
-
                     </tbody>
 
                 </table>

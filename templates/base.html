@@ -5,6 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         :root {
@@ -41,6 +42,7 @@
             --sidebar-hover: #1e293b;
             --topbar-height: 64px;
             --sidebar-width: 270px;
+            --sidebar-collapsed-width: 76px;
         }
 
         * {
@@ -71,7 +73,6 @@
             text-decoration: underline;
         }
 
-        /* ===== App Layout ===== */
         .app-shell {
             display: flex;
             min-height: 100vh;
@@ -88,13 +89,59 @@
             top: 0;
             height: 100vh;
             border-right: 1px solid rgba(255, 255, 255, 0.06);
+            transition: width 0.2s ease;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .sidebar.sidebar-collapsed {
+            width: var(--sidebar-collapsed-width);
         }
 
         .brand {
-            padding: 20px 18px;
+            padding: 20px 18px 12px 18px;
             font-size: 20px;
             font-weight: 700;
             border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 72px;
+        }
+
+        .brand-icon {
+            font-size: 20px;
+            line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            white-space: nowrap;
+        }
+
+        .sidebar-toggle-wrap {
+            padding: 12px 12px 0 12px;
+        }
+
+        .sidebar-toggle-btn {
+            width: 100%;
+            border: none;
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--sidebar-text);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: .15s ease-in-out;
+        }
+
+        .sidebar-toggle-btn:hover {
+            background: var(--sidebar-hover);
         }
 
         .sidebar-scroll {
@@ -110,7 +157,8 @@
         .menu-link,
         .menu-toggle,
         .submenu a {
-            display: block;
+            display: flex;
+            align-items: center;
             width: 100%;
             border: none;
             background: none;
@@ -122,6 +170,8 @@
             font-weight: 600;
             text-decoration: none;
             cursor: pointer;
+            gap: 10px;
+            min-height: 42px;
         }
 
         .menu-link:hover,
@@ -133,6 +183,7 @@
 
         .menu-toggle {
             position: relative;
+            justify-content: flex-start;
         }
 
         .menu-toggle::after {
@@ -141,6 +192,18 @@
             right: 12px;
             color: var(--sidebar-muted);
             font-size: 12px;
+        }
+
+        .menu-icon {
+            width: 18px;
+            min-width: 18px;
+            text-align: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .menu-text {
+            white-space: nowrap;
         }
 
         .menu-section .submenu {
@@ -189,34 +252,10 @@
             flex-direction: column;
         }
 
-        .topbar {
-            height: var(--topbar-height);
-            background: #fff;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 22px;
-            position: sticky;
-            top: 0;
-            z-index: 20;
-        }
-
-        .topbar-title {
-            font-size: 18px;
-            font-weight: 700;
-        }
-
-        .topbar-user {
-            color: var(--muted);
-            font-weight: 600;
-        }
-
         .content {
             padding: 22px;
         }
 
-        /* ===== Cards / Sections ===== */
         .card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -249,7 +288,6 @@
             color: var(--muted);
         }
 
-        /* ===== Tables ===== */
         .table-wrap {
             overflow-x: auto;
         }
@@ -293,7 +331,6 @@
             border-top: 2px solid var(--border);
         }
 
-        /* ===== Forms ===== */
         label {
             display: block;
             font-size: 13px;
@@ -332,7 +369,6 @@
             resize: vertical;
         }
 
-        /* ===== Badges ===== */
         .badge {
             display: inline-block;
             padding: 4px 10px;
@@ -373,7 +409,6 @@
             color: var(--purple);
         }
 
-        /* ===== Buttons ===== */
         .btn {
             display: inline-block;
             padding: 10px 14px;
@@ -434,7 +469,6 @@
             text-align: center;
         }
 
-        /* ===== Text State Helpers ===== */
         .text-success {
             color: var(--success);
             font-weight: 600;
@@ -455,7 +489,6 @@
             font-weight: 600;
         }
 
-        /* ===== Alerts ===== */
         .alert {
             border-radius: 12px;
             padding: 12px 14px;
@@ -488,7 +521,6 @@
             border-color: #a5f3fc;
         }
 
-        /* ===== Dashboard cards ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -557,7 +589,6 @@
             text-decoration: none;
         }
 
-        /* ===== Auth pages ===== */
         .auth-wrap {
             min-height: 100vh;
             display: flex;
@@ -576,7 +607,6 @@
             box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
         }
 
-        /* ===== Utilities ===== */
         .grid-2 {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -822,7 +852,6 @@
             background: rgba(255, 255, 255, 0.42);
         }
 
-        /* ===== Premium Quick Actions ===== */
         .quick-actions-section {
             margin-top: 18px;
         }
@@ -940,110 +969,129 @@
             color: var(--primary);
             line-height: 1.2;
         }
-        .form-grid-4{
-            display:grid;
-            grid-template-columns:repeat(4,1fr);
-            gap:12px;
+
+        .form-grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
         }
 
-        .form-grid-4 .full{
-            grid-column:span 4;
+        .form-grid-4 .full {
+            grid-column: span 4;
         }
 
-        .split-layout{
-            display:grid;
-            grid-template-columns:1.6fr 1fr;
-            gap:16px;
+        .split-layout {
+            display: grid;
+            grid-template-columns: 1.6fr 1fr;
+            gap: 16px;
         }
 
-        .filter-grid{
-            display:grid;
-            grid-template-columns:repeat(4,1fr);
-            gap:10px;
-            margin:10px 0;
+        .filter-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 10px 0;
         }
 
-        .catalog-list{
-            max-height:500px;
-            overflow-y:auto;
-            display:grid;
-            gap:10px;
+        .catalog-list {
+            max-height: 500px;
+            overflow-y: auto;
+            display: grid;
+            gap: 10px;
         }
 
-        .item-card{
-            display:grid;
-            grid-template-columns:1fr auto 70px 80px;
-            gap:10px;
-            align-items:center;
-            padding:10px;
-            border:1px solid #e5e7eb;
-            border-radius:10px;
+        .item-card {
+            display: grid;
+            grid-template-columns: 1fr auto 70px 80px;
+            gap: 10px;
+            align-items: center;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
         }
 
-        .qty-input{
-            padding:6px;
-            border-radius:6px;
-            border:1px solid #ccc;
+        .qty-input {
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
         }
 
-        .summary{
-            margin-top:10px;
-            padding-top:10px;
-            border-top:1px solid #e5e7eb;
+        .summary {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e5e7eb;
         }
 
-        @media (max-width:900px){
-            .split-layout{
-                grid-template-columns:1fr;
-            }
-
-            .form-grid-4{
-                grid-template-columns:1fr 1fr;
-            }
-        }
-        .detail-pairs{
-            display:grid;
-            grid-template-columns:1fr;
-            gap:8px;
+        .detail-pairs {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
         }
 
-        .detail-row{
-            font-size:14px;
-            line-height:1.45;
-            text-align:left;
-            word-break:break-word;
+        .detail-row {
+            font-size: 14px;
+            line-height: 1.45;
+            text-align: left;
+            word-break: break-word;
         }
 
-        .detail-label{
-            font-weight:600;
-            color:var(--text);
-            margin-right:4px;
+        .detail-label {
+            font-weight: 600;
+            color: var(--text);
+            margin-right: 4px;
         }
 
-        .detail-value{
-            color:var(--text);
+        .detail-value {
+            color: var(--text);
         }
-        @media (max-width: 768px) {
-            .quick-actions-grid {
+
+        .sidebar.sidebar-collapsed .brand {
+            padding: 20px 8px 12px 8px;
+            justify-content: center;
+        }
+
+        .sidebar.sidebar-collapsed .brand-text,
+        .sidebar.sidebar-collapsed .toggle-text,
+        .sidebar.sidebar-collapsed .menu-text,
+        .sidebar.sidebar-collapsed .menu-toggle::after,
+        .sidebar.sidebar-collapsed .submenu,
+        .sidebar.sidebar-collapsed .user-panel {
+            display: none !important;
+        }
+
+        .sidebar.sidebar-collapsed .sidebar-toggle-wrap {
+            padding: 12px 8px 0 8px;
+        }
+
+        .sidebar.sidebar-collapsed .sidebar-scroll {
+            padding: 14px 8px;
+        }
+
+        .sidebar.sidebar-collapsed .menu-link,
+        .sidebar.sidebar-collapsed .menu-toggle {
+            justify-content: center;
+            padding: 12px 8px;
+            gap: 0;
+        }
+
+        .sidebar.sidebar-collapsed .menu-icon {
+            margin: 0;
+            width: auto;
+            min-width: auto;
+            font-size: 16px;
+        }
+
+        .sidebar.sidebar-collapsed .menu-section.open .menu-toggle {
+            background: transparent;
+        }
+
+        @media (max-width: 900px) {
+            .split-layout {
                 grid-template-columns: 1fr;
             }
-        }
 
-        @media (max-width: 768px) {
-            .quick-actions-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .kpi-value {
-                font-size: 34px;
-            }
-
-            .kpi-label {
-                font-size: 18px;
-            }
-
-            .kpi-icon {
-                font-size: 44px;
+            .form-grid-4 {
+                grid-template-columns: 1fr 1fr;
             }
         }
 
@@ -1073,8 +1121,46 @@
                 height: auto;
             }
 
-            .topbar {
-                position: relative;
+            .sidebar.sidebar-collapsed {
+                width: 100%;
+            }
+
+            .sidebar.sidebar-collapsed .brand-text,
+            .sidebar.sidebar-collapsed .toggle-text,
+            .sidebar.sidebar-collapsed .menu-text,
+            .sidebar.sidebar-collapsed .user-panel {
+                display: inline !important;
+            }
+
+            .sidebar.sidebar-collapsed .submenu {
+                display: none !important;
+            }
+
+            .sidebar.sidebar-collapsed .menu-link,
+            .sidebar.sidebar-collapsed .menu-toggle {
+                justify-content: flex-start;
+                gap: 10px;
+                padding: 10px 12px;
+            }
+
+            .sidebar.sidebar-collapsed .menu-toggle::after {
+                display: block !important;
+            }
+
+            .quick-actions-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .kpi-value {
+                font-size: 34px;
+            }
+
+            .kpi-label {
+                font-size: 18px;
+            }
+
+            .kpi-icon {
+                font-size: 44px;
             }
         }
     </style>
@@ -1083,63 +1169,135 @@
 <body>
     {% if request.session.user_email %}
     <div class="app-shell">
-        <aside class="sidebar">
-            <div class="brand">Savannah Stores</div>
+        <aside class="sidebar" id="appSidebar">
+            <div class="brand">
+                <span class="brand-icon"><i class="bi bi-box-seam"></i></span>
+                <span class="brand-text">Savannah Stores</span>
+            </div>
+
+            <div class="sidebar-toggle-wrap">
+                <button id="sidebarToggle" class="sidebar-toggle-btn" type="button" title="Toggle menu">
+                    <span class="menu-icon"><i class="bi bi-list"></i></span>
+                    <span class="toggle-text">Collapse Menu</span>
+                </button>
+            </div>
 
             <div class="sidebar-scroll">
                 {% if session_features.dashboard %}
                 <div class="menu-section">
-                    <a class="menu-link" href="/dashboard/">Dashboard</a>
+                    <a class="menu-link" href="/dashboard/" title="Dashboard">
+                        <span class="menu-icon"><i class="bi bi-speedometer2"></i></span>
+                        <span class="menu-text">Dashboard</span>
+                    </a>
                 </div>
                 {% endif %}
 
                 <div class="menu-section open">
-                    <button class="menu-toggle" type="button">Requests</button>
+                    <button class="menu-toggle" type="button" title="Requests">
+                        <span class="menu-icon"><i class="bi bi-file-earmark-text"></i></span>
+                        <span class="menu-text">Requests</span>
+                    </button>
                     <div class="submenu">
                         {% if session_features.create_request %}
-                        <a href="/requests/create/">Create Request</a>
+                        <a href="/requests/create/" title="Create Request">
+                            <span class="menu-icon"><i class="bi bi-plus-circle"></i></span>
+                            <span class="menu-text">Create Request</span>
+                        </a>
                         {% endif %}
 
-                        {% if session_features.my_requests %}
-                        <a href="/requests/my-requests/">My Requests</a>
+                        {% if session_features.my_requests or request.session.role_name == "Stores Controller" %}
+                        <a href="{% url 'my_requests' %}" title="Requests">
+                            <span class="menu-icon"><i class="bi bi-card-list"></i></span>
+                            <span class="menu-text">Requests</span>
+                        </a>
                         {% endif %}
 
                         {% if session_features.approvals %}
-                        <a href="/requests/approvals/">Approvals</a>
+                        <a href="/requests/approvals/" title="Approvals">
+                            <span class="menu-icon"><i class="bi bi-check2-square"></i></span>
+                            <span class="menu-text">Approvals</span>
+                        </a>
                         {% endif %}
 
                         {% if session_features.collections or request.session.role_name == "Stores Controller" %}
-                        <a href="{% url 'collection_inbox' %}">Pending Collections</a>
-                        <a href="{% url 'collection_history' %}">Collection History</a>
-                        <a href="{% url 'returns_list' %}">Returns</a>
+                        <a href="{% url 'collection_inbox' %}" title="Pending Collections">
+                            <span class="menu-icon"><i class="bi bi-box-arrow-in-down"></i></span>
+                            <span class="menu-text">Pending Collections</span>
+                        </a>
+                        <a href="{% url 'collection_history' %}" title="Collection History">
+                            <span class="menu-icon"><i class="bi bi-clock-history"></i></span>
+                            <span class="menu-text">Collection History</span>
+                        </a>
                         {% endif %}
                     </div>
                 </div>
 
                 {% if request.session.role_name == "Stores Controller" %}
                 <div class="menu-section">
-                    <button class="menu-toggle" type="button">Inventory Management</button>
+                    <button class="menu-toggle" type="button" title="Inventory Management">
+                        <span class="menu-icon"><i class="bi bi-boxes"></i></span>
+                        <span class="menu-text">Inventory Management</span>
+                    </button>
                     <div class="submenu">
-                        <a href="{% url 'inventory_list' %}">Inventory Items</a>
-                        <a href="{% url 'item_type_list' %}">Item Types</a>
-                        <a href="{% url 'uom_list' %}">UOMs</a>
-                        <a href="{% url 'category_list' %}">Categories</a>
-                        <a href="{% url 'supplier_list' %}">Suppliers</a>
-                        <a href="{% url 'delivery_list' %}">Deliveries</a>
+                        <a href="{% url 'inventory_list' %}" title="Inventory Items">
+                            <span class="menu-icon"><i class="bi bi-box-seam"></i></span>
+                            <span class="menu-text">Inventory Items</span>
+                        </a>
+                        <a href="{% url 'item_type_list' %}" title="Item Types">
+                            <span class="menu-icon"><i class="bi bi-tags"></i></span>
+                            <span class="menu-text">Item Types</span>
+                        </a>
+                        <a href="{% url 'uom_list' %}" title="UOMs">
+                            <span class="menu-icon"><i class="bi bi-rulers"></i></span>
+                            <span class="menu-text">UOMs</span>
+                        </a>
+                        <a href="{% url 'category_list' %}" title="Categories">
+                            <span class="menu-icon"><i class="bi bi-diagram-3"></i></span>
+                            <span class="menu-text">Categories</span>
+                        </a>
+                        <a href="{% url 'supplier_list' %}" title="Suppliers">
+                            <span class="menu-icon"><i class="bi bi-truck"></i></span>
+                            <span class="menu-text">Suppliers</span>
+                        </a>
+                        <a href="{% url 'delivery_list' %}" title="Deliveries">
+                            <span class="menu-icon"><i class="bi bi-arrow-down-square"></i></span>
+                            <span class="menu-text">Deliveries</span>
+                        </a>
                     </div>
                 </div>
                 {% endif %}
 
                 {% if session_features.reports %}
                 <div class="menu-section">
-                    <button class="menu-toggle" type="button">Reports</button>
+                    <button class="menu-toggle" type="button" title="Reports">
+                        <span class="menu-icon"><i class="bi bi-bar-chart"></i></span>
+                        <span class="menu-text">Reports</span>
+                    </button>
                     <div class="submenu">
-                        <a href="{% url 'stock_reports' %}">Stock Reports</a>
-                        <a href="{% url 'farmer_reports' %}">Farmer Reports</a>
-                        <a href="{% url 'request_tracker' %}">Request Tracker</a>
-                        <a href="{% url 'exception_reports' %}">Exception Reports</a>
-                        <a href="{% url 'department_reports' %}">Department Reports</a>
-                        <a href="{% url 'reversal_reports' %}">Reversal Reports</a>
+                        <a href="{% url 'stock_reports' %}" title="Stock Reports">
+                            <span class="menu-icon"><i class="bi bi-graph-up-arrow"></i></span>
+                            <span class="menu-text">Stock Reports</span>
+                        </a>
+                        <a href="{% url 'farmer_reports' %}" title="Farmer Reports">
+                            <span class="menu-icon"><i class="bi bi-people"></i></span>
+                            <span class="menu-text">Farmer Reports</span>
+                        </a>
+                        <a href="{% url 'request_tracker' %}" title="Request Tracker">
+                            <span class="menu-icon"><i class="bi bi-clipboard-data"></i></span>
+                            <span class="menu-text">Request Tracker</span>
+                        </a>
+                        <a href="{% url 'exception_reports' %}" title="Exception Reports">
+                            <span class="menu-icon"><i class="bi bi-exclamation-triangle"></i></span>
+                            <span class="menu-text">Exception Reports</span>
+                        </a>
+                        <a href="{% url 'department_reports' %}" title="Department Reports">
+                            <span class="menu-icon"><i class="bi bi-building"></i></span>
+                            <span class="menu-text">Department Reports</span>
+                        </a>
+                        <a href="{% url 'reversal_reports' %}" title="Reversal Reports">
+                            <span class="menu-icon"><i class="bi bi-arrow-counterclockwise"></i></span>
+                            <span class="menu-text">Reversal Reports</span>
+                        </a>
                     </div>
                 </div>
                 {% endif %}
@@ -1166,11 +1324,6 @@
         </aside>
 
         <main class="main">
-            <div class="topbar">
-                <div class="topbar-title">Savannah Stores</div>
-                <div class="topbar-user">{{ session_user_name|default:session_user_email }}</div>
-            </div>
-
             <div class="content">
                 {% if messages %}
                 {% for message in messages %}
@@ -1211,9 +1364,29 @@
     <script>
         document.querySelectorAll(".menu-toggle").forEach(function (btn) {
             btn.addEventListener("click", function () {
+                const sidebar = document.getElementById("appSidebar");
+                if (sidebar && sidebar.classList.contains("sidebar-collapsed")) {
+                    return;
+                }
                 btn.parentElement.classList.toggle("open");
             });
         });
+
+        const sidebar = document.getElementById("appSidebar");
+        const sidebarToggle = document.getElementById("sidebarToggle");
+
+        if (sidebar && sidebarToggle) {
+            sidebarToggle.addEventListener("click", function () {
+                sidebar.classList.toggle("sidebar-collapsed");
+
+                const toggleText = sidebarToggle.querySelector(".toggle-text");
+                if (toggleText) {
+                    toggleText.textContent = sidebar.classList.contains("sidebar-collapsed")
+                        ? "Expand Menu"
+                        : "Collapse Menu";
+                }
+            });
+        }
     </script>
 </body>
 

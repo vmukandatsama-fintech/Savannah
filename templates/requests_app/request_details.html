@@ -8,7 +8,7 @@
     <div class="page-title">Request Not Found</div>
     <div class="muted">No request details were found for {{ request_number }}.</div>
     <div style="margin-top:12px;">
-        <a href="/requests/my-requests/" class="btn btn-secondary">Back to My Requests</a>
+        <a href="{% url 'my_requests' %}" class="btn btn-secondary">Back to Requests</a>
     </div>
 </div>
 {% else %}
@@ -19,24 +19,50 @@
             <div class="page-title">Request Details</div>
             <div class="page-subtitle">{{ header.RequestNumber }}</div>
         </div>
-        <a href="/requests/my-requests/" class="btn btn-secondary">Back</a>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="{% url 'my_requests' %}" class="btn btn-secondary">Back to Requests</a>
+        </div>
     </div>
 </div>
 
-<div class="grid-3">
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-label">Total Requested</div>
+        <div class="stat-value">{{ total_requested|default:0|number }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Issued</div>
+        <div class="stat-value">{{ total_issued|default:0|number }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Total Returned</div>
+        <div class="stat-value">{{ total_returned|default:0|number }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Outstanding With Farmer</div>
+        <div class="stat-value">{{ total_net_issued|default:0|number }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">Remaining To Be Issued</div>
+        <div class="stat-value">{{ total_remaining|default:0|number }}</div>
+    </div>
+</div>
 
+<div class="grid-2">
     <div class="card">
-        <div class="section-title">Request Info</div>
-
+        <div class="section-title">Request Information</div>
         <div class="detail-pairs">
             <div class="detail-row">
-                <span class="detail-label">Request Number:</span><span class="detail-value">{{ header.RequestNumber }}</span>
+                <span class="detail-label">Request Number:</span>
+                <span class="detail-value">{{ header.RequestNumber }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Request Date:</span><span class="detail-value">{{ header.RequestDate|date:"d-m-Y H:i" }}</span>
+                <span class="detail-label">Request Date:</span>
+                <span class="detail-value">{{ header.RequestDate|date:"d-m-Y H:i" }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Required Date:</span><span class="detail-value">{{ header.RequiredDate|date:"d-m-Y" }}</span>
+                <span class="detail-label">Required Date:</span>
+                <span class="detail-value">{{ header.RequiredDate|date:"d-m-Y" }}</span>
             </div>
             <div class="detail-row">
                 <span class="detail-label">Status:</span>
@@ -44,68 +70,69 @@
                     {{ header.StatusName }}
                 </span>
             </div>
-        </div>
-    </div>
-
-    <div class="card">
-        <div class="section-title">Farmer</div>
-
-        <div class="detail-pairs">
             <div class="detail-row">
-                <span class="detail-label">Name:</span><span class="detail-value">{{ header.FarmerName|default:"-" }}</span>
+                <span class="detail-label">Authorization Required:</span>
+                {% if header.AuthorizationRequired %}
+                    <span class="badge badge-pending">Yes</span>
+                {% else %}
+                    <span class="badge badge-success">No</span>
+                {% endif %}
             </div>
             <div class="detail-row">
-                <span class="detail-label">Grower:</span><span class="detail-value">{{ header.GrowerNumber|default:"-" }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Department:</span><span class="detail-value">{{ header.DepartmentCode|default:"-" }}</span>
-            </div>
-            <div class="detail-row">
-                <span class="detail-label">Requested By:</span><span class="detail-value">{{ header.RequestorEmail|default:"-" }}</span>
+                <span class="detail-label">Created At:</span>
+                <span class="detail-value">{{ header.CreatedAt|date:"d-m-Y H:i"|default:"-" }}</span>
             </div>
         </div>
     </div>
 
     <div class="card">
-        <div class="section-title">Collection</div>
-
+        <div class="section-title">Farmer and Collection Context</div>
         <div class="detail-pairs">
             <div class="detail-row">
-                <span class="detail-label">Collector:</span><span class="detail-value">{{ header.CollectorName|default:"-" }}</span>
+                <span class="detail-label">Farmer Name:</span>
+                <span class="detail-value">{{ header.FarmerName|default:"-" }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">ID:</span><span class="detail-value">{{ header.CollectorNationalID|default:"-" }}</span>
+                <span class="detail-label">Grower Number:</span>
+                <span class="detail-value">{{ header.GrowerNumber|default:"-" }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Truck:</span><span class="detail-value">{{ header.TruckRegistration|default:"-" }}</span>
+                <span class="detail-label">Department:</span>
+                <span class="detail-value">{{ header.DepartmentName|default:header.DepartmentCode|default:"-" }}</span>
             </div>
             <div class="detail-row">
-                <span class="detail-label">Trailer:</span><span class="detail-value">{{ header.TrailerRegistration|default:"-" }}</span>
+                <span class="detail-label">Requested By:</span>
+                <span class="detail-value">{{ header.RequestorEmail|default:"-" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Collector:</span>
+                <span class="detail-value">{{ header.CollectorName|default:"-" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Collector ID:</span>
+                <span class="detail-value">{{ header.CollectorNationalID|default:"-" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Truck Registration:</span>
+                <span class="detail-value">{{ header.TruckRegistration|default:"-" }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Trailer Registration:</span>
+                <span class="detail-value">{{ header.TrailerRegistration|default:"-" }}</span>
             </div>
         </div>
     </div>
-
 </div>
 
 <div class="card">
     <div class="section-title">Justification</div>
-
     <div class="muted">{{ header.Justification|default:"-" }}</div>
-
-    <div class="detail-row" style="margin-top:12px;">
-        <span class="detail-label">Authorization Required:</span>
-        {% if header.AuthorizationRequired %}
-            <span class="badge badge-pending">Yes</span>
-        {% else %}
-            <span class="badge badge-success">No</span>
-        {% endif %}
-    </div>
 </div>
 
 <div class="card">
     <div class="section-head-inline">
         <div class="section-title mb-0">Requested Items</div>
-        <div class="muted">Line-level breakdown</div>
+        <div class="muted">Line-level request, issue, and return balances</div>
     </div>
 
     {% if lines %}
@@ -117,6 +144,8 @@
                     <th>Item</th>
                     <th class="numeric">Requested</th>
                     <th class="numeric">Issued</th>
+                    <th class="numeric">Returned</th>
+                    <th class="numeric">Outstanding</th>
                     <th class="numeric">Reserved</th>
                     <th>UOM</th>
                     <th>Status</th>
@@ -127,11 +156,13 @@
                 <tr>
                     <td>{{ line.LineNumber }}</td>
                     <td>
-                        <strong>{{ line.ItemName }}</strong><br>
+                        <strong>{{ line.ItemName|default:"-" }}</strong><br>
                         <span class="muted">{{ line.ItemCode }}</span>
                     </td>
                     <td class="numeric">{{ line.QuantityRequested|number }}</td>
                     <td class="numeric">{{ line.QuantityIssued|number }}</td>
+                    <td class="numeric">{{ line.QuantityReturned|default:0|number }}</td>
+                    <td class="numeric">{{ line.NetIssued|default:0|number }}</td>
                     <td class="numeric">{{ line.QuantityReserved|number }}</td>
                     <td>{{ line.UOMCode|default:"-" }}</td>
                     <td>
@@ -170,7 +201,7 @@
             </thead>
             <tbody>
                 {% for approval in approvals %}
-                <tr {% if approval.IsCurrent %}class="row-highlight"{% endif %}>
+                <tr>
                     <td>{{ approval.ApprovalLevel }}</td>
                     <td>{{ approval.ApproverEmail|default:"-" }}</td>
                     <td>{{ approval.ApprovalRole|default:"-" }}</td>
@@ -186,7 +217,7 @@
                             <span class="badge badge-secondary">Done</span>
                         {% endif %}
                     </td>
-                    <td>{{ approval.CreatedDate|date:"d-m-Y H:i" }}</td>
+                    <td>{{ approval.CreatedDate|date:"d-m-Y H:i"|default:"-" }}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -194,6 +225,102 @@
     </div>
     {% else %}
         <div class="muted">No approvals found.</div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="section-head-inline">
+        <div class="section-title mb-0">Collections History</div>
+        <div class="muted">Only collections linked to this request</div>
+    </div>
+
+    {% if collections %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Collection Number</th>
+                    <th>Date</th>
+                    <th>Disbursed By</th>
+                    <th class="numeric">Issued Qty</th>
+                    <th class="numeric">Lines</th>
+                    <th>Voucher</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for collection in collections %}
+                <tr>
+                    <td><strong>{{ collection.CollectionNumber }}</strong></td>
+                    <td>{{ collection.CollectionDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td>{{ collection.DisbursedBy|default:"-" }}</td>
+                    <td class="numeric">{{ collection.TotalIssueQty|default:0|number }}</td>
+                    <td class="numeric">{{ collection.TotalLines|default:0|number }}</td>
+                    <td>
+                        {% if collection.VoucherStatus %}
+                            <span class="{{ collection.VoucherStatus|status_badge_class }}">
+                                {{ collection.VoucherStatus }}
+                            </span>
+                        {% else %}
+                            <span class="muted">-</span>
+                        {% endif %}
+                    </td>
+                    <td style="white-space:nowrap;">
+                        <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end;">
+                            <a href="{% url 'collection_history_detail' collection.CollectionNumber %}" class="btn btn-secondary">View</a>
+                            <a href="{% url 'return_detail' collection.CollectionNumber %}" class="btn btn-warning">Process Return</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No collections found for this request.</div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="section-head-inline">
+        <div class="section-title mb-0">Returns History</div>
+        <div class="muted">All returns posted against this request</div>
+    </div>
+
+    {% if returns_history %}
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Return Date</th>
+                    <th>Reference</th>
+                    <th>Line</th>
+                    <th>Item</th>
+                    <th class="numeric">Returned Qty</th>
+                    <th>Returned By</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in returns_history %}
+                <tr>
+                    <td>{{ item.ReturnDate|date:"d-m-Y H:i"|default:"-" }}</td>
+                    <td>{{ item.ReturnReference|default:header.RequestNumber|default:"-" }}</td>
+                    <td>{{ item.LineNumber|default:"-" }}</td>
+                    <td>
+                        <strong>{{ item.ItemName|default:"-" }}</strong><br>
+                        <span class="muted">{{ item.ItemCode|default:"-" }}</span>
+                    </td>
+                    <td class="numeric">{{ item.ReturnedQty|default:0|number }}</td>
+                    <td>{{ item.ReturnedBy|default:"-" }}</td>
+                    <td>{{ item.Notes|default:"-" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <div class="muted">No returns have been posted for this request.</div>
     {% endif %}
 </div>
 

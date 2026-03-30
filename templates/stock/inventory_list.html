@@ -1,78 +1,322 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h3 class="mb-0">Inventory Items</h3>
-            <small class="text-muted">Manage item master data for stores operations.</small>
+<style>
+    .page-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .page-title-wrap h1,
+    .page-title-wrap h3 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .page-subtitle {
+        margin-top: 6px;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .sav-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    .sav-card-header {
+        padding: 18px 20px 0 20px;
+    }
+
+    .sav-card-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .sav-card-subtitle {
+        margin: 4px 0 0 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .sav-card-body {
+        padding: 20px;
+    }
+
+    .sav-btn-primary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: #2563eb;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 600;
+        border: none;
+        transition: 0.2s ease;
+    }
+
+    .sav-btn-primary:hover {
+        background: #1d4ed8;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    .sav-alert {
+        border-radius: 12px;
+        border: 1px solid #e5e7eb;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+    }
+
+    .sav-alert:last-child {
+        margin-bottom: 0;
+    }
+
+    .sav-table-wrap {
+        overflow-x: auto;
+    }
+
+    .sav-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 1100px;
+    }
+
+    .sav-table thead th {
+        background: #f9fafb;
+        color: #6b7280;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 14px 12px;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .sav-table thead th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .sav-table thead th:last-child {
+        border-top-right-radius: 12px;
+    }
+
+    .sav-table tbody td {
+        padding: 14px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: #111827;
+        background: #ffffff;
+    }
+
+    .sav-table tbody tr:hover td {
+        background: #fcfcfd;
+    }
+
+    .sav-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .code-text {
+        font-weight: 600;
+        color: #111827;
+        white-space: nowrap;
+    }
+
+    .muted-value {
+        color: #6b7280;
+    }
+
+    .number-cell {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+
+    .status-active {
+        background: #ecfdf3;
+        color: #027a48;
+        border-color: #abefc6;
+    }
+
+    .status-inactive {
+        background: #f3f4f6;
+        color: #6b7280;
+        border-color: #e5e7eb;
+    }
+
+    .status-alert-on {
+        background: #fffaeb;
+        color: #b54708;
+        border-color: #fedf89;
+    }
+
+    .status-alert-off {
+        background: #f8fafc;
+        color: #64748b;
+        border-color: #e2e8f0;
+    }
+
+    .actions-cell {
+        white-space: nowrap;
+        width: 190px;
+    }
+
+    .sav-btn-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #d0d5dd;
+        background: #ffffff;
+        color: #344054;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-right: 8px;
+        transition: 0.2s ease;
+    }
+
+    .sav-btn-link:hover {
+        text-decoration: none;
+        background: #f9fafb;
+        color: #101828;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 28px 16px;
+        color: #6b7280;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .sav-btn-primary {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="page-shell">
+    <div class="page-header">
+        <div class="page-title-wrap">
+            <h3>Inventory Items</h3>
+            <div class="page-subtitle">Manage item master data for stores operations.</div>
         </div>
-        <a href="{% url 'inventory_create' %}" class="btn btn-primary">
+
+        <a href="{% url 'inventory_create' %}" class="sav-btn-primary">
             Add Inventory Item
         </a>
     </div>
 
     {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
-        {% endfor %}
+        <div>
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags|default:'info' }} sav-alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
     {% endif %}
 
-    <div class="card shadow-sm">
-        <div class="card-body table-responsive">
-            <table class="table table-striped table-bordered align-middle">
-                <thead>
-                    <tr>
-                        <th>Item Code</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>UOM</th>
-                        <th>Reorder</th>
-                        <th>Min</th>
-                        <th>Max</th>
-                        <th>Current Stock</th>
-                        <th>Active</th>
-                        <th>Alert</th>
-                        <th style="width: 180px;">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in items %}
-                    <tr>
-                        <td>{{ item.ItemCode }}</td>
-                        <td>{{ item.Name }}</td>
-                        <td>{{ item.CategoryName|default:item.CategoryCode }}</td>
-                        <td>{{ item.UOMName|default:item.UOMCode }}</td>
-                        <td>{{ item.ReorderLevel }}</td>
-                        <td>{{ item.MinStockLevel }}</td>
-                        <td>{{ item.MaxStockLevel }}</td>
-                        <td>{{ item.CurrentStock }}</td>
-                        <td>
-                            {% if item.IsActive %}
-                                <span class="badge bg-success">Active</span>
-                            {% else %}
-                                <span class="badge bg-secondary">Inactive</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if item.EnabledStockAlert %}
-                                <span class="badge bg-warning text-dark">Enabled</span>
-                            {% else %}
-                                <span class="badge bg-light text-muted">Disabled</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <a href="{% url 'inventory_edit' item.ItemCode %}" class="btn btn-sm btn-outline-primary">Edit</a>
-                            <a href="{% url 'inventory_toggle' item.ItemCode %}" class="btn btn-sm btn-outline-secondary">Toggle</a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="11" class="text-center">No inventory items found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="sav-card">
+        <div class="sav-card-header">
+            <h4 class="sav-card-title">Inventory Master List</h4>
+            <p class="sav-card-subtitle">View, maintain, and control inventory item setup.</p>
+        </div>
+
+        <div class="sav-card-body">
+            <div class="sav-table-wrap">
+                <table class="sav-table">
+                    <thead>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>UOM</th>
+                            <th class="number-cell">Reorder</th>
+                            <th class="number-cell">Min</th>
+                            <th class="number-cell">Max</th>
+                            <th class="number-cell">Current Stock</th>
+                            <th>Active</th>
+                            <th>Alert</th>
+                            <th style="width: 180px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td class="code-text">{{ item.ItemCode }}</td>
+                            <td>{{ item.Name }}</td>
+                            <td>{{ item.CategoryName|default:item.CategoryCode }}</td>
+                            <td>{{ item.UOMName|default:item.UOMCode }}</td>
+                            <td class="number-cell">{{ item.ReorderLevel }}</td>
+                            <td class="number-cell">{{ item.MinStockLevel }}</td>
+                            <td class="number-cell">{{ item.MaxStockLevel }}</td>
+                            <td class="number-cell">{{ item.CurrentStock }}</td>
+                            <td>
+                                {% if item.IsActive %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.EnabledStockAlert %}
+                                    <span class="status-badge status-alert-on">Enabled</span>
+                                {% else %}
+                                    <span class="status-badge status-alert-off">Disabled</span>
+                                {% endif %}
+                            </td>
+                            <td class="actions-cell">
+                                <a href="{% url 'inventory_edit' item.ItemCode %}" class="sav-btn-link">Edit</a>
+                                <a href="{% url 'inventory_toggle' item.ItemCode %}" class="sav-btn-link">Toggle</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" class="empty-state">No inventory items found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

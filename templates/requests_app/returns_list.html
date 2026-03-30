@@ -1,56 +1,250 @@
 {% extends "base.html" %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Returns List</h2>
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead>
-                <tr style="border-bottom:1px solid #ddd;">
-                    <th style="padding:10px;">Collection No</th>
-                    <th style="padding:10px;">Collection Date</th>
-                    <th style="padding:10px;">Request No</th>
-                    <th style="padding:10px;">Grower</th>
-                    <th style="padding:10px;">Farmer</th>
-                    <th style="padding:10px;">Department Code</th>
-                    <th style="padding:10px;">Department Name</th>
-                    <th style="padding:10px;">Disbursed By</th>
-                    <th style="padding:10px;">Line Count</th>
-                    <th style="padding:10px;">Total Issued Qty</th>
-                    <th style="padding:10px;">Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in rows %}
-                    <tr>
-                        <td style="padding:10px;">{{ row.CollectionNumber }}</td>
-                        <td style="padding:10px;">{{ row.CollectionDate }}</td>
-                        <td style="padding:10px;">{{ row.RequestNumber }}</td>
-                        <td style="padding:10px;">{{ row.GrowerNumber }}</td>
-                        <td style="padding:10px;">{{ row.FarmerName }}</td>
-                        <td style="padding:10px;">{{ row.DepartmentCode }}</td>
-                        <td style="padding:10px;">{{ row.DepartmentName }}</td>
-                        <td style="padding:10px;">{{ row.DisbursedBy }}</td>
-                        <td style="padding:10px;">{{ row.LineCount }}</td>
-                        <td style="padding:10px;">{{ row.TotalIssuedQty|floatformat:0|default:"0" }}</td>
-                        <td style="padding:10px;">
-                            <a href="{% url 'return_detail' row.CollectionNumber %}">Process Return</a>
-                        </td>
-                    </tr>
-                {% empty %}
-                    <tr><td colspan="100%">No returns found.</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<style>
+    .page-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .page-title h2 {
+        margin: 0;
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .page-subtitle {
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .sav-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    .sav-card-header {
+        padding: 18px 20px 0 20px;
+    }
+
+    .sav-card-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .sav-card-subtitle {
+        margin: 4px 0 0 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .sav-card-body {
+        padding: 20px;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    .sav-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 1200px;
+    }
+
+    .sav-table thead th {
+        background: #f9fafb;
+        color: #6b7280;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 14px 12px;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .sav-table thead th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .sav-table thead th:last-child {
+        border-top-right-radius: 12px;
+    }
+
+    .sav-table tbody td {
+        padding: 14px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: #111827;
+        background: #ffffff;
+    }
+
+    .sav-table tbody tr:hover td {
+        background: #fcfcfd;
+    }
+
+    .sav-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .code-text {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+
+    .number-cell {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .action-cell {
+        white-space: nowrap;
+    }
+
+    .sav-btn-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 10px;
+        border: 1px solid #d0d5dd;
+        background: #ffffff;
+        color: #344054;
+        text-decoration: none;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+    .sav-btn-link:hover {
+        background: #f9fafb;
+        color: #111827;
+        text-decoration: none;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 28px 16px;
+        color: #6b7280;
+    }
+
+    .filter-list {
+        margin: 0;
+        padding-left: 18px;
+        color: #111827;
+    }
+
+    .filter-list li {
+        margin-bottom: 6px;
+    }
+
+    .filter-label {
+        color: #6b7280;
+        font-weight: 600;
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+
+<div class="page-shell">
+    <div class="page-header">
+        <div class="page-title">
+            <h2>Returns List</h2>
+            <div class="page-subtitle">Review issued collections and process stock returns.</div>
+        </div>
     </div>
+
+    <div class="sav-card">
+        <div class="sav-card-header">
+            <h3 class="sav-card-title">Collections Available for Return</h3>
+            <p class="sav-card-subtitle">Select a collection record to open the return processing screen.</p>
+        </div>
+
+        <div class="sav-card-body">
+            <div class="table-wrap">
+                <table class="sav-table">
+                    <thead>
+                        <tr>
+                            <th>Collection No</th>
+                            <th>Collection Date</th>
+                            <th>Request No</th>
+                            <th>Grower</th>
+                            <th>Farmer</th>
+                            <th>Department Code</th>
+                            <th>Department Name</th>
+                            <th>Disbursed By</th>
+                            <th class="number-cell">Line Count</th>
+                            <th class="number-cell">Total Issued Qty</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in rows %}
+                        <tr>
+                            <td class="code-text">{{ row.CollectionNumber }}</td>
+                            <td>{{ row.CollectionDate }}</td>
+                            <td>{{ row.RequestNumber }}</td>
+                            <td>{{ row.GrowerNumber }}</td>
+                            <td>{{ row.FarmerName }}</td>
+                            <td>{{ row.DepartmentCode }}</td>
+                            <td>{{ row.DepartmentName }}</td>
+                            <td>{{ row.DisbursedBy }}</td>
+                            <td class="number-cell">{{ row.LineCount }}</td>
+                            <td class="number-cell">{{ row.TotalIssuedQty|floatformat:0|default:"0" }}</td>
+                            <td class="action-cell">
+                                <a href="{% url 'return_detail' row.CollectionNumber %}" class="sav-btn-link">
+                                    Process Return
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" class="empty-state">No returns found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     {% if filters %}
-        <div class="mt-3">
-            <h5>Filters Applied:</h5>
-            <ul>
+    <div class="sav-card">
+        <div class="sav-card-header">
+            <h3 class="sav-card-title">Filters Applied</h3>
+            <p class="sav-card-subtitle">Current filters affecting the returns list.</p>
+        </div>
+        <div class="sav-card-body">
+            <ul class="filter-list">
                 {% for key, value in filters.items %}
-                    <li><strong>{{ key|capfirst }}:</strong> {{ value }}</li>
+                    <li><span class="filter-label">{{ key|capfirst }}:</span> {{ value }}</li>
                 {% endfor %}
             </ul>
         </div>
+    </div>
     {% endif %}
 </div>
 {% endblock %}

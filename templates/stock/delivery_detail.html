@@ -3,63 +3,302 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-3">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h2 class="mb-0">{{ delivery.DeliveryNumber }}</h2>
-            <small class="text-muted">Delivery detail</small>
+<style>
+    .page-shell {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+
+    .page-title h2 {
+        margin: 0;
+        font-size: 1.7rem;
+        font-weight: 700;
+        color: #111827;
+    }
+
+    .page-subtitle {
+        margin-top: 6px;
+        color: #6b7280;
+        font-size: 0.95rem;
+    }
+
+    .sav-btn-secondary {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: #ffffff;
+        color: #344054;
+        border: 1px solid #d0d5dd;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.2s ease;
+    }
+
+    .sav-btn-secondary:hover {
+        background: #f9fafb;
+        color: #111827;
+        text-decoration: none;
+    }
+
+    .sav-card {
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+    }
+
+    .sav-card-header {
+        padding: 18px 20px 0 20px;
+    }
+
+    .sav-card-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 600;
+        color: #111827;
+    }
+
+    .sav-card-subtitle {
+        margin: 4px 0 0 0;
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+
+    .sav-card-body {
+        padding: 20px;
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 16px;
+    }
+
+    .detail-item {
+        min-width: 0;
+    }
+
+    .detail-item.span-2 {
+        grid-column: span 2;
+    }
+
+    .detail-label {
+        margin: 0 0 6px 0;
+        color: #6b7280;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+    }
+
+    .detail-value {
+        color: #111827;
+        font-size: 0.96rem;
+        font-weight: 500;
+        word-break: break-word;
+    }
+
+    .table-wrap {
+        overflow-x: auto;
+    }
+
+    .sav-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        min-width: 900px;
+    }
+
+    .sav-table thead th {
+        background: #f9fafb;
+        color: #6b7280;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 14px 12px;
+        border-bottom: 1px solid #e5e7eb;
+        white-space: nowrap;
+    }
+
+    .sav-table thead th:first-child {
+        border-top-left-radius: 12px;
+    }
+
+    .sav-table thead th:last-child {
+        border-top-right-radius: 12px;
+    }
+
+    .sav-table tbody td {
+        padding: 14px 12px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        color: #111827;
+        background: #ffffff;
+    }
+
+    .sav-table tbody tr:hover td {
+        background: #fcfcfd;
+    }
+
+    .sav-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .number-cell {
+        text-align: right;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .muted-text {
+        color: #6b7280;
+    }
+
+    .empty-state {
+        text-align: center;
+        color: #6b7280;
+        padding: 28px 16px;
+    }
+
+    @media (max-width: 1100px) {
+        .detail-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .detail-item.span-2 {
+            grid-column: span 2;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .page-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-item.span-2 {
+            grid-column: span 1;
+        }
+
+        .sav-btn-secondary {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="page-shell">
+    <div class="page-header">
+        <div class="page-title">
+            <h2>{{ delivery.DeliveryNumber }}</h2>
+            <div class="page-subtitle">Delivery detail</div>
         </div>
-        <a href="{% url 'delivery_list' %}" class="btn btn-outline-secondary">Back</a>
+
+        <a href="{% url 'delivery_list' %}" class="sav-btn-secondary">Back</a>
     </div>
 
-    <div class="card shadow-sm border-0 mb-3">
-        <div class="card-body">
-            <div class="row g-3">
-                <div class="col-md-3"><strong>Date:</strong><br>{{ delivery.DeliveryDate }}</div>
-                <div class="col-md-3"><strong>Supplier:</strong><br>{{ delivery.SupplierName|default:delivery.SupplierCode }}</div>
-                <div class="col-md-2"><strong>Vehicle:</strong><br>{{ delivery.VehicleRegistration|default:"-" }}</div>
-                <div class="col-md-2"><strong>Driver:</strong><br>{{ delivery.DriverName|default:"-" }}</div>
-                <div class="col-md-2"><strong>Waybill:</strong><br>{{ delivery.WaybillNumber|default:"-" }}</div>
-                <div class="col-md-4"><strong>Received By:</strong><br>{{ delivery.ReceivedByEmail }}</div>
-                <div class="col-md-8"><strong>Remarks:</strong><br>{{ delivery.Remarks|default:"-" }}</div>
+    <div class="sav-card">
+        <div class="sav-card-header">
+            <h3 class="sav-card-title">Delivery Information</h3>
+            <p class="sav-card-subtitle">Header details for the selected delivery record.</p>
+        </div>
+
+        <div class="sav-card-body">
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Date</div>
+                    <div class="detail-value">{{ delivery.DeliveryDate }}</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Supplier</div>
+                    <div class="detail-value">{{ delivery.SupplierName|default:delivery.SupplierCode }}</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Vehicle</div>
+                    <div class="detail-value">{{ delivery.VehicleRegistration|default:"-" }}</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Driver</div>
+                    <div class="detail-value">{{ delivery.DriverName|default:"-" }}</div>
+                </div>
+
+                <div class="detail-item">
+                    <div class="detail-label">Waybill</div>
+                    <div class="detail-value">{{ delivery.WaybillNumber|default:"-" }}</div>
+                </div>
+
+                <div class="detail-item span-2">
+                    <div class="detail-label">Received By</div>
+                    <div class="detail-value">{{ delivery.ReceivedByEmail }}</div>
+                </div>
+
+                <div class="detail-item span-2">
+                    <div class="detail-label">Remarks</div>
+                    <div class="detail-value">{{ delivery.Remarks|default:"-" }}</div>
+                </div>
             </div>
         </div>
     </div>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Item Code</th>
-                        <th>Item Name</th>
-                        <th>Qty</th>
-                        <th>UOM</th>
-                        <th>Batch</th>
-                        <th>Expiry</th>
-                        <th>Condition</th>
-                        <th>Remarks</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in lines %}
-                    <tr>
-                        <td>{{ row.ItemCode }}</td>
-                        <td>{{ row.ItemName }}</td>
-                        <td>{{ row.QuantityReceived }}</td>
-                        <td>{{ row.UOMName|default:row.UOMCode }}</td>
-                        <td>{{ row.BatchNumber|default:"-" }}</td>
-                        <td>{{ row.ExpiryDate|default:"-" }}</td>
-                        <td>{{ row.ConditionOnArrival|default:"-" }}</td>
-                        <td>{{ row.Remarks|default:"-" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">No delivery lines found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="sav-card">
+        <div class="sav-card-header">
+            <h3 class="sav-card-title">Delivery Lines</h3>
+            <p class="sav-card-subtitle">Items received under this delivery.</p>
+        </div>
+
+        <div class="sav-card-body">
+            <div class="table-wrap">
+                <table class="sav-table">
+                    <thead>
+                        <tr>
+                            <th>Item Code</th>
+                            <th>Item Name</th>
+                            <th class="number-cell">Qty</th>
+                            <th>UOM</th>
+                            <th>Batch</th>
+                            <th>Expiry</th>
+                            <th>Condition</th>
+                            <th>Remarks</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in lines %}
+                        <tr>
+                            <td>{{ row.ItemCode }}</td>
+                            <td>{{ row.ItemName }}</td>
+                            <td class="number-cell">{{ row.QuantityReceived }}</td>
+                            <td>{{ row.UOMName|default:row.UOMCode }}</td>
+                            <td>{{ row.BatchNumber|default:"-" }}</td>
+                            <td>{{ row.ExpiryDate|default:"-" }}</td>
+                            <td>{{ row.ConditionOnArrival|default:"-" }}</td>
+                            <td>{{ row.Remarks|default:"-" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="empty-state">No delivery lines found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>

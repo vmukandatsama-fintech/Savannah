@@ -1,7 +1,7 @@
 ﻿from django.db import connection
 
 
-def get_my_requests(user_email, search="", status="", page=1, page_size=10):
+def get_my_requests(user_email=None, search="", status="", page=1, page_size=10):
     page = max(int(page or 1), 1)
     page_size = max(int(page_size or 10), 1)
     offset = (page - 1) * page_size
@@ -9,8 +9,12 @@ def get_my_requests(user_email, search="", status="", page=1, page_size=10):
     search = (search or "").strip()
     status = (status or "").strip()
 
-    where_clauses = ["r.RequestorEmail = %s"]
-    params = [user_email]
+    where_clauses = []
+    params = []
+
+    if user_email:
+        where_clauses.append("r.RequestorEmail = %s")
+        params.append(user_email)
 
     if search:
         where_clauses.append("r.RequestNumber LIKE %s")
@@ -20,12 +24,14 @@ def get_my_requests(user_email, search="", status="", page=1, page_size=10):
         where_clauses.append("r.StatusName = %s")
         params.append(status)
 
-    where_sql = " AND ".join(where_clauses)
+    where_sql = ""
+    if where_clauses:
+        where_sql = "WHERE " + " AND ".join(where_clauses)
 
     count_sql = f"""
         SELECT COUNT(1)
         FROM dbo.Requests r
-        WHERE {where_sql}
+        {where_sql}
     """
 
     data_sql = f"""
@@ -42,7 +48,7 @@ def get_my_requests(user_email, search="", status="", page=1, page_size=10):
             ON r.DepartmentCode = d.DepartmentCode
         LEFT JOIN dbo.RequestedItems ri
             ON r.RequestNumber = ri.RequestNumber
-        WHERE {where_sql}
+        {where_sql}
         GROUP BY
             r.RequestNumber,
             r.RequestDate,

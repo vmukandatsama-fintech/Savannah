@@ -6,11 +6,19 @@
 <div class="card">
     <div class="section-head-inline">
         <div>
-            <div class="page-title">My Requests</div>
-            <div class="page-subtitle">Track your submitted requests and their progress</div>
+            <div class="page-title">Requests</div>
+            <div class="page-subtitle">
+                {% if request.session.role_name == "Stores Controller" %}
+                    View and track all requests across the system
+                {% else %}
+                    Track your submitted requests and their progress
+                {% endif %}
+            </div>
         </div>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            {% if session_features.create_request %}
             <a href="/requests/create/" class="btn btn-primary">New Request</a>
+            {% endif %}
         </div>
     </div>
 </div>
@@ -18,7 +26,13 @@
 <div class="card">
     <div class="section-head-inline" style="margin-bottom:14px;">
         <div class="section-title mb-0">Filters</div>
-        <div class="muted">Refine your request history</div>
+        <div class="muted">
+            {% if request.session.role_name == "Stores Controller" %}
+                Refine the full requests list
+            {% else %}
+                Refine your request history
+            {% endif %}
+        </div>
     </div>
 
     <form id="myRequestsFilterForm" method="get" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; align-items:end; margin:0;">
@@ -60,7 +74,13 @@
 
 <div class="card">
     <div class="section-head-inline" style="margin-bottom:14px;">
-        <div class="section-title mb-0">Request History</div>
+        <div class="section-title mb-0">
+            {% if request.session.role_name == "Stores Controller" %}
+                Requests
+            {% else %}
+                Request History
+            {% endif %}
+        </div>
         <div class="muted">
             Showing {{ request_history.rows|length }} of {{ request_history.total_count|number }}
         </div>

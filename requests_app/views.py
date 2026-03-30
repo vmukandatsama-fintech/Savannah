@@ -97,27 +97,59 @@ def returns_list_view(request):
 @feature_required("collections")
 def return_detail_view(request, collection_number):
     detail = get_collection_return_detail(collection_number)
+
     if not detail or not detail.get("header"):
         messages.error(request, f"Collection {collection_number} not found.")
         return redirect("returns_list")
+
+    header = detail["header"]
+    lines = detail["lines"]
+
     if request.method == "POST":
         reason = (request.POST.get("reason") or "").strip()
         line_items = []
-        for line in detail["lines"]:
-            field_name = f"return_qty_{line['LineNumber']}"
+
+        for line in lines:
+            line_number = int(line["LineNumber"])
+            item_code = str(line["ItemCode"])
+            issued_qty = int(line.get("ThisIssueQty") or 0)
+
+            field_name = f"return_qty_{line_number}"
             raw_value = (request.POST.get(field_name) or "0").strip()
+
             try:
-                return_qty = float(raw_value)
+                return_qty = int(raw_value)
             except Exception:
                 return_qty = 0
+
+            if return_qty < 0:
+                messages.error(request, f"Return quantity cannot be negative on line {line_number}.")
+                return redirect("return_detail", collection_number=collection_number)
+
+            if return_qty > issued_qty:
+                messages.error(
+                    request,
+                    f"Return quantity for line {line_number} cannot exceed issued quantity ({issued_qty})."
+                )
+                return redirect("return_detail", collection_number=collection_number)
+
             if return_qty > 0:
-                line_items.append({"LineNumber": line["LineNumber"], "ReturnQty": return_qty})
+                line_items.append(
+                    {
+                        "LineNumber": line_number,
+                        "ItemCode": item_code,
+                        "ReturnQty": return_qty,
+                    }
+                )
+
         if not line_items:
             messages.error(request, "Please enter at least one quantity to return.")
             return redirect("return_detail", collection_number=collection_number)
+
         if not reason:
             messages.error(request, "Return reason is required.")
             return redirect("return_detail", collection_number=collection_number)
+
         try:
             post_return_stock(
                 collection_number=collection_number,
@@ -125,12 +157,31 @@ def return_detail_view(request, collection_number):
                 reason=reason,
                 line_items=line_items,
             )
+            # get request number from collection
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT RequestNumber FROM dbo.Collections WHERE CollectionNumber = %s",
+                    [collection_number],
+                )
+                row = cursor.fetchone()
+                request_number = row[0] if row else None
+
             messages.success(request, f"Return posted successfully for {collection_number}.")
-            return redirect("return_detail", collection_number=collection_number)
+
+            return redirect("request_details", request_number=request_number)
+
         except Exception as ex:
             messages.error(request, f"Return failed: {ex}")
             return redirect("return_detail", collection_number=collection_number)
-    return render(request, "requests_app/return_detail.html", {"header": detail["header"], "lines": detail["lines"]})
+
+    return render(
+        request,
+        "requests_app/return_detail.html",
+        {
+            "header": header,
+            "lines": lines,
+        },
+    )
 
 
 
@@ -1308,13 +1359,31 @@ def request_cart(request):
 @feature_required("my_requests")
 def my_requests(request):
     user_email = get_session_user_email(request)
+    role_name = (request.session.get("role_name") or request.session.get("session_role_name") or "").strip()
+
     search = request.GET.get("search", "").strip()
     status = request.GET.get("status", "").strip()
-    page = int(request.GET.get("page", 1) or 1)
-    page_size = int(request.GET.get("page_size", 10) or 10)
+
+    try:
+        page = int(request.GET.get("page", 1) or 1)
+    except Exception:
+        page = 1
+
+    try:
+        page_size = int(request.GET.get("page_size", 10) or 10)
+    except Exception:
+        page_size = 10
+
+    if page < 1:
+        page = 1
+
+    if page_size not in [10, 20, 30]:
+        page_size = 10
+
+    show_all = role_name == "Stores Controller"
 
     result = get_my_requests(
-        user_email=user_email,
+        user_email=None if show_all else user_email,
         search=search,
         status=status,
         page=page,
@@ -1331,6 +1400,7 @@ def my_requests(request):
                 "status": status,
                 "page_size": page_size,
             },
+            "show_all_requests": show_all,
         },
     )
 
@@ -1352,17 +1422,34 @@ def request_details(request, request_number):
             },
         )
 
+    lines = details.get("lines", [])
+
+    total_requested = sum(float(line.get("QuantityRequested") or 0) for line in lines)
+    total_issued = sum(float(line.get("QuantityIssued") or 0) for line in lines)
+    total_returned = sum(float(line.get("QuantityReturned") or 0) for line in lines)
+    total_net_issued = sum(float(line.get("NetIssued") or 0) for line in lines)
+    total_remaining = sum(
+        max(float(line.get("QuantityRequested") or 0) - float(line.get("QuantityIssued") or 0), 0)
+        for line in lines
+    )
+
     return render(
         request,
         "requests_app/request_details.html",
         {
             "details": details,
             "header": details["header"],
-            "lines": details["lines"],
+            "lines": lines,
             "approvals": details["approvals"],
+            "collections": details.get("collections", []),
+            "returns_history": details.get("returns_history", []),
+            "total_requested": total_requested,
+            "total_issued": total_issued,
+            "total_returned": total_returned,
+            "total_net_issued": total_net_issued,
+            "total_remaining": total_remaining,
         },
     )
-
 
 
 # ============================================================
